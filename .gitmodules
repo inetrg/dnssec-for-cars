@@ -1,4 +1,4 @@
 [submodule "vsomeip"]
 	path = vsomeip
-	url = gitarchserver:/home/git/Repositories/vsomeip-secured
+	url = git@git.inet.haw-hamburg.de:core/source/someip/mininet-vsomeip
 	branch = main
