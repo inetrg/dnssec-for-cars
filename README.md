@@ -19,7 +19,7 @@
 3. Execute the `download-and-compile-nsd.bash` script and follow the instructions at the end to setup the authoritative name server
 
 ## Evaluation
-Execute `python topo-1sw-Nhosts.py --help` to get a list with which options the evaluation can be started with
+Execute `python topo-1sw-Nhosts.py --help` to get a list with which options the evaluation can be started with.
 
 There are eight evaluation options:
 - A: vanilla (vsomeip as it is)
