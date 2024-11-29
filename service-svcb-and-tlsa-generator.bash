@@ -7,7 +7,7 @@ printUsage() {
 }
 
 if [[ $# -gt 7 ]]; then
-    PROJECT_FOLDER_PATH="/home/mehmet/vscode-workspaces/mininet-vsomeip"
+    PROJECT_FOLDER_PATH="/home/vm-user/workspace/mininet-vsomeip-evaluation"
     ZONE_FILE_PATH="${PROJECT_FOLDER_PATH}/zones/service.zone"
     CERTIFICATES_FOLDER_PATH="${PROJECT_FOLDER_PATH}/certificates"
     service_id=$1
@@ -61,12 +61,12 @@ if [[ $# -gt 7 ]]; then
     string_mask          = utf8only
 
     [ subject ]
-    countryName          = DE
-    stateOrProvinceName  = HH
-    localityName         = Hamburg
-    organizationName     = Hochschule fuer Angewandte Wissenschaften Hamburg
-    commonName           = HAW Hamburg
-    emailAddress         = mehmet.mueller@haw-hamburg.de
+    countryName          = XX
+    stateOrProvinceName  = XX
+    localityName         = City
+    organizationName     = Example Org
+    commonName           = Example
+    emailAddress         = user@example.org
 
     [ x509_ext ]
     subjectKeyIdentifier    = hash
@@ -93,7 +93,7 @@ if [[ $# -gt 7 ]]; then
     DNS.5  = $(printf "_someip.major%s.id%s.service."                    "$dns_major" "$dns_service")
     DNS.6  = $(printf "_someip.id%s.service."                            "$dns_service")
     IP.1   = ${ip_address}
-    email.1  = mehmet.mueller@haw-hamburg.de"
+    email.1  = user@example.org"
 
     cd ${CERTIFICATES_FOLDER_PATH}
     openssl req -config <(echo "$CERTIFICATE_CONF") -new -x509 -sha256 -newkey rsa:2048 -nodes -keyout "${file_name}.service.key.pem" -days 365 -out "${file_name}.service.cert.pem" 2>/dev/null

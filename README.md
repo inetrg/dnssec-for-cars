@@ -1,8 +1,13 @@
 # mininet-vsomeip-evaluation for Ubuntu Jammy
 
 ## Dependencies
+- pkg-config - sudo apt install pkg-config
+- doxygen - sudo apt install doxygen
 
 - [boost 1.83](https://launchpad.net/~mhier/+archive/ubuntu/libboost-latest)
+    sudo add-apt-repository ppa:mhier/libboost-latest
+    sudo apt update
+    sudo apt install libboost1.83-all-dev
 - [cmake](https://apt.kitware.com/)
 - [libc-ares-dev](https://packages.ubuntu.com/jammy/libc-ares-dev)
 - [cryptopp](https://github.com/weidai11/cryptopp)
@@ -15,10 +20,11 @@
 
 ## Prerequisites
 1. Execute `git submodule init` first and then `git submodule update` to pull the _vsomeip_ project
-2. Adjust all path specifications in every file containing `/home/mehmet/vscode-workspaces` according to your project path
+2. Adjust all path specifications in every file containing `/home/vm-user/workspace` according to your project path
 3. Execute the `download-and-compile-nsd.bash` script and follow the instructions at the end to setup the authoritative name server
 
 ## Evaluation
+Update user in `topo-1sw-Nhosts.py` from `vm-user` to your username.
 Execute `python topo-1sw-Nhosts.py --help` to get a list with which options the evaluation can be started with.
 
 There are eight evaluation options:

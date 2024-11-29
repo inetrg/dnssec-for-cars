@@ -1,1 +1,1 @@
-env VSOMEIP_CONFIGURATION=/home/mehmet/vscode-workspaces/mininet-vsomeip/vsomeip-configs/h2.json VSOMEIP_APPLICATION_NAME=h2 /home/mehmet/vscode-workspaces/mininet-vsomeip/vsomeip/build/examples/my-subscriber
+env VSOMEIP_CONFIGURATION=/home/vm-user/workspace/mininet-vsomeip-evaluation/vsomeip-configs/h2.json VSOMEIP_APPLICATION_NAME=h2 /home/vm-user/workspace/mininet-vsomeip-evaluation/vsomeip/build/examples/my-subscriber
