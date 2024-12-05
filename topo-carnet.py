@@ -12,7 +12,6 @@ import time
 from itertools import combinations
 from mininet.topo import Topo
 from mininet.net import Mininet
-from mininet.cli import CLI
 from mininet.link import TCLink
 from mininet.log import setLogLevel
 from mininet.util import dumpNodeConnections
@@ -87,10 +86,16 @@ def dump_infos(net: Mininet):
     print( "Dumping net connections" )
     dumpNetConnections(net)
    
-def simple_tests(net: Mininet):
-    print( "Testing network connectivity" )
-    net.pingAll()
-    print( "Testing bandwidth between hosts" )
+def test_connectivity(net: Mininet, debug=False):
+    lossPct = net.pingAll()
+    if lossPct == 0:
+        print("All hosts are reachable")
+    else:
+        print("Reachability test failed with loss percentage of {}".format(lossPct))
+        # throw exception here
+        raise Exception("Hosts are not reachable")
+
+def test_bandwidth(net: Mininet):
     unique_host_tuples_set = set(combinations(net.hosts, 2))
     for host_tuple in unique_host_tuples_set:
         net.iperf(hosts=host_tuple,l4Type='TCP')
@@ -102,29 +107,59 @@ def add_default_route(host):
 
 
 if __name__ == '__main__':
-    print("Building mininet network ... ")
-    setLogLevel('info')
-    topo: car_topology = car_topology()
-    net = Mininet(topo=topo, controller=None, link=TCLink)
-    net.start()
-    for switch in net.switches:
-        make_switch_traditional(net, switch.__str__())
-    print("Done")
+    try:
+        parser = argparse.ArgumentParser(description='Starts a car network topology in mininet and runs some connection tests')
+        parser.add_argument('--iperf', type=bool, default=False, help='Run iperf tests')
+        parser.add_argument('--debug', type=bool, default=False, help='Enable debug output, such as network dumps')
+        parser.add_argument('--connectivity', type=bool, default=False, help='Test network connectivity')
+        parser.add_argument('--clean', type=bool, default=False, help='Clean up all mininet interfaces from previous runs')
+        args = parser.parse_args()
 
-    print("Adding default routes ... ")
-    for host in net.hosts:
-        add_default_route(host)
-    print("Done")
+        if args.debug:
+            setLogLevel('debug')
+        else:
+            setLogLevel('warning')
 
-    print("Dumping network information ... ")
-    dump_infos(net)
-    print("Done")
+        if args.clean:
+            print("Cleaning up mininet interfaces ... ")
+            subprocess.run(['mn', '-c'])
+            print("Done")
 
-    print("Testing network ... ")
-    simple_tests(net)
-    print("Done")
+        print("Building mininet network ... ")
+        topo: car_topology = car_topology()
+        net = Mininet(topo=topo, controller=None, link=TCLink)
+        net.start()
+        for switch in net.switches:
+            make_switch_traditional(net, switch.__str__())
+        print("Done")
 
-    print("Stopping mininet network")
-    net.stop()
-    print("Done.")
-    
+        print("Adding default routes ... ")
+        for host in net.hosts:
+            add_default_route(host)
+        print("Done")
+
+        if args.debug:
+            print("Dumping switch information ... ")
+            for switch in net.switches:
+                dump_switch_information(net, switch.__str__())
+            print("Done")
+
+        if args.connectivity:
+            print("Testing network connectivity ... ")
+            test_connectivity(net)
+            print("Done")
+
+        if args.iperf:
+            print( "Testing bandwidth between hosts ... " )
+            test_bandwidth(net)
+            print("Done")
+
+    except KeyboardInterrupt:
+        print("Caught Ctrl+C. Stopping mininet network.")
+    except Exception as e:
+        print("An error occurred: {}".format(e))    
+    finally:
+        print("Stopping mininet network")
+        net.stop()
+        print("Done.")
+
