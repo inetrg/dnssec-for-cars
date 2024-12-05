@@ -23,7 +23,7 @@ from mininet.util import dumpNetConnections
 from pathlib import Path
 
 PUBLISHER_HOST_NAME = 'h1'
-PROJECT_PATH = "/home/mehmet/vscode-workspaces/mininet-vsomeip"
+PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
 
 SERVICE_ID = "4660"
 INSTANCE_ID = "22136"
@@ -225,7 +225,7 @@ def set_client_certificate_paths(host, subscriber_count: int):
         json.dump(config, file, indent=4)
 
 def reset_zone_files():
-    subprocess.run(["su", "-", "mehmet", "-c", f"{PROJECT_PATH}/reset-zone-file.bash"])
+    subprocess.run(["su", "-", "vm-user", "-c", f"{PROJECT_PATH}/reset-zone-file.bash"])
 
 def start_someip_subscriber_app(host):
     host_name = host.__str__()
@@ -252,11 +252,11 @@ def switch_someip_branch(branch_name: str):
     return result.returncode
 
 def build_vsomeip():
-    # subprocess.run(["su", "-", "mehmet", "-c", f"{PROJECT_PATH}/build_vsomeip.bash"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    subprocess.run(f'su - mehmet -c "cmake -B {PROJECT_PATH}/vsomeip/build -S {PROJECT_PATH}/vsomeip"', shell=True)
-    subprocess.run(f'su - mehmet -c "$(which cmake) --build {PROJECT_PATH}/vsomeip/build --config Release --target all -- -j$(nproc)"', shell=True)
-    subprocess.run(f'su - mehmet -c "$(which cmake) --build {PROJECT_PATH}/vsomeip/build --config Release --target examples -- -j$(nproc)"', shell=True)
-    subprocess.run(f'su - mehmet -c "$(which cmake) --build {PROJECT_PATH}/vsomeip/build --config Release --target statistics-writer -- -j$(nproc)"', shell=True)
+    # subprocess.run(["su", "-", "vm-user", "-c", f"{PROJECT_PATH}/build_vsomeip.bash"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(f'su - vm-user -c "cmake -B {PROJECT_PATH}/vsomeip/build -S {PROJECT_PATH}/vsomeip"', shell=True)
+    subprocess.run(f'su - vm-user -c "$(which cmake) --build {PROJECT_PATH}/vsomeip/build --config Release --target all -- -j$(nproc)"', shell=True)
+    subprocess.run(f'su - vm-user -c "$(which cmake) --build {PROJECT_PATH}/vsomeip/build --config Release --target examples -- -j$(nproc)"', shell=True)
+    subprocess.run(f'su - vm-user -c "$(which cmake) --build {PROJECT_PATH}/vsomeip/build --config Release --target statistics-writer -- -j$(nproc)"', shell=True)
 
 def cleanup():
     subprocess.run(["pkill", "statistics-writ"])
@@ -272,6 +272,9 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, subscri
         print(f"Starting {current_run}/{total_evaluation_runs} evaluation run {evaluation_option} ... ")
         # start statistics writer
         print("Starting statistics-writer ...")
+        # check if result dir exists and create it if not
+        if not Path(f"{PROJECT_PATH}/statistic-results/{evaluation_option}-series").is_dir():
+            subprocess.run(f"mkdir -p {PROJECT_PATH}/statistic-results/{evaluation_option}-series", shell = True) 
         statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", str(subscriber_count), f"{PROJECT_PATH}/statistic-results/{evaluation_option}-series", evaluation_option])
         # statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", str(subscriber_count), f"{PROJECT_PATH}/statistic-results", evaluation_option])
         print("Done.")
