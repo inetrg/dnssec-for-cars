@@ -19,6 +19,7 @@ from mininet.util import dumpNetConnections
 from pathlib import Path
 
 PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
+SCENARIO_PATH = f"{PROJECT_PATH}/carnet"
 
 DNSNODENAME = 'dns'
 
@@ -146,19 +147,19 @@ def build_vsomeip():
     subprocess.run(f'su - vm-user -c "$(which cmake) --build {PROJECT_PATH}/vsomeip/build --config Release --target statistics-writer -- -j$(nproc)"', shell=True)
 
 def reset_zone_files():
-    subprocess.run(["su", "-", "vm-user", "-c", f"{PROJECT_PATH}/reset-zone-file.bash"])
+    subprocess.run(["su", "-", "vm-user", "-c", f"{SCENARIO_PATH}/reset-zone-files.bash"])
 
 def start_dns_server(dns_host):
     dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
     dns_host.cmd(f"sed -i -E 's/.* # mininet-host-ip/    ip-address: {dns_host_ip} # mininet-host-ip/' {PROJECT_PATH}/nsd/nsd.conf")
-    dns_host.cmd(f"sed -i -E 's/ns\.service\.         IN    A    .*/ns.service.         IN    A    {dns_host_ip}/' {PROJECT_PATH}/zones/service.zone")
-    dns_host.cmd(f"sed -i -E 's/ns\.client\.         IN    A    .*/ns.client.         IN    A    {dns_host_ip}/' {PROJECT_PATH}/zones/client.zone")
+    dns_host.cmd(f"sed -i -E 's/ns\.service\.         IN    A    .*/ns.service.         IN    A    {dns_host_ip}/' {SCENARIO_PATH}/zones/service.zone")
+    dns_host.cmd(f"sed -i -E 's/ns\.client\.         IN    A    .*/ns.client.         IN    A    {dns_host_ip}/' {SCENARIO_PATH}/zones/client.zone")
     dns_host.cmd('nsd-control-setup')
     dns_host.cmd(f'nsd -c {PROJECT_PATH}/nsd/nsd.conf')
 
 def set_dns_server_ip(host, dns_host):
     host_name = host.__str__()
-    host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
+    host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
     dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
     ip_bytes = dns_host_ip.split(".")
     ip_bytes_in_hex = [ "{:02x}".format(int(x)) for x in ip_bytes ]
@@ -182,8 +183,8 @@ def create_host_config(host, host_config: str):
     config['network'] = f'-{host_name}'
     config['unicast'] = unicast_ip
     config['logging']['level'] = 'fatal'
-    config['logging']['console'] = 'false'
-    config['logging']['file']['enable'] = 'false'
+    config['logging']['console'] = 'true'
+    config['logging']['file']['enable'] = 'true'
     config['logging']['file']['path'] = f'/var/log/{host_name}.log'
     config['applications'][0]['name'] = host_name
     config['applications'][0]['id'] = host_id
@@ -194,8 +195,8 @@ def create_host_config(host, host_config: str):
 
 def create_publisher_config(host):
     host_name = host.__str__()
-    publisher_config_template = f"{PROJECT_PATH}/vsomeip-configs/vsomeip-udp-mininet-publisher.json"
-    host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
+    publisher_config_template = f"{SCENARIO_PATH}/vsomeip-configs/vsomeip-udp-mininet-publisher.json"
+    host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {publisher_config_template} {host_config}')
         create_host_config(host, host_config)
@@ -208,8 +209,8 @@ def create_publisher_config(host):
 
 def create_subscriber_config(host):
     host_name = host.__str__()
-    subscriber_config_template = f"{PROJECT_PATH}/vsomeip-configs/vsomeip-udp-mininet-subscriber.json"
-    host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
+    subscriber_config_template = f"{SCENARIO_PATH}/vsomeip-configs/vsomeip-udp-mininet-subscriber.json"
+    host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {subscriber_config_template} {host_config}')
         create_host_config(host, host_config)
@@ -222,12 +223,12 @@ def create_subscriber_config(host):
 
 def create_publisher_certificate(host):
     host_name = host.__str__()
-    certificate = f'{PROJECT_PATH}/certificates/{host_name}.service.cert.pem'
-    private_key = f'{PROJECT_PATH}/certificates/{host_name}.service.key.pem'
+    certificate = f'{SCENARIO_PATH}/certificates/{host_name}.service.cert.pem'
+    private_key = f'{SCENARIO_PATH}/certificates/{host_name}.service.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
         host_ip = host.IP(intf=host.defaultIntf())
-        host.cmd(f'{PROJECT_PATH}/service-svcb-and-tlsa-generator.bash {SERVICE_ID} {INSTANCE_ID} {MAJOR_VERSION} {MINOR_VERSION} {host_ip} {PUBLISHER_PORT} {PROTOCOL} {host_name}')
-        host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
+        host.cmd(f'{SCENARIO_PATH}/pub-svcb-and-tlsa-generator.bash {SERVICE_ID} {INSTANCE_ID} {MAJOR_VERSION} {MINOR_VERSION} {host_ip} {PUBLISHER_PORT} {PROTOCOL} {host_name}')
+        host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
         with open(host_config, 'r') as file:
             config = json.load(file)
         config['certificate-path'] = certificate
@@ -237,13 +238,13 @@ def create_publisher_certificate(host):
 
 def create_subscriber_certificate(host):
     host_name = host.__str__()
-    certificate = f'{PROJECT_PATH}/certificates/{host_name}.client.cert.pem'
-    private_key = f'{PROJECT_PATH}/certificates/{host_name}.client.key.pem'
+    certificate = f'{SCENARIO_PATH}/certificates/{host_name}.client.cert.pem'
+    private_key = f'{SCENARIO_PATH}/certificates/{host_name}.client.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
         host_ip = host.IP(intf=host.defaultIntf())
         host_id = str(2)
-        host.cmd(f'{PROJECT_PATH}/client-svcb-and-tlsa-generator.bash {host_id} {SERVICE_ID} {INSTANCE_ID} {MAJOR_VERSION} {host_ip} {SUBSCRIBER_PORTS} {PROTOCOL} {host_name}')
-        host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
+        host.cmd(f'{SCENARIO_PATH}/sub-svcb-and-tlsa-generator.bash {host_id} {SERVICE_ID} {INSTANCE_ID} {MAJOR_VERSION} {host_ip} {SUBSCRIBER_PORTS} {PROTOCOL} {host_name}')
+        host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
         with open(host_config, 'r') as file:
             config = json.load(file)
         config['certificate-path'] = certificate
@@ -254,10 +255,10 @@ def create_subscriber_certificate(host):
 def set_pub_certificate_path_at_sub(pub, sub):
     pub_name = pub.__str__()
     sub_name = sub.__str__()
-    host_config = f"{PROJECT_PATH}/vsomeip-configs/{sub_name}.json"
+    host_config = f"{SCENARIO_PATH}/vsomeip-configs/{sub_name}.json"
     with open(host_config, 'r') as file:
         config = json.load(file)
-    config['service-certificate-path'] = f'{PROJECT_PATH}/certificates/{pub_name}.service.cert.pem'
+    config['service-certificate-path'] = f'{SCENARIO_PATH}/certificates/{pub_name}.service.cert.pem'
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
 
@@ -265,10 +266,10 @@ def set_sub_certificate_path_at_pub(pub, sub):
     # todo make subs a list an accept multiple subscribers
     pub_name = pub.__str__()
     sub_name = sub.__str__()
-    host_config = f"{PROJECT_PATH}/vsomeip-configs/{pub_name}.json"
+    host_config = f"{SCENARIO_PATH}/vsomeip-configs/{pub_name}.json"
     with open(host_config, 'r') as file:
         config = json.load(file)
-    client_certificate_paths = [f'{PROJECT_PATH}/certificates/{sub_name}.client.cert.pem']
+    client_certificate_paths = [f'{SCENARIO_PATH}/certificates/{sub_name}.client.cert.pem']
     config['host-certificates'] = client_certificate_paths
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
@@ -276,9 +277,9 @@ def set_sub_certificate_path_at_pub(pub, sub):
 def start_someip_app(host, app_name):
     host_name = host.__str__()
     if STD_CONDITION:
-        host.cmd(f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/{app_name} &> /var/log/{host_name}.std &")
+        host.cmd(f"env VSOMEIP_CONFIGURATION={SCENARIO_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/{app_name} &> /var/log/{host_name}.std &")
     else:
-        host.cmd(f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/{app_name} &")
+        host.cmd(f"env VSOMEIP_CONFIGURATION={SCENARIO_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/{app_name} &")
 
 def start_someip_subscriber_app(host):
     start_someip_app(host, "my-subscriber")
@@ -299,7 +300,7 @@ def start_evaluation(evaluation_option: str, add_compile_definitions: str, net: 
     # check if result dir exists and create it if not
     if not Path(f"{PROJECT_PATH}/statistic-results/{evaluation_option}-series").is_dir():
         subprocess.run(f"mkdir -p {PROJECT_PATH}/statistic-results/{evaluation_option}-series", shell = True) 
-    statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", str(1), f"{PROJECT_PATH}/statistic-results/{evaluation_option}-series", evaluation_option])
+    # statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", str(1), f"{PROJECT_PATH}/statistic-results/{evaluation_option}-series", evaluation_option])
     # statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", str(subscriber_count), f"{PROJECT_PATH}/statistic-results", evaluation_option])
     print("Done.")
     # start someip publisher and subscribers
@@ -316,15 +317,17 @@ def start_evaluation(evaluation_option: str, add_compile_definitions: str, net: 
     print("Done.")
     evaluation_run_start = time.time()
     # Wait for statistics writer
-    print("Waiting until all statistics are contributed ... ")
-    return_code = statistics_writer_process.wait(timeout=120)
-    if return_code == 0:
-        print("Done.")
-        evaluation_run_end = time.time()
-        print(f"RUN ({evaluation_option}): ({evaluation_run_end-evaluation_run_start}s)")
-    else:
-        print(f"statistics writer failed with return code {return_code}")
-        print(f"evaluation run {evaluation_option} failed ")
+    # print("Waiting until all statistics are contributed ... ")
+    # return_code = statistics_writer_process.wait(timeout=120)
+    # wait 
+    time.sleep(10)
+    # if return_code == 0:
+    #     print("Done.")
+    evaluation_run_end = time.time()
+    #     print(f"RUN ({evaluation_option}): ({evaluation_run_end-evaluation_run_start}s)")
+    # else:
+    #     print(f"statistics writer failed with return code {return_code}")
+    #     print(f"evaluation run {evaluation_option} failed ")
     # stop someip publisher, subscribers and dns server
     print("Stopping SOME/IP apps and DNS server, and cleaning up ... ")
     for host in net.hosts:
@@ -342,10 +345,10 @@ def start_evaluation(evaluation_option: str, add_compile_definitions: str, net: 
 
 def cleanup():
     subprocess.run(["pkill", "statistics-writ"])
-    subprocess.run(f"rm -f {PROJECT_PATH}/vsomeip-h*", shell=True)
-    subprocess.run("rm -f /var/log/h*.log", shell=True)
+    subprocess.run(f"rm -f {PROJECT_PATH}/vsomeip-zc*", shell=True)
+    subprocess.run("rm -f /var/log/zc*.log", shell=True)
     subprocess.run(f"rm -f {PROJECT_PATH}/publisher-initialized", shell=True)
-    subprocess.run(f"rm -f /var/log/h*.std", shell=True)
+    subprocess.run(f"rm -f /var/log/zc*.std", shell=True)
 
 if __name__ == '__main__':
     try:
@@ -355,6 +358,7 @@ if __name__ == '__main__':
         parser.add_argument('--connectivity', type=bool, default=False, help='Test network connectivity')
         parser.add_argument('--clean', type=bool, default=False, help='Clean up all mininet interfaces from previous runs')
         parser.add_argument('--nobuild', type=bool, default=False, help='Do not rebuild vsomeip but use latest build')
+        parser.add_argument('--noeval', type=bool, default=False, help='Do not run evaluation')
         parser.add_argument('--evaluate', choices=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], default='H', help="""A: vanilla (vsomeip as it is),
                                                                                                                             B: w/ DNSSEC w/o SOME/IP SD,
                                                                                                                             C: w/ service authentication,
@@ -375,8 +379,9 @@ if __name__ == '__main__':
             subprocess.run(['mn', '-c'])
             print("Done")
             print("Removing configs and certificates ... ")
-            subprocess.run(f"rm -f {PROJECT_PATH}/vsomeip-configs/h*.json", shell=True)
-            subprocess.run(f"rm -f {PROJECT_PATH}/certificates/*", shell=True)
+            subprocess.run(f"rm -f {SCENARIO_PATH}/vsomeip-configs/h*.json", shell=True)
+            subprocess.run(f"rm -f {SCENARIO_PATH}/certificates/*", shell=True)
+            cleanup()
             reset_zone_files()
             print("Done.")
 
@@ -409,9 +414,9 @@ if __name__ == '__main__':
             test_bandwidth(net)
             print("Done")
 
+        add_compile_definitions = compile_definitions[args.evaluate]
         if not args.nobuild:
             print("Building vsomeip ... ")
-            add_compile_definitions = compile_definitions[args.evaluate]
             subprocess.run(f"sed -i -E 's/add_compile_definitions.*/add_compile_definitions\({add_compile_definitions}\)/' {PROJECT_PATH}/vsomeip/CMakeLists.txt", shell=True)
             build_vsomeip()
             print("Done.")
@@ -435,10 +440,11 @@ if __name__ == '__main__':
             start_dns_server(net[DNSNODENAME])
             print("Done.")
             
-        print("Starting vsomeip scenario ... ")
-        # Evaluate
-        start_evaluation(args.evaluate, add_compile_definitions, net, DNSNODENAME)
-        print("Done.")
+        if not args.noeval:
+            print("Starting vsomeip scenario ... ")
+            # Evaluate
+            start_evaluation(args.evaluate, add_compile_definitions, net, DNSNODENAME)
+            print("Done.")
         
     except KeyboardInterrupt:
         print("Caught Ctrl+C. Stopping mininet network.")
@@ -446,9 +452,8 @@ if __name__ == '__main__':
         print("An error occurred: {}".format(e))    
     finally:
         print("Stopping mininet network, DNS and cleaning up ...")
-        if WITH_DNSSEC in add_compile_definitions:
+        if 'add_compile_definitions' in locals() and WITH_DNSSEC in add_compile_definitions:
             stop_dns_server(net[DNSNODENAME])
-        cleanup()
         net.stop()
         print("Done.")
 
