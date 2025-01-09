@@ -273,28 +273,6 @@ def create_subscriber_certificate(host, serviceId, client_id):
         with open(host_config, 'w') as file:
             json.dump(config, file, indent=4)
 
-def set_pub_certificate_path_at_sub(pub, sub):
-    pub_name = pub.__str__()
-    sub_name = sub.__str__()
-    host_config = f"{SCENARIO_PATH}/vsomeip-configs/{sub_name}.json"
-    with open(host_config, 'r') as file:
-        config = json.load(file)
-    config['service-certificate-path'] = f'{SCENARIO_PATH}/certificates/{pub_name}.service.cert.pem'
-    with open(host_config, 'w') as file:
-        json.dump(config, file, indent=4)
-
-def set_sub_certificate_path_at_pub(pub, sub):
-    # todo make subs a list an accept multiple subscribers
-    pub_name = pub.__str__()
-    sub_name = sub.__str__()
-    host_config = f"{SCENARIO_PATH}/vsomeip-configs/{pub_name}.json"
-    with open(host_config, 'r') as file:
-        config = json.load(file)
-    client_certificate_paths = [f'{SCENARIO_PATH}/certificates/{sub_name}.client.cert.pem']
-    config['host-certificates'] = client_certificate_paths
-    with open(host_config, 'w') as file:
-        json.dump(config, file, indent=4)
-
 def start_someip_app(host, app_name):
     host_name = host.__str__()
     if STD_CONDITION:
@@ -410,6 +388,36 @@ def create_subscribers(net, dns_host = None):
         create_subscriber_config(net[net_name], service_id, client_id, dns_host_ip_in_hex)
         create_subscriber_certificate(net[net_name], service_id, client_id)
 
+def reference_certificates():
+    with open (f"{SCENARIO_PATH}/subscribers.json", "r") as client_file:
+        clients = json.load(client_file)
+    with open (f"{SCENARIO_PATH}/publishers.json", "r") as service_file:
+        services = json.load(service_file)
+    for client in clients:
+        service_id = clients[client]["serviceId"]
+        client_id = clients[client]["clientId"]
+        client_host = clients[client]["host"]
+        service_host = services[str(service_id)]["host"]
+        client_cert = f"{SCENARIO_PATH}/certificates/{client_host}_{client_id}.client.cert.pem"
+        client_config = f"{SCENARIO_PATH}/vsomeip-configs/{client_host}_{service_id}_sub.json"
+        service_cert = f"{SCENARIO_PATH}/certificates/{service_host}_{service_id}.service.cert.pem"
+        service_config = f"{SCENARIO_PATH}/vsomeip-configs/{service_host}_{service_id}_pub.json"
+        with open(client_config, 'r') as file:
+            client_conf = json.load(file)
+        with open(service_config, 'r') as file:
+            service_conf = json.load(file)
+        client_conf['service-certificate-path'] = service_cert
+        client_conf['host-certificates'] = ["only applies to services"]
+        if "host" in service_conf['host-certificates'][0]:
+            service_conf['host-certificates'] = [client_cert]
+        else:
+            service_conf['host-certificates'].append(client_cert)
+        service_conf['service-certificate-path'] = "only applies to clients"
+        with open(client_config, 'w') as file:
+            json.dump(client_conf, file, indent=4)
+        with open(service_config, 'w') as file:
+            json.dump(service_conf, file, indent=4)
+
 if __name__ == '__main__':
     try:
         parser = argparse.ArgumentParser(description='Starts a car network topology in mininet and runs some connection tests')
@@ -484,22 +492,17 @@ if __name__ == '__main__':
 
         # create host configs and certificates
         print("Creating host configs and certificates ... ")
-        create_publishers(net, net[DNSNODENAME])
-        create_subscribers(net, net[DNSNODENAME])
-        # create_subscriber_config(net['zcFR'])
-        # create_subscriber_certificate(net['zcFR'])
-        # set_pub_certificate_path_at_sub(pub=net['zcRL'], sub=net['zcFR']) # todo --> on per service basis instead of per host
-        # set_sub_certificate_path_at_pub(sub=net['zcFR'], pub=net['zcRL']) # todo --> on per service basis instead of per host
-        # if WITH_DNSSEC in add_compile_definitions:
-        #     # for host in net.hosts:
-        #         # set_dns_server_ip(host, net[DNSNODENAME])
-        #     set_dns_server_ip(net[PUBLISHER_HOST_NAME], net[DNSNODENAME])
-        #     set_dns_server_ip(net[SUBSCRIBER_HOST_NAMES[0]], net[DNSNODENAME])
-        # print("Done.")
-        # if WITH_DNSSEC in add_compile_definitions:
-        #     print("Starting DNS server ... ")
-        #     start_dns_server(net[DNSNODENAME])
-        #     print("Done.")
+        dns_host = None
+        if WITH_DNSSEC in add_compile_definitions:
+            dns_host = net[DNSNODENAME]
+        create_publishers(net, dns_host)
+        create_subscribers(net, dns_host)
+        reference_certificates()
+        print("Done.")
+        if WITH_DNSSEC in add_compile_definitions:
+            print("Starting DNS server ... ")
+            start_dns_server(net[DNSNODENAME])
+            print("Done.")
             
         # if not args.noeval:
         #     print("Starting vsomeip scenario ... ")
