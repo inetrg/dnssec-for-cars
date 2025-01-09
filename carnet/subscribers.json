@@ -1,0 +1,3586 @@
+{
+    "1-4049": {
+        "serviceId": 4049,
+        "clientId": 1,
+        "port": 4049,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.2.50"
+    },
+    "2-4021": {
+        "serviceId": 4021,
+        "clientId": 2,
+        "port": 4021,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.22"
+    },
+    "3-4021": {
+        "serviceId": 4021,
+        "clientId": 3,
+        "port": 4021,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.22"
+    },
+    "4-6077": {
+        "serviceId": 6077,
+        "clientId": 4,
+        "port": 6077,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.78"
+    },
+    "5-6077": {
+        "serviceId": 6077,
+        "clientId": 5,
+        "port": 6077,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.78"
+    },
+    "6-4022": {
+        "serviceId": 4022,
+        "clientId": 6,
+        "port": 4022,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.23"
+    },
+    "7-3026": {
+        "serviceId": 3026,
+        "clientId": 7,
+        "port": 3026,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.27"
+    },
+    "8-3026": {
+        "serviceId": 3026,
+        "clientId": 8,
+        "port": 3026,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.27"
+    },
+    "9-4011": {
+        "serviceId": 4011,
+        "clientId": 9,
+        "port": 4011,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.12"
+    },
+    "10-6045": {
+        "serviceId": 6045,
+        "clientId": 10,
+        "port": 6045,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.46"
+    },
+    "11-6045": {
+        "serviceId": 6045,
+        "clientId": 11,
+        "port": 6045,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.46"
+    },
+    "12-6045": {
+        "serviceId": 6045,
+        "clientId": 12,
+        "port": 6045,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.46"
+    },
+    "13-6078": {
+        "serviceId": 6078,
+        "clientId": 13,
+        "port": 6078,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.79"
+    },
+    "14-6078": {
+        "serviceId": 6078,
+        "clientId": 14,
+        "port": 6078,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.79"
+    },
+    "15-4005": {
+        "serviceId": 4005,
+        "clientId": 15,
+        "port": 4005,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.6"
+    },
+    "16-4005": {
+        "serviceId": 4005,
+        "clientId": 16,
+        "port": 4005,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.2.6"
+    },
+    "17-4005": {
+        "serviceId": 4005,
+        "clientId": 17,
+        "port": 4005,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.6"
+    },
+    "18-6033": {
+        "serviceId": 6033,
+        "clientId": 18,
+        "port": 6033,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.34"
+    },
+    "19-6065": {
+        "serviceId": 6065,
+        "clientId": 19,
+        "port": 6065,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.66"
+    },
+    "20-6065": {
+        "serviceId": 6065,
+        "clientId": 20,
+        "port": 6065,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.66"
+    },
+    "21-6065": {
+        "serviceId": 6065,
+        "clientId": 21,
+        "port": 6065,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.66"
+    },
+    "22-5004": {
+        "serviceId": 5004,
+        "clientId": 22,
+        "port": 5004,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.3.5"
+    },
+    "23-5004": {
+        "serviceId": 5004,
+        "clientId": 23,
+        "port": 5004,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.3.5"
+    },
+    "24-5004": {
+        "serviceId": 5004,
+        "clientId": 24,
+        "port": 5004,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.3.5"
+    },
+    "25-5004": {
+        "serviceId": 5004,
+        "clientId": 25,
+        "port": 5004,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.3.5"
+    },
+    "26-3008": {
+        "serviceId": 3008,
+        "clientId": 26,
+        "port": 3008,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.9"
+    },
+    "27-3008": {
+        "serviceId": 3008,
+        "clientId": 27,
+        "port": 3008,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.9"
+    },
+    "28-4014": {
+        "serviceId": 4014,
+        "clientId": 28,
+        "port": 4014,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.15"
+    },
+    "29-4014": {
+        "serviceId": 4014,
+        "clientId": 29,
+        "port": 4014,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.2.15"
+    },
+    "30-4014": {
+        "serviceId": 4014,
+        "clientId": 30,
+        "port": 4014,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.15"
+    },
+    "31-3020": {
+        "serviceId": 3020,
+        "clientId": 31,
+        "port": 3020,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.21"
+    },
+    "32-3020": {
+        "serviceId": 3020,
+        "clientId": 32,
+        "port": 3020,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.1.21"
+    },
+    "33-3020": {
+        "serviceId": 3020,
+        "clientId": 33,
+        "port": 3020,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.21"
+    },
+    "34-7002": {
+        "serviceId": 7002,
+        "clientId": 34,
+        "port": 7002,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.5.3"
+    },
+    "35-6053": {
+        "serviceId": 6053,
+        "clientId": 35,
+        "port": 6053,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.54"
+    },
+    "36-4001": {
+        "serviceId": 4001,
+        "clientId": 36,
+        "port": 4001,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.2"
+    },
+    "37-4046": {
+        "serviceId": 4046,
+        "clientId": 37,
+        "port": 4046,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.47"
+    },
+    "38-4046": {
+        "serviceId": 4046,
+        "clientId": 38,
+        "port": 4046,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.47"
+    },
+    "39-5002": {
+        "serviceId": 5002,
+        "clientId": 39,
+        "port": 5002,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.3.3"
+    },
+    "40-5002": {
+        "serviceId": 5002,
+        "clientId": 40,
+        "port": 5002,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.3.3"
+    },
+    "41-4001": {
+        "serviceId": 4001,
+        "clientId": 41,
+        "port": 4001,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.2"
+    },
+    "42-3038": {
+        "serviceId": 3038,
+        "clientId": 42,
+        "port": 3038,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.39"
+    },
+    "43-3038": {
+        "serviceId": 3038,
+        "clientId": 43,
+        "port": 3038,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.39"
+    },
+    "44-3011": {
+        "serviceId": 3011,
+        "clientId": 44,
+        "port": 3011,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.12"
+    },
+    "45-3011": {
+        "serviceId": 3011,
+        "clientId": 45,
+        "port": 3011,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.12"
+    },
+    "46-3031": {
+        "serviceId": 3031,
+        "clientId": 46,
+        "port": 3031,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.1.32"
+    },
+    "47-6053": {
+        "serviceId": 6053,
+        "clientId": 47,
+        "port": 6053,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.54"
+    },
+    "48-6053": {
+        "serviceId": 6053,
+        "clientId": 48,
+        "port": 6053,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.54"
+    },
+    "49-7002": {
+        "serviceId": 7002,
+        "clientId": 49,
+        "port": 7002,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.5.3"
+    },
+    "50-7002": {
+        "serviceId": 7002,
+        "clientId": 50,
+        "port": 7002,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.5.3"
+    },
+    "51-7002": {
+        "serviceId": 7002,
+        "clientId": 51,
+        "port": 7002,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.5.3"
+    },
+    "52-7012": {
+        "serviceId": 7012,
+        "clientId": 52,
+        "port": 7012,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.5.13"
+    },
+    "53-3041": {
+        "serviceId": 3041,
+        "clientId": 53,
+        "port": 3041,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.1.42"
+    },
+    "54-3041": {
+        "serviceId": 3041,
+        "clientId": 54,
+        "port": 3041,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.42"
+    },
+    "55-3041": {
+        "serviceId": 3041,
+        "clientId": 55,
+        "port": 3041,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.42"
+    },
+    "56-4051": {
+        "serviceId": 4051,
+        "clientId": 56,
+        "port": 4051,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.52"
+    },
+    "57-4051": {
+        "serviceId": 4051,
+        "clientId": 57,
+        "port": 4051,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.52"
+    },
+    "58-6058": {
+        "serviceId": 6058,
+        "clientId": 58,
+        "port": 6058,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.59"
+    },
+    "59-6058": {
+        "serviceId": 6058,
+        "clientId": 59,
+        "port": 6058,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.59"
+    },
+    "60-4006": {
+        "serviceId": 4006,
+        "clientId": 60,
+        "port": 4006,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.7"
+    },
+    "61-4006": {
+        "serviceId": 4006,
+        "clientId": 61,
+        "port": 4006,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.2.7"
+    },
+    "62-4035": {
+        "serviceId": 4035,
+        "clientId": 62,
+        "port": 4035,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.36"
+    },
+    "63-4035": {
+        "serviceId": 4035,
+        "clientId": 63,
+        "port": 4035,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.36"
+    },
+    "64-4035": {
+        "serviceId": 4035,
+        "clientId": 64,
+        "port": 4035,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.2.36"
+    },
+    "65-4029": {
+        "serviceId": 4029,
+        "clientId": 65,
+        "port": 4029,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.30"
+    },
+    "66-4029": {
+        "serviceId": 4029,
+        "clientId": 66,
+        "port": 4029,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.30"
+    },
+    "67-4048": {
+        "serviceId": 4048,
+        "clientId": 67,
+        "port": 4048,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.49"
+    },
+    "68-4048": {
+        "serviceId": 4048,
+        "clientId": 68,
+        "port": 4048,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.49"
+    },
+    "69-6004": {
+        "serviceId": 6004,
+        "clientId": 69,
+        "port": 6004,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.5"
+    },
+    "70-6004": {
+        "serviceId": 6004,
+        "clientId": 70,
+        "port": 6004,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.5"
+    },
+    "71-3010": {
+        "serviceId": 3010,
+        "clientId": 71,
+        "port": 3010,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.1.11"
+    },
+    "72-6004": {
+        "serviceId": 6004,
+        "clientId": 72,
+        "port": 6004,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.5"
+    },
+    "73-4009": {
+        "serviceId": 4009,
+        "clientId": 73,
+        "port": 4009,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.2.10"
+    },
+    "74-4009": {
+        "serviceId": 4009,
+        "clientId": 74,
+        "port": 4009,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.10"
+    },
+    "75-4009": {
+        "serviceId": 4009,
+        "clientId": 75,
+        "port": 4009,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.10"
+    },
+    "76-4041": {
+        "serviceId": 4041,
+        "clientId": 76,
+        "port": 4041,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.42"
+    },
+    "77-7012": {
+        "serviceId": 7012,
+        "clientId": 77,
+        "port": 7012,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.5.13"
+    },
+    "78-7012": {
+        "serviceId": 7012,
+        "clientId": 78,
+        "port": 7012,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.5.13"
+    },
+    "79-3027": {
+        "serviceId": 3027,
+        "clientId": 79,
+        "port": 3027,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.28"
+    },
+    "80-3027": {
+        "serviceId": 3027,
+        "clientId": 80,
+        "port": 3027,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.28"
+    },
+    "81-4017": {
+        "serviceId": 4017,
+        "clientId": 81,
+        "port": 4017,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.2.18"
+    },
+    "82-4017": {
+        "serviceId": 4017,
+        "clientId": 82,
+        "port": 4017,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.18"
+    },
+    "83-4017": {
+        "serviceId": 4017,
+        "clientId": 83,
+        "port": 4017,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.18"
+    },
+    "84-4042": {
+        "serviceId": 4042,
+        "clientId": 84,
+        "port": 4042,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.43"
+    },
+    "85-3004": {
+        "serviceId": 3004,
+        "clientId": 85,
+        "port": 3004,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.1.5"
+    },
+    "86-4038": {
+        "serviceId": 4038,
+        "clientId": 86,
+        "port": 4038,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.39"
+    },
+    "87-6061": {
+        "serviceId": 6061,
+        "clientId": 87,
+        "port": 6061,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.62"
+    },
+    "88-4054": {
+        "serviceId": 4054,
+        "clientId": 88,
+        "port": 4054,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.55"
+    },
+    "89-6061": {
+        "serviceId": 6061,
+        "clientId": 89,
+        "port": 6061,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.62"
+    },
+    "90-4054": {
+        "serviceId": 4054,
+        "clientId": 90,
+        "port": 4054,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.55"
+    },
+    "91-3010": {
+        "serviceId": 3010,
+        "clientId": 91,
+        "port": 3010,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.11"
+    },
+    "92-3010": {
+        "serviceId": 3010,
+        "clientId": 92,
+        "port": 3010,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.11"
+    },
+    "93-6034": {
+        "serviceId": 6034,
+        "clientId": 93,
+        "port": 6034,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.35"
+    },
+    "94-6036": {
+        "serviceId": 6036,
+        "clientId": 94,
+        "port": 6036,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.37"
+    },
+    "95-6036": {
+        "serviceId": 6036,
+        "clientId": 95,
+        "port": 6036,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.37"
+    },
+    "96-6036": {
+        "serviceId": 6036,
+        "clientId": 96,
+        "port": 6036,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.37"
+    },
+    "97-6034": {
+        "serviceId": 6034,
+        "clientId": 97,
+        "port": 6034,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.35"
+    },
+    "98-4020": {
+        "serviceId": 4020,
+        "clientId": 98,
+        "port": 4020,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.21"
+    },
+    "99-4020": {
+        "serviceId": 4020,
+        "clientId": 99,
+        "port": 4020,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.21"
+    },
+    "100-7009": {
+        "serviceId": 7009,
+        "clientId": 100,
+        "port": 7009,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.5.10"
+    },
+    "101-7001": {
+        "serviceId": 7001,
+        "clientId": 101,
+        "port": 7001,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.5.2"
+    },
+    "102-6060": {
+        "serviceId": 6060,
+        "clientId": 102,
+        "port": 6060,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.61"
+    },
+    "103-6060": {
+        "serviceId": 6060,
+        "clientId": 103,
+        "port": 6060,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.61"
+    },
+    "104-3004": {
+        "serviceId": 3004,
+        "clientId": 104,
+        "port": 3004,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.5"
+    },
+    "105-3004": {
+        "serviceId": 3004,
+        "clientId": 105,
+        "port": 3004,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.5"
+    },
+    "106-6070": {
+        "serviceId": 6070,
+        "clientId": 106,
+        "port": 6070,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.71"
+    },
+    "107-6057": {
+        "serviceId": 6057,
+        "clientId": 107,
+        "port": 6057,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.58"
+    },
+    "108-6057": {
+        "serviceId": 6057,
+        "clientId": 108,
+        "port": 6057,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.58"
+    },
+    "109-6035": {
+        "serviceId": 6035,
+        "clientId": 109,
+        "port": 6035,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.36"
+    },
+    "110-1111": {
+        "serviceId": 1111,
+        "clientId": 110,
+        "port": 1111,
+        "ip": "192.168.0.45",
+        "host": "adas",
+        "mcast": null
+    },
+    "111-3034": {
+        "serviceId": 3034,
+        "clientId": 111,
+        "port": 3034,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.35"
+    },
+    "112-6070": {
+        "serviceId": 6070,
+        "clientId": 112,
+        "port": 6070,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.71"
+    },
+    "113-4034": {
+        "serviceId": 4034,
+        "clientId": 113,
+        "port": 4034,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.35"
+    },
+    "114-6023": {
+        "serviceId": 6023,
+        "clientId": 114,
+        "port": 6023,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.24"
+    },
+    "115-6023": {
+        "serviceId": 6023,
+        "clientId": 115,
+        "port": 6023,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.24"
+    },
+    "116-6023": {
+        "serviceId": 6023,
+        "clientId": 116,
+        "port": 6023,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.24"
+    },
+    "117-6014": {
+        "serviceId": 6014,
+        "clientId": 117,
+        "port": 6014,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.15"
+    },
+    "118-6014": {
+        "serviceId": 6014,
+        "clientId": 118,
+        "port": 6014,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.15"
+    },
+    "119-6041": {
+        "serviceId": 6041,
+        "clientId": 119,
+        "port": 6041,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.42"
+    },
+    "120-6041": {
+        "serviceId": 6041,
+        "clientId": 120,
+        "port": 6041,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.42"
+    },
+    "121-6041": {
+        "serviceId": 6041,
+        "clientId": 121,
+        "port": 6041,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.42"
+    },
+    "122-7001": {
+        "serviceId": 7001,
+        "clientId": 122,
+        "port": 7001,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.5.2"
+    },
+    "123-3006": {
+        "serviceId": 3006,
+        "clientId": 123,
+        "port": 3006,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.7"
+    },
+    "124-7003": {
+        "serviceId": 7003,
+        "clientId": 124,
+        "port": 7003,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.5.4"
+    },
+    "125-6035": {
+        "serviceId": 6035,
+        "clientId": 125,
+        "port": 6035,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.36"
+    },
+    "126-6018": {
+        "serviceId": 6018,
+        "clientId": 126,
+        "port": 6018,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.19"
+    },
+    "127-5006": {
+        "serviceId": 5006,
+        "clientId": 127,
+        "port": 5006,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.3.7"
+    },
+    "128-5006": {
+        "serviceId": 5006,
+        "clientId": 128,
+        "port": 5006,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.3.7"
+    },
+    "129-5006": {
+        "serviceId": 5006,
+        "clientId": 129,
+        "port": 5006,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.3.7"
+    },
+    "130-5006": {
+        "serviceId": 5006,
+        "clientId": 130,
+        "port": 5006,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.3.7"
+    },
+    "131-6020": {
+        "serviceId": 6020,
+        "clientId": 131,
+        "port": 6020,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.21"
+    },
+    "132-6020": {
+        "serviceId": 6020,
+        "clientId": 132,
+        "port": 6020,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.21"
+    },
+    "133-6020": {
+        "serviceId": 6020,
+        "clientId": 133,
+        "port": 6020,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.21"
+    },
+    "134-3015": {
+        "serviceId": 3015,
+        "clientId": 134,
+        "port": 3015,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.16"
+    },
+    "135-3015": {
+        "serviceId": 3015,
+        "clientId": 135,
+        "port": 3015,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.16"
+    },
+    "136-3015": {
+        "serviceId": 3015,
+        "clientId": 136,
+        "port": 3015,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.1.16"
+    },
+    "137-3003": {
+        "serviceId": 3003,
+        "clientId": 137,
+        "port": 3003,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.4"
+    },
+    "138-3003": {
+        "serviceId": 3003,
+        "clientId": 138,
+        "port": 3003,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.4"
+    },
+    "139-7003": {
+        "serviceId": 7003,
+        "clientId": 139,
+        "port": 7003,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.5.4"
+    },
+    "140-7003": {
+        "serviceId": 7003,
+        "clientId": 140,
+        "port": 7003,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.5.4"
+    },
+    "141-7003": {
+        "serviceId": 7003,
+        "clientId": 141,
+        "port": 7003,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.5.4"
+    },
+    "142-5000": {
+        "serviceId": 5000,
+        "clientId": 142,
+        "port": 5000,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.3.1"
+    },
+    "143-6010": {
+        "serviceId": 6010,
+        "clientId": 143,
+        "port": 6010,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.11"
+    },
+    "144-5000": {
+        "serviceId": 5000,
+        "clientId": 144,
+        "port": 5000,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.3.1"
+    },
+    "145-3009": {
+        "serviceId": 3009,
+        "clientId": 145,
+        "port": 3009,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.10"
+    },
+    "146-6017": {
+        "serviceId": 6017,
+        "clientId": 146,
+        "port": 6017,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.18"
+    },
+    "147-6017": {
+        "serviceId": 6017,
+        "clientId": 147,
+        "port": 6017,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.18"
+    },
+    "148-6017": {
+        "serviceId": 6017,
+        "clientId": 148,
+        "port": 6017,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.18"
+    },
+    "149-6010": {
+        "serviceId": 6010,
+        "clientId": 149,
+        "port": 6010,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.11"
+    },
+    "150-4033": {
+        "serviceId": 4033,
+        "clientId": 150,
+        "port": 4033,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.34"
+    },
+    "151-4033": {
+        "serviceId": 4033,
+        "clientId": 151,
+        "port": 4033,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.34"
+    },
+    "152-4057": {
+        "serviceId": 4057,
+        "clientId": 152,
+        "port": 4057,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.58"
+    },
+    "153-3021": {
+        "serviceId": 3021,
+        "clientId": 153,
+        "port": 3021,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.1.22"
+    },
+    "154-4044": {
+        "serviceId": 4044,
+        "clientId": 154,
+        "port": 4044,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.45"
+    },
+    "155-4044": {
+        "serviceId": 4044,
+        "clientId": 155,
+        "port": 4044,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.45"
+    },
+    "156-6062": {
+        "serviceId": 6062,
+        "clientId": 156,
+        "port": 6062,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.63"
+    },
+    "157-6062": {
+        "serviceId": 6062,
+        "clientId": 157,
+        "port": 6062,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.63"
+    },
+    "158-6042": {
+        "serviceId": 6042,
+        "clientId": 158,
+        "port": 6042,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.43"
+    },
+    "159-6042": {
+        "serviceId": 6042,
+        "clientId": 159,
+        "port": 6042,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.43"
+    },
+    "160-6049": {
+        "serviceId": 6049,
+        "clientId": 160,
+        "port": 6049,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.50"
+    },
+    "161-6049": {
+        "serviceId": 6049,
+        "clientId": 161,
+        "port": 6049,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.50"
+    },
+    "162-6049": {
+        "serviceId": 6049,
+        "clientId": 162,
+        "port": 6049,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.50"
+    },
+    "163-3021": {
+        "serviceId": 3021,
+        "clientId": 163,
+        "port": 3021,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.22"
+    },
+    "164-3021": {
+        "serviceId": 3021,
+        "clientId": 164,
+        "port": 3021,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.22"
+    },
+    "165-4060": {
+        "serviceId": 4060,
+        "clientId": 165,
+        "port": 4060,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.61"
+    },
+    "166-7011": {
+        "serviceId": 7011,
+        "clientId": 166,
+        "port": 7011,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.5.12"
+    },
+    "167-4060": {
+        "serviceId": 4060,
+        "clientId": 167,
+        "port": 4060,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.61"
+    },
+    "168-4060": {
+        "serviceId": 4060,
+        "clientId": 168,
+        "port": 4060,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.2.61"
+    },
+    "169-4061": {
+        "serviceId": 4061,
+        "clientId": 169,
+        "port": 4061,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.2.62"
+    },
+    "170-6015": {
+        "serviceId": 6015,
+        "clientId": 170,
+        "port": 6015,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.16"
+    },
+    "171-6015": {
+        "serviceId": 6015,
+        "clientId": 171,
+        "port": 6015,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.16"
+    },
+    "172-3022": {
+        "serviceId": 3022,
+        "clientId": 172,
+        "port": 3022,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.1.23"
+    },
+    "173-7010": {
+        "serviceId": 7010,
+        "clientId": 173,
+        "port": 7010,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.5.11"
+    },
+    "174-7010": {
+        "serviceId": 7010,
+        "clientId": 174,
+        "port": 7010,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.5.11"
+    },
+    "175-6032": {
+        "serviceId": 6032,
+        "clientId": 175,
+        "port": 6032,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.33"
+    },
+    "176-6032": {
+        "serviceId": 6032,
+        "clientId": 176,
+        "port": 6032,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.33"
+    },
+    "177-6032": {
+        "serviceId": 6032,
+        "clientId": 177,
+        "port": 6032,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.33"
+    },
+    "178-6012": {
+        "serviceId": 6012,
+        "clientId": 178,
+        "port": 6012,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.13"
+    },
+    "179-6052": {
+        "serviceId": 6052,
+        "clientId": 179,
+        "port": 6052,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.53"
+    },
+    "180-6052": {
+        "serviceId": 6052,
+        "clientId": 180,
+        "port": 6052,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.53"
+    },
+    "181-6052": {
+        "serviceId": 6052,
+        "clientId": 181,
+        "port": 6052,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.53"
+    },
+    "182-4061": {
+        "serviceId": 4061,
+        "clientId": 182,
+        "port": 4061,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.62"
+    },
+    "183-4061": {
+        "serviceId": 4061,
+        "clientId": 183,
+        "port": 4061,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.62"
+    },
+    "184-3028": {
+        "serviceId": 3028,
+        "clientId": 184,
+        "port": 3028,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.29"
+    },
+    "185-3028": {
+        "serviceId": 3028,
+        "clientId": 185,
+        "port": 3028,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.29"
+    },
+    "186-4007": {
+        "serviceId": 4007,
+        "clientId": 186,
+        "port": 4007,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.8"
+    },
+    "187-4007": {
+        "serviceId": 4007,
+        "clientId": 187,
+        "port": 4007,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.8"
+    },
+    "188-7011": {
+        "serviceId": 7011,
+        "clientId": 188,
+        "port": 7011,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.5.12"
+    },
+    "189-7011": {
+        "serviceId": 7011,
+        "clientId": 189,
+        "port": 7011,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.5.12"
+    },
+    "190-3022": {
+        "serviceId": 3022,
+        "clientId": 190,
+        "port": 3022,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.23"
+    },
+    "191-3022": {
+        "serviceId": 3022,
+        "clientId": 191,
+        "port": 3022,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.23"
+    },
+    "192-6044": {
+        "serviceId": 6044,
+        "clientId": 192,
+        "port": 6044,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.45"
+    },
+    "193-6044": {
+        "serviceId": 6044,
+        "clientId": 193,
+        "port": 6044,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.45"
+    },
+    "194-6044": {
+        "serviceId": 6044,
+        "clientId": 194,
+        "port": 6044,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.45"
+    },
+    "195-6013": {
+        "serviceId": 6013,
+        "clientId": 195,
+        "port": 6013,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.14"
+    },
+    "196-6013": {
+        "serviceId": 6013,
+        "clientId": 196,
+        "port": 6013,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.14"
+    },
+    "197-6013": {
+        "serviceId": 6013,
+        "clientId": 197,
+        "port": 6013,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.14"
+    },
+    "198-4040": {
+        "serviceId": 4040,
+        "clientId": 198,
+        "port": 4040,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.2.41"
+    },
+    "199-6048": {
+        "serviceId": 6048,
+        "clientId": 199,
+        "port": 6048,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.49"
+    },
+    "200-6048": {
+        "serviceId": 6048,
+        "clientId": 200,
+        "port": 6048,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.49"
+    },
+    "201-6048": {
+        "serviceId": 6048,
+        "clientId": 201,
+        "port": 6048,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.49"
+    },
+    "202-6031": {
+        "serviceId": 6031,
+        "clientId": 202,
+        "port": 6031,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.32"
+    },
+    "203-6031": {
+        "serviceId": 6031,
+        "clientId": 203,
+        "port": 6031,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.32"
+    },
+    "204-2112": {
+        "serviceId": 2112,
+        "clientId": 204,
+        "port": 2112,
+        "ip": "192.168.0.45",
+        "host": "adas",
+        "mcast": null
+    },
+    "205-6024": {
+        "serviceId": 6024,
+        "clientId": 205,
+        "port": 6024,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.25"
+    },
+    "206-6075": {
+        "serviceId": 6075,
+        "clientId": 206,
+        "port": 6075,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.76"
+    },
+    "207-6075": {
+        "serviceId": 6075,
+        "clientId": 207,
+        "port": 6075,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.76"
+    },
+    "208-6075": {
+        "serviceId": 6075,
+        "clientId": 208,
+        "port": 6075,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.76"
+    },
+    "209-6021": {
+        "serviceId": 6021,
+        "clientId": 209,
+        "port": 6021,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.22"
+    },
+    "210-6046": {
+        "serviceId": 6046,
+        "clientId": 210,
+        "port": 6046,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.47"
+    },
+    "211-6046": {
+        "serviceId": 6046,
+        "clientId": 211,
+        "port": 6046,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.47"
+    },
+    "212-3014": {
+        "serviceId": 3014,
+        "clientId": 212,
+        "port": 3014,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.1.15"
+    },
+    "213-3014": {
+        "serviceId": 3014,
+        "clientId": 213,
+        "port": 3014,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.15"
+    },
+    "214-3014": {
+        "serviceId": 3014,
+        "clientId": 214,
+        "port": 3014,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.15"
+    },
+    "215-6046": {
+        "serviceId": 6046,
+        "clientId": 215,
+        "port": 6046,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.47"
+    },
+    "216-2111": {
+        "serviceId": 2111,
+        "clientId": 216,
+        "port": 2111,
+        "ip": "192.168.0.45",
+        "host": "adas",
+        "mcast": null
+    },
+    "217-7006": {
+        "serviceId": 7006,
+        "clientId": 217,
+        "port": 7006,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.5.7"
+    },
+    "218-4004": {
+        "serviceId": 4004,
+        "clientId": 218,
+        "port": 4004,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.5"
+    },
+    "219-3005": {
+        "serviceId": 3005,
+        "clientId": 219,
+        "port": 3005,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.6"
+    },
+    "220-4004": {
+        "serviceId": 4004,
+        "clientId": 220,
+        "port": 4004,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.2.5"
+    },
+    "221-3005": {
+        "serviceId": 3005,
+        "clientId": 221,
+        "port": 3005,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.6"
+    },
+    "222-4004": {
+        "serviceId": 4004,
+        "clientId": 222,
+        "port": 4004,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.5"
+    },
+    "223-7005": {
+        "serviceId": 7005,
+        "clientId": 223,
+        "port": 7005,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.5.6"
+    },
+    "224-4012": {
+        "serviceId": 4012,
+        "clientId": 224,
+        "port": 4012,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.13"
+    },
+    "225-4047": {
+        "serviceId": 4047,
+        "clientId": 225,
+        "port": 4047,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.48"
+    },
+    "226-4047": {
+        "serviceId": 4047,
+        "clientId": 226,
+        "port": 4047,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.48"
+    },
+    "227-6066": {
+        "serviceId": 6066,
+        "clientId": 227,
+        "port": 6066,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.67"
+    },
+    "228-3023": {
+        "serviceId": 3023,
+        "clientId": 228,
+        "port": 3023,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.1.24"
+    },
+    "229-3001": {
+        "serviceId": 3001,
+        "clientId": 229,
+        "port": 3001,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.2"
+    },
+    "230-3001": {
+        "serviceId": 3001,
+        "clientId": 230,
+        "port": 3001,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.2"
+    },
+    "231-3012": {
+        "serviceId": 3012,
+        "clientId": 231,
+        "port": 3012,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.1.13"
+    },
+    "232-3042": {
+        "serviceId": 3042,
+        "clientId": 232,
+        "port": 3042,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.1.43"
+    },
+    "233-6021": {
+        "serviceId": 6021,
+        "clientId": 233,
+        "port": 6021,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.22"
+    },
+    "234-6021": {
+        "serviceId": 6021,
+        "clientId": 234,
+        "port": 6021,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.22"
+    },
+    "235-6000": {
+        "serviceId": 6000,
+        "clientId": 235,
+        "port": 6000,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.1"
+    },
+    "236-6000": {
+        "serviceId": 6000,
+        "clientId": 236,
+        "port": 6000,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.1"
+    },
+    "237-6000": {
+        "serviceId": 6000,
+        "clientId": 237,
+        "port": 6000,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.1"
+    },
+    "238-6003": {
+        "serviceId": 6003,
+        "clientId": 238,
+        "port": 6003,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.4"
+    },
+    "239-6003": {
+        "serviceId": 6003,
+        "clientId": 239,
+        "port": 6003,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.4"
+    },
+    "240-6003": {
+        "serviceId": 6003,
+        "clientId": 240,
+        "port": 6003,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.4"
+    },
+    "241-3042": {
+        "serviceId": 3042,
+        "clientId": 241,
+        "port": 3042,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.43"
+    },
+    "242-4027": {
+        "serviceId": 4027,
+        "clientId": 242,
+        "port": 4027,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.28"
+    },
+    "243-4027": {
+        "serviceId": 4027,
+        "clientId": 243,
+        "port": 4027,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.28"
+    },
+    "244-4027": {
+        "serviceId": 4027,
+        "clientId": 244,
+        "port": 4027,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.2.28"
+    },
+    "245-3035": {
+        "serviceId": 3035,
+        "clientId": 245,
+        "port": 3035,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.1.36"
+    },
+    "246-3023": {
+        "serviceId": 3023,
+        "clientId": 246,
+        "port": 3023,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.24"
+    },
+    "247-3023": {
+        "serviceId": 3023,
+        "clientId": 247,
+        "port": 3023,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.24"
+    },
+    "248-3018": {
+        "serviceId": 3018,
+        "clientId": 248,
+        "port": 3018,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.19"
+    },
+    "249-3018": {
+        "serviceId": 3018,
+        "clientId": 249,
+        "port": 3018,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.1.19"
+    },
+    "250-3018": {
+        "serviceId": 3018,
+        "clientId": 250,
+        "port": 3018,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.19"
+    },
+    "251-3040": {
+        "serviceId": 3040,
+        "clientId": 251,
+        "port": 3040,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.41"
+    },
+    "252-3040": {
+        "serviceId": 3040,
+        "clientId": 252,
+        "port": 3040,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.41"
+    },
+    "253-3012": {
+        "serviceId": 3012,
+        "clientId": 253,
+        "port": 3012,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.13"
+    },
+    "254-7004": {
+        "serviceId": 7004,
+        "clientId": 254,
+        "port": 7004,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.5.5"
+    },
+    "255-3012": {
+        "serviceId": 3012,
+        "clientId": 255,
+        "port": 3012,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.13"
+    },
+    "256-3029": {
+        "serviceId": 3029,
+        "clientId": 256,
+        "port": 3029,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.30"
+    },
+    "257-3029": {
+        "serviceId": 3029,
+        "clientId": 257,
+        "port": 3029,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.30"
+    },
+    "258-4023": {
+        "serviceId": 4023,
+        "clientId": 258,
+        "port": 4023,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.24"
+    },
+    "259-4023": {
+        "serviceId": 4023,
+        "clientId": 259,
+        "port": 4023,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.24"
+    },
+    "260-6038": {
+        "serviceId": 6038,
+        "clientId": 260,
+        "port": 6038,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.39"
+    },
+    "261-6038": {
+        "serviceId": 6038,
+        "clientId": 261,
+        "port": 6038,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.39"
+    },
+    "262-6038": {
+        "serviceId": 6038,
+        "clientId": 262,
+        "port": 6038,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.39"
+    },
+    "263-4000": {
+        "serviceId": 4000,
+        "clientId": 263,
+        "port": 4000,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.2.1"
+    },
+    "264-4000": {
+        "serviceId": 4000,
+        "clientId": 264,
+        "port": 4000,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.1"
+    },
+    "265-4000": {
+        "serviceId": 4000,
+        "clientId": 265,
+        "port": 4000,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.1"
+    },
+    "266-6068": {
+        "serviceId": 6068,
+        "clientId": 266,
+        "port": 6068,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.69"
+    },
+    "267-6064": {
+        "serviceId": 6064,
+        "clientId": 267,
+        "port": 6064,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.65"
+    },
+    "268-3035": {
+        "serviceId": 3035,
+        "clientId": 268,
+        "port": 3035,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.36"
+    },
+    "269-7004": {
+        "serviceId": 7004,
+        "clientId": 269,
+        "port": 7004,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.5.5"
+    },
+    "270-6072": {
+        "serviceId": 6072,
+        "clientId": 270,
+        "port": 6072,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.73"
+    },
+    "271-6026": {
+        "serviceId": 6026,
+        "clientId": 271,
+        "port": 6026,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.27"
+    },
+    "272-7004": {
+        "serviceId": 7004,
+        "clientId": 272,
+        "port": 7004,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.5.5"
+    },
+    "273-7004": {
+        "serviceId": 7004,
+        "clientId": 273,
+        "port": 7004,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.5.5"
+    },
+    "274-4039": {
+        "serviceId": 4039,
+        "clientId": 274,
+        "port": 4039,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.40"
+    },
+    "275-4039": {
+        "serviceId": 4039,
+        "clientId": 275,
+        "port": 4039,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.2.40"
+    },
+    "276-4039": {
+        "serviceId": 4039,
+        "clientId": 276,
+        "port": 4039,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.40"
+    },
+    "277-4050": {
+        "serviceId": 4050,
+        "clientId": 277,
+        "port": 4050,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.51"
+    },
+    "278-4050": {
+        "serviceId": 4050,
+        "clientId": 278,
+        "port": 4050,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.51"
+    },
+    "279-6072": {
+        "serviceId": 6072,
+        "clientId": 279,
+        "port": 6072,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.73"
+    },
+    "280-1112": {
+        "serviceId": 1112,
+        "clientId": 280,
+        "port": 1112,
+        "ip": "192.168.0.45",
+        "host": "adas",
+        "mcast": null
+    },
+    "281-6069": {
+        "serviceId": 6069,
+        "clientId": 281,
+        "port": 6069,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.70"
+    },
+    "282-6006": {
+        "serviceId": 6006,
+        "clientId": 282,
+        "port": 6006,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.7"
+    },
+    "283-6006": {
+        "serviceId": 6006,
+        "clientId": 283,
+        "port": 6006,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.7"
+    },
+    "284-6006": {
+        "serviceId": 6006,
+        "clientId": 284,
+        "port": 6006,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.7"
+    },
+    "285-4028": {
+        "serviceId": 4028,
+        "clientId": 285,
+        "port": 4028,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.29"
+    },
+    "286-4028": {
+        "serviceId": 4028,
+        "clientId": 286,
+        "port": 4028,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.29"
+    },
+    "287-6019": {
+        "serviceId": 6019,
+        "clientId": 287,
+        "port": 6019,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.20"
+    },
+    "288-6019": {
+        "serviceId": 6019,
+        "clientId": 288,
+        "port": 6019,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.20"
+    },
+    "289-2113": {
+        "serviceId": 2113,
+        "clientId": 289,
+        "port": 2113,
+        "ip": "192.168.0.45",
+        "host": "adas",
+        "mcast": null
+    },
+    "290-3037": {
+        "serviceId": 3037,
+        "clientId": 290,
+        "port": 3037,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.1.38"
+    },
+    "291-3030": {
+        "serviceId": 3030,
+        "clientId": 291,
+        "port": 3030,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.31"
+    },
+    "292-4019": {
+        "serviceId": 4019,
+        "clientId": 292,
+        "port": 4019,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.20"
+    },
+    "293-4019": {
+        "serviceId": 4019,
+        "clientId": 293,
+        "port": 4019,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.20"
+    },
+    "294-4019": {
+        "serviceId": 4019,
+        "clientId": 294,
+        "port": 4019,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.2.20"
+    },
+    "295-6025": {
+        "serviceId": 6025,
+        "clientId": 295,
+        "port": 6025,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.26"
+    },
+    "296-6025": {
+        "serviceId": 6025,
+        "clientId": 296,
+        "port": 6025,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.26"
+    },
+    "297-4015": {
+        "serviceId": 4015,
+        "clientId": 297,
+        "port": 4015,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.2.16"
+    },
+    "298-4015": {
+        "serviceId": 4015,
+        "clientId": 298,
+        "port": 4015,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.16"
+    },
+    "299-4015": {
+        "serviceId": 4015,
+        "clientId": 299,
+        "port": 4015,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.16"
+    },
+    "300-3002": {
+        "serviceId": 3002,
+        "clientId": 300,
+        "port": 3002,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.3"
+    },
+    "301-2114": {
+        "serviceId": 2114,
+        "clientId": 301,
+        "port": 2114,
+        "ip": "192.168.0.45",
+        "host": "adas",
+        "mcast": null
+    },
+    "302-3037": {
+        "serviceId": 3037,
+        "clientId": 302,
+        "port": 3037,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.38"
+    },
+    "303-3037": {
+        "serviceId": 3037,
+        "clientId": 303,
+        "port": 3037,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.38"
+    },
+    "304-4025": {
+        "serviceId": 4025,
+        "clientId": 304,
+        "port": 4025,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.26"
+    },
+    "305-4025": {
+        "serviceId": 4025,
+        "clientId": 305,
+        "port": 4025,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.26"
+    },
+    "306-6051": {
+        "serviceId": 6051,
+        "clientId": 306,
+        "port": 6051,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.52"
+    },
+    "307-6051": {
+        "serviceId": 6051,
+        "clientId": 307,
+        "port": 6051,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.52"
+    },
+    "308-6051": {
+        "serviceId": 6051,
+        "clientId": 308,
+        "port": 6051,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.52"
+    },
+    "309-4013": {
+        "serviceId": 4013,
+        "clientId": 309,
+        "port": 4013,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.14"
+    },
+    "310-7007": {
+        "serviceId": 7007,
+        "clientId": 310,
+        "port": 7007,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.5.8"
+    },
+    "311-3019": {
+        "serviceId": 3019,
+        "clientId": 311,
+        "port": 3019,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.20"
+    },
+    "312-3019": {
+        "serviceId": 3019,
+        "clientId": 312,
+        "port": 3019,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.1.20"
+    },
+    "313-3019": {
+        "serviceId": 3019,
+        "clientId": 313,
+        "port": 3019,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.20"
+    },
+    "314-6039": {
+        "serviceId": 6039,
+        "clientId": 314,
+        "port": 6039,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.40"
+    },
+    "315-6028": {
+        "serviceId": 6028,
+        "clientId": 315,
+        "port": 6028,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.29"
+    },
+    "316-6028": {
+        "serviceId": 6028,
+        "clientId": 316,
+        "port": 6028,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.29"
+    },
+    "317-6067": {
+        "serviceId": 6067,
+        "clientId": 317,
+        "port": 6067,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.68"
+    },
+    "318-6067": {
+        "serviceId": 6067,
+        "clientId": 318,
+        "port": 6067,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.68"
+    },
+    "319-6067": {
+        "serviceId": 6067,
+        "clientId": 319,
+        "port": 6067,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.68"
+    },
+    "320-6001": {
+        "serviceId": 6001,
+        "clientId": 320,
+        "port": 6001,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.2"
+    },
+    "321-6001": {
+        "serviceId": 6001,
+        "clientId": 321,
+        "port": 6001,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.2"
+    },
+    "322-6001": {
+        "serviceId": 6001,
+        "clientId": 322,
+        "port": 6001,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.2"
+    },
+    "323-3032": {
+        "serviceId": 3032,
+        "clientId": 323,
+        "port": 3032,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.33"
+    },
+    "324-3032": {
+        "serviceId": 3032,
+        "clientId": 324,
+        "port": 3032,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.33"
+    },
+    "325-3032": {
+        "serviceId": 3032,
+        "clientId": 325,
+        "port": 3032,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.1.33"
+    },
+    "326-4053": {
+        "serviceId": 4053,
+        "clientId": 326,
+        "port": 4053,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.54"
+    },
+    "327-4053": {
+        "serviceId": 4053,
+        "clientId": 327,
+        "port": 4053,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.54"
+    },
+    "328-300": {
+        "serviceId": 300,
+        "clientId": 328,
+        "port": 300,
+        "ip": "192.168.0.45",
+        "host": "adas",
+        "mcast": null
+    },
+    "329-6008": {
+        "serviceId": 6008,
+        "clientId": 329,
+        "port": 6008,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.9"
+    },
+    "330-6011": {
+        "serviceId": 6011,
+        "clientId": 330,
+        "port": 6011,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.12"
+    },
+    "331-6011": {
+        "serviceId": 6011,
+        "clientId": 331,
+        "port": 6011,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.12"
+    },
+    "332-6055": {
+        "serviceId": 6055,
+        "clientId": 332,
+        "port": 6055,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.56"
+    },
+    "333-6055": {
+        "serviceId": 6055,
+        "clientId": 333,
+        "port": 6055,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.56"
+    },
+    "334-6043": {
+        "serviceId": 6043,
+        "clientId": 334,
+        "port": 6043,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.44"
+    },
+    "335-6043": {
+        "serviceId": 6043,
+        "clientId": 335,
+        "port": 6043,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.44"
+    },
+    "336-6043": {
+        "serviceId": 6043,
+        "clientId": 336,
+        "port": 6043,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.44"
+    },
+    "337-4058": {
+        "serviceId": 4058,
+        "clientId": 337,
+        "port": 4058,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.2.59"
+    },
+    "338-4058": {
+        "serviceId": 4058,
+        "clientId": 338,
+        "port": 4058,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.59"
+    },
+    "339-4058": {
+        "serviceId": 4058,
+        "clientId": 339,
+        "port": 4058,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.59"
+    },
+    "340-6073": {
+        "serviceId": 6073,
+        "clientId": 340,
+        "port": 6073,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.74"
+    },
+    "341-4026": {
+        "serviceId": 4026,
+        "clientId": 341,
+        "port": 4026,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.27"
+    },
+    "342-4056": {
+        "serviceId": 4056,
+        "clientId": 342,
+        "port": 4056,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.57"
+    },
+    "343-4052": {
+        "serviceId": 4052,
+        "clientId": 343,
+        "port": 4052,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.53"
+    },
+    "344-6059": {
+        "serviceId": 6059,
+        "clientId": 344,
+        "port": 6059,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.60"
+    },
+    "345-6059": {
+        "serviceId": 6059,
+        "clientId": 345,
+        "port": 6059,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.60"
+    },
+    "346-4018": {
+        "serviceId": 4018,
+        "clientId": 346,
+        "port": 4018,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.2.19"
+    },
+    "347-4018": {
+        "serviceId": 4018,
+        "clientId": 347,
+        "port": 4018,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.19"
+    },
+    "348-4018": {
+        "serviceId": 4018,
+        "clientId": 348,
+        "port": 4018,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.19"
+    },
+    "349-4059": {
+        "serviceId": 4059,
+        "clientId": 349,
+        "port": 4059,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.60"
+    },
+    "350-6007": {
+        "serviceId": 6007,
+        "clientId": 350,
+        "port": 6007,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.8"
+    },
+    "351-6007": {
+        "serviceId": 6007,
+        "clientId": 351,
+        "port": 6007,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.8"
+    },
+    "352-6007": {
+        "serviceId": 6007,
+        "clientId": 352,
+        "port": 6007,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.8"
+    },
+    "353-6029": {
+        "serviceId": 6029,
+        "clientId": 353,
+        "port": 6029,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.30"
+    },
+    "354-6037": {
+        "serviceId": 6037,
+        "clientId": 354,
+        "port": 6037,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.38"
+    },
+    "355-6037": {
+        "serviceId": 6037,
+        "clientId": 355,
+        "port": 6037,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.38"
+    },
+    "356-4031": {
+        "serviceId": 4031,
+        "clientId": 356,
+        "port": 4031,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.32"
+    },
+    "357-4031": {
+        "serviceId": 4031,
+        "clientId": 357,
+        "port": 4031,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.32"
+    },
+    "358-5001": {
+        "serviceId": 5001,
+        "clientId": 358,
+        "port": 5001,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.3.2"
+    },
+    "359-3039": {
+        "serviceId": 3039,
+        "clientId": 359,
+        "port": 3039,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.40"
+    },
+    "360-3039": {
+        "serviceId": 3039,
+        "clientId": 360,
+        "port": 3039,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.40"
+    },
+    "361-4037": {
+        "serviceId": 4037,
+        "clientId": 361,
+        "port": 4037,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.2.38"
+    },
+    "362-4037": {
+        "serviceId": 4037,
+        "clientId": 362,
+        "port": 4037,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.38"
+    },
+    "363-4037": {
+        "serviceId": 4037,
+        "clientId": 363,
+        "port": 4037,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.38"
+    },
+    "364-6054": {
+        "serviceId": 6054,
+        "clientId": 364,
+        "port": 6054,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.55"
+    },
+    "365-6054": {
+        "serviceId": 6054,
+        "clientId": 365,
+        "port": 6054,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.55"
+    },
+    "366-6054": {
+        "serviceId": 6054,
+        "clientId": 366,
+        "port": 6054,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.55"
+    },
+    "367-3025": {
+        "serviceId": 3025,
+        "clientId": 367,
+        "port": 3025,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.26"
+    },
+    "368-6063": {
+        "serviceId": 6063,
+        "clientId": 368,
+        "port": 6063,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.64"
+    },
+    "369-6063": {
+        "serviceId": 6063,
+        "clientId": 369,
+        "port": 6063,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.64"
+    },
+    "370-6002": {
+        "serviceId": 6002,
+        "clientId": 370,
+        "port": 6002,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.3"
+    },
+    "371-6040": {
+        "serviceId": 6040,
+        "clientId": 371,
+        "port": 6040,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.41"
+    },
+    "372-6040": {
+        "serviceId": 6040,
+        "clientId": 372,
+        "port": 6040,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.41"
+    },
+    "373-4010": {
+        "serviceId": 4010,
+        "clientId": 373,
+        "port": 4010,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.11"
+    },
+    "374-6022": {
+        "serviceId": 6022,
+        "clientId": 374,
+        "port": 6022,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.23"
+    },
+    "375-6022": {
+        "serviceId": 6022,
+        "clientId": 375,
+        "port": 6022,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.23"
+    },
+    "376-4002": {
+        "serviceId": 4002,
+        "clientId": 376,
+        "port": 4002,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.3"
+    },
+    "377-4002": {
+        "serviceId": 4002,
+        "clientId": 377,
+        "port": 4002,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.2.3"
+    },
+    "378-4002": {
+        "serviceId": 4002,
+        "clientId": 378,
+        "port": 4002,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.3"
+    },
+    "379-6071": {
+        "serviceId": 6071,
+        "clientId": 379,
+        "port": 6071,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.72"
+    },
+    "380-7013": {
+        "serviceId": 7013,
+        "clientId": 380,
+        "port": 7013,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.5.14"
+    },
+    "381-6071": {
+        "serviceId": 6071,
+        "clientId": 381,
+        "port": 6071,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.72"
+    },
+    "382-3024": {
+        "serviceId": 3024,
+        "clientId": 382,
+        "port": 3024,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.1.25"
+    },
+    "383-3024": {
+        "serviceId": 3024,
+        "clientId": 383,
+        "port": 3024,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.25"
+    },
+    "384-3024": {
+        "serviceId": 3024,
+        "clientId": 384,
+        "port": 3024,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.25"
+    },
+    "385-6005": {
+        "serviceId": 6005,
+        "clientId": 385,
+        "port": 6005,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.6"
+    },
+    "386-6005": {
+        "serviceId": 6005,
+        "clientId": 386,
+        "port": 6005,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.6"
+    },
+    "387-6005": {
+        "serviceId": 6005,
+        "clientId": 387,
+        "port": 6005,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.6"
+    },
+    "388-3007": {
+        "serviceId": 3007,
+        "clientId": 388,
+        "port": 3007,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.8"
+    },
+    "389-3013": {
+        "serviceId": 3013,
+        "clientId": 389,
+        "port": 3013,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.14"
+    },
+    "390-6076": {
+        "serviceId": 6076,
+        "clientId": 390,
+        "port": 6076,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.77"
+    },
+    "391-4030": {
+        "serviceId": 4030,
+        "clientId": 391,
+        "port": 4030,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.31"
+    },
+    "392-7000": {
+        "serviceId": 7000,
+        "clientId": 392,
+        "port": 7000,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.5.1"
+    },
+    "393-6076": {
+        "serviceId": 6076,
+        "clientId": 393,
+        "port": 6076,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.77"
+    },
+    "394-3016": {
+        "serviceId": 3016,
+        "clientId": 394,
+        "port": 3016,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.17"
+    },
+    "395-3016": {
+        "serviceId": 3016,
+        "clientId": 395,
+        "port": 3016,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.1.17"
+    },
+    "396-3016": {
+        "serviceId": 3016,
+        "clientId": 396,
+        "port": 3016,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.17"
+    },
+    "397-4008": {
+        "serviceId": 4008,
+        "clientId": 397,
+        "port": 4008,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.9"
+    },
+    "398-7013": {
+        "serviceId": 7013,
+        "clientId": 398,
+        "port": 7013,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.5.14"
+    },
+    "399-3033": {
+        "serviceId": 3033,
+        "clientId": 399,
+        "port": 3033,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.34"
+    },
+    "400-3033": {
+        "serviceId": 3033,
+        "clientId": 400,
+        "port": 3033,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.34"
+    },
+    "401-6047": {
+        "serviceId": 6047,
+        "clientId": 401,
+        "port": 6047,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.48"
+    },
+    "402-6047": {
+        "serviceId": 6047,
+        "clientId": 402,
+        "port": 6047,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.48"
+    },
+    "403-6047": {
+        "serviceId": 6047,
+        "clientId": 403,
+        "port": 6047,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.48"
+    },
+    "404-7008": {
+        "serviceId": 7008,
+        "clientId": 404,
+        "port": 7008,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.5.9"
+    },
+    "405-7000": {
+        "serviceId": 7000,
+        "clientId": 405,
+        "port": 7000,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.5.1"
+    },
+    "406-7000": {
+        "serviceId": 7000,
+        "clientId": 406,
+        "port": 7000,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.5.1"
+    },
+    "407-3017": {
+        "serviceId": 3017,
+        "clientId": 407,
+        "port": 3017,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.18"
+    },
+    "408-6056": {
+        "serviceId": 6056,
+        "clientId": 408,
+        "port": 6056,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.57"
+    },
+    "409-3017": {
+        "serviceId": 3017,
+        "clientId": 409,
+        "port": 3017,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.1.18"
+    },
+    "410-3017": {
+        "serviceId": 3017,
+        "clientId": 410,
+        "port": 3017,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.18"
+    },
+    "411-6056": {
+        "serviceId": 6056,
+        "clientId": 411,
+        "port": 6056,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.57"
+    },
+    "412-3000": {
+        "serviceId": 3000,
+        "clientId": 412,
+        "port": 3000,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.1.1"
+    },
+    "413-5005": {
+        "serviceId": 5005,
+        "clientId": 413,
+        "port": 5005,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.3.6"
+    },
+    "414-4045": {
+        "serviceId": 4045,
+        "clientId": 414,
+        "port": 4045,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.46"
+    },
+    "415-4045": {
+        "serviceId": 4045,
+        "clientId": 415,
+        "port": 4045,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.46"
+    },
+    "416-4055": {
+        "serviceId": 4055,
+        "clientId": 416,
+        "port": 4055,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.56"
+    },
+    "417-4024": {
+        "serviceId": 4024,
+        "clientId": 417,
+        "port": 4024,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.25"
+    },
+    "418-4055": {
+        "serviceId": 4055,
+        "clientId": 418,
+        "port": 4055,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.56"
+    },
+    "419-4024": {
+        "serviceId": 4024,
+        "clientId": 419,
+        "port": 4024,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.25"
+    },
+    "420-4016": {
+        "serviceId": 4016,
+        "clientId": 420,
+        "port": 4016,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.2.17"
+    },
+    "421-4016": {
+        "serviceId": 4016,
+        "clientId": 421,
+        "port": 4016,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.17"
+    },
+    "422-4016": {
+        "serviceId": 4016,
+        "clientId": 422,
+        "port": 4016,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.17"
+    },
+    "423-6016": {
+        "serviceId": 6016,
+        "clientId": 423,
+        "port": 6016,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.17"
+    },
+    "424-6016": {
+        "serviceId": 6016,
+        "clientId": 424,
+        "port": 6016,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.17"
+    },
+    "425-4043": {
+        "serviceId": 4043,
+        "clientId": 425,
+        "port": 4043,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.44"
+    },
+    "426-4043": {
+        "serviceId": 4043,
+        "clientId": 426,
+        "port": 4043,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.2.44"
+    },
+    "427-4036": {
+        "serviceId": 4036,
+        "clientId": 427,
+        "port": 4036,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.37"
+    },
+    "428-4036": {
+        "serviceId": 4036,
+        "clientId": 428,
+        "port": 4036,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.37"
+    },
+    "429-6030": {
+        "serviceId": 6030,
+        "clientId": 429,
+        "port": 6030,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.31"
+    },
+    "430-6030": {
+        "serviceId": 6030,
+        "clientId": 430,
+        "port": 6030,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.31"
+    },
+    "431-6009": {
+        "serviceId": 6009,
+        "clientId": 431,
+        "port": 6009,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.10"
+    },
+    "432-6009": {
+        "serviceId": 6009,
+        "clientId": 432,
+        "port": 6009,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.10"
+    },
+    "433-6009": {
+        "serviceId": 6009,
+        "clientId": 433,
+        "port": 6009,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.4.10"
+    },
+    "434-6027": {
+        "serviceId": 6027,
+        "clientId": 434,
+        "port": 6027,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.28"
+    },
+    "435-3000": {
+        "serviceId": 3000,
+        "clientId": 435,
+        "port": 3000,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.1"
+    },
+    "436-5003": {
+        "serviceId": 5003,
+        "clientId": 436,
+        "port": 5003,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.3.4"
+    },
+    "437-6074": {
+        "serviceId": 6074,
+        "clientId": 437,
+        "port": 6074,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.75"
+    },
+    "438-4003": {
+        "serviceId": 4003,
+        "clientId": 438,
+        "port": 4003,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.4"
+    },
+    "439-4003": {
+        "serviceId": 4003,
+        "clientId": 439,
+        "port": 4003,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.2.4"
+    },
+    "440-4003": {
+        "serviceId": 4003,
+        "clientId": 440,
+        "port": 4003,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.4"
+    },
+    "441-3036": {
+        "serviceId": 3036,
+        "clientId": 441,
+        "port": 3036,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.1.37"
+    },
+    "442-6050": {
+        "serviceId": 6050,
+        "clientId": 442,
+        "port": 6050,
+        "ip": "192.168.0.5",
+        "host": "zcFR",
+        "mcast": "224.0.4.51"
+    },
+    "443-6050": {
+        "serviceId": 6050,
+        "clientId": 443,
+        "port": 6050,
+        "ip": "192.168.0.9",
+        "host": "zcRL",
+        "mcast": "224.0.4.51"
+    },
+    "444-6050": {
+        "serviceId": 6050,
+        "clientId": 444,
+        "port": 6050,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.4.51"
+    },
+    "445-3036": {
+        "serviceId": 3036,
+        "clientId": 445,
+        "port": 3036,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.1.37"
+    },
+    "446-4032": {
+        "serviceId": 4032,
+        "clientId": 446,
+        "port": 4032,
+        "ip": "192.168.0.1",
+        "host": "zcFL",
+        "mcast": "224.0.2.33"
+    },
+    "447-4032": {
+        "serviceId": 4032,
+        "clientId": 447,
+        "port": 4032,
+        "ip": "192.168.0.41",
+        "host": "inf",
+        "mcast": "224.0.2.33"
+    },
+    "448-4032": {
+        "serviceId": 4032,
+        "clientId": 448,
+        "port": 4032,
+        "ip": "192.168.0.13",
+        "host": "zcRR",
+        "mcast": "224.0.2.33"
+    }
+}
