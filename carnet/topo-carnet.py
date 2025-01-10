@@ -473,8 +473,8 @@ if __name__ == '__main__':
             setLogLevel('warning')
 
         print("Cleaning up mininet interfaces ... ")
-        print("Done")
         subprocess.run(['mn', '-c'])
+        print("Done")
         if args.clean:
             print("Removing configs and certificates ... ")
             subprocess.run(f"rm -f {SCENARIO_PATH}/vsomeip-configs/*pub.json", shell=True)
@@ -518,26 +518,26 @@ if __name__ == '__main__':
         build_vsomeip()
         print("Done.")
 
-        # create host configs and certificates
-        print("Creating host configs and certificates ... (this can take some time)")
-        dns_host = None
-        if WITH_DNSSEC in add_compile_definitions:
-            dns_host = net[DNSNODENAME]
-        create_publishers(net, dns_host)
-        create_subscribers(net, dns_host)
-        reference_certificates()
-        set_subscriber_counts_to_record()
-        print("Done.")
+        # # create host configs and certificates
+        # print("Creating host configs and certificates ... (this can take some time)")
+        # dns_host = None
+        # if WITH_DNSSEC in add_compile_definitions:
+        #     dns_host = net[DNSNODENAME]
+        # create_publishers(net, dns_host)
+        # create_subscribers(net, dns_host)
+        # reference_certificates()
+        # set_subscriber_counts_to_record()
+        # print("Done.")
 
-        if not args.noeval:
-            print("Starting vsomeip scenario ... ")
-            # Evaluate
-            start_evaluation(args.evaluate, add_compile_definitions, net, DNSNODENAME)
-            print("Done.")
-        else:
-            print("Starting debug mode ... ")
-            start_debug(args.evaluate, 1, add_compile_definitions, net, DNSNODENAME)
-            print("Done.")
+        # if not args.noeval:
+        #     print("Starting vsomeip scenario ... ")
+        #     # Evaluate
+        #     start_evaluation(args.evaluate, add_compile_definitions, net, DNSNODENAME)
+        #     print("Done.")
+        # else:
+        #     print("Starting debug mode ... ")
+        #     start_debug(args.evaluate, 1, add_compile_definitions, net, DNSNODENAME)
+        #     print("Done.")
         
     except KeyboardInterrupt:
         print("Caught Ctrl+C. Stopping mininet network.")
