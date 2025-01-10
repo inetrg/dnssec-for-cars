@@ -25,8 +25,12 @@ from pathlib import Path
 PUBLISHER_HOST_NAME = 'h1'
 PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
 
-SERVICE_ID = "4660"
-INSTANCE_ID = "22136"
+SERVICE_ID_INT = 1
+SERVICE_ID_HEX_STR = "0x{:04x}".format(SERVICE_ID_INT)
+SERVICE_ID = str(int(SERVICE_ID_INT))
+INSTANCE_ID_INT = 1
+INSTANCE_ID_HEX_STR = "0x{:04x}".format(INSTANCE_ID_INT)
+INSTANCE_ID = str(int(INSTANCE_ID_INT))
 MAJOR_VERSION = "0"
 MINOR_VERSION = "0"
 PUBLISHER_PORT = "30509"
@@ -132,6 +136,11 @@ def create_subscriber_config(host):
     
     with open(host_config, 'r') as file:
         config = json.load(file)
+    config['clients'][0]['service'] = SERVICE_ID_HEX_STR
+    config['clients'][0]['instance'] = INSTANCE_ID_HEX_STR
+    # config["applications"] = []
+    with open(host_config, 'w') as file:
+        json.dump(config, file, indent=4)
     global STD_CONDITION
     if not STD_CONDITION:
         STD_CONDITION = ((config['logging']['console'] == 'true') or (config['logging']['file']['enable'] == 'true'))
@@ -146,6 +155,11 @@ def create_publisher_config(host):
     
     with open(host_config, 'r') as file:
         config = json.load(file)
+    config['services'][0]['service'] = SERVICE_ID_HEX_STR
+    config['services'][0]['instance'] = INSTANCE_ID_HEX_STR
+    # config["applications"] = []
+    with open(host_config, 'w') as file:
+        json.dump(config, file, indent=4)
     global STD_CONDITION
     if not STD_CONDITION:
         STD_CONDITION = ((config['logging']['console'] == 'true') or (config['logging']['file']['enable'] == 'true'))
@@ -229,17 +243,19 @@ def reset_zone_files():
 
 def start_someip_subscriber_app(host):
     host_name = host.__str__()
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {SERVICE_ID} --instanceid {INSTANCE_ID} &"
     if STD_CONDITION:
-        host.cmd(f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber &> /var/log/{host_name}.std &")
+        host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
     else:
-        host.cmd(f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber &")
+        host.cmd(f"{launch_cmd}")
 
 def start_someip_publisher_app(host):
     host_name = host.__str__()
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {SERVICE_ID} --instanceid {INSTANCE_ID} &"
     if STD_CONDITION:
-        host.cmd(f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher &> /var/log/{host_name}.std &")
+        host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
     else:
-        host.cmd(f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher &")
+        host.cmd(f"{launch_cmd}")
 
 def stop_subscriber_app(host):
     host.cmd("pkill my-subscriber")
