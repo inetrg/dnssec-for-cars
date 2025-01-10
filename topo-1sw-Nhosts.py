@@ -23,6 +23,8 @@ from mininet.util import dumpNetConnections
 from pathlib import Path
 
 PUBLISHER_HOST_NAME = 'h1'
+SUBSCRIBER_HOST_NAME = 'h2'
+DNS_HOST_NAME = 'h3'
 PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
 
 SERVICE_ID_INT = 1
@@ -31,6 +33,9 @@ SERVICE_ID = str(int(SERVICE_ID_INT))
 INSTANCE_ID_INT = 1
 INSTANCE_ID_HEX_STR = "0x{:04x}".format(INSTANCE_ID_INT)
 INSTANCE_ID = str(int(INSTANCE_ID_INT))
+CLIENT_ID_INT = 3
+CLIENT_ID_HEX_STR = "0x{:04x}".format(CLIENT_ID_INT)
+CLIENT_ID = str(CLIENT_ID_INT)
 MAJOR_VERSION = "0"
 MINOR_VERSION = "0"
 PUBLISHER_PORT = "30509"
@@ -56,9 +61,15 @@ class simple_topo( Topo ):
         switch = self.addSwitch( 's1' )
 
         # Add hosts with links connecting to switch
-        for i in range(n):
-            host = self.addHost( 'h{}'.format(i + 1) )
-            self.addLink( host, switch, bw=1000, delay='0ms', loss=0, max_queue_size=99999 )
+        # for i in range(n):
+        #     host = self.addHost( 'h{}'.format(i + 1) )
+        #     self.addLink( host, switch, bw=1000, delay='0ms', loss=0, max_queue_size=99999 )
+        host1 = self.addHost( PUBLISHER_HOST_NAME )
+        host2 = self.addHost( SUBSCRIBER_HOST_NAME )
+        dns = self.addHost( DNS_HOST_NAME )
+        self.addLink( host1, switch, bw=1000, delay='0ms', loss=0, max_queue_size=99999 )
+        self.addLink( host2, switch, bw=1000, delay='0ms', loss=0, max_queue_size=99999 )
+        self.addLink( dns, switch, bw=1000, delay='0ms', loss=0, max_queue_size=99999 )
 
 def make_switch_traditional(net: Mininet, switch: str):
     net[switch].cmd('ovs-ofctl add-flow {} action=normal'.format(switch))
@@ -132,7 +143,7 @@ def create_subscriber_config(host):
     host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {subscriber_config_template} {host_config}')
-        create_host_config(host, host_config)
+        create_host_config(host, host_config, CLIENT_ID_HEX_STR)
     
     with open(host_config, 'r') as file:
         config = json.load(file)
@@ -151,7 +162,7 @@ def create_publisher_config(host):
     host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {publisher_config_template} {host_config}')
-        create_host_config(host, host_config)
+        create_host_config(host, host_config,"0x0001")
     
     with open(host_config, 'r') as file:
         config = json.load(file)
@@ -164,9 +175,8 @@ def create_publisher_config(host):
     if not STD_CONDITION:
         STD_CONDITION = ((config['logging']['console'] == 'true') or (config['logging']['file']['enable'] == 'true'))
 
-def create_host_config(host, host_config: str):
+def create_host_config(host, host_config: str, app_id):
     host_name = host.__str__()
-    host_id = "0x{:04x}".format(int(host.__str__()[1:]))
     unicast_ip = host.IP(intf=host.defaultIntf())
     with open(host_config, 'r') as file:
         config = json.load(file)
@@ -177,7 +187,7 @@ def create_host_config(host, host_config: str):
     config['logging']['file']['enable'] = 'false'
     config['logging']['file']['path'] = f'/var/log/{host_name}.log'
     config['applications'][0]['name'] = host_name
-    config['applications'][0]['id'] = host_id
+    config['applications'][0]['id'] = app_id
     config['routing'] = f'{host_name}'
 
     with open(host_config, 'w') as file:
@@ -189,8 +199,7 @@ def create_client_certificate(host):
     private_key = f'{PROJECT_PATH}/certificates/{host_name}.client.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
         host_ip = host.IP(intf=host.defaultIntf())
-        host_id = str(host_name[1:])
-        host.cmd(f'{PROJECT_PATH}/client-svcb-and-tlsa-generator.bash {host_id} {SERVICE_ID} {INSTANCE_ID} {MAJOR_VERSION} {host_ip} {SUBSCRIBER_PORTS} {PROTOCOL} {host_name}')
+        host.cmd(f'{PROJECT_PATH}/client-svcb-and-tlsa-generator.bash {CLIENT_ID} {SERVICE_ID} {INSTANCE_ID} {MAJOR_VERSION} {host_ip} {SUBSCRIBER_PORTS} {PROTOCOL} {host_name}')
         host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
         with open(host_config, 'r') as file:
             config = json.load(file)
@@ -230,10 +239,7 @@ def set_client_certificate_paths(host, subscriber_count: int):
 
     with open(host_config, 'r') as file:
         config = json.load(file)    
-    client_certificate_paths = [
-        f'{PROJECT_PATH}/certificates/h{i}.client.cert.pem'
-        for i in range(2, subscriber_count + 2)
-    ]
+    client_certificate_paths = [ f'{PROJECT_PATH}/certificates/{SUBSCRIBER_HOST_NAME}.client.cert.pem' ]
     config['host-certificates'] = client_certificate_paths
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
@@ -317,7 +323,7 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, subscri
         evaluation_run_start = time.time()
         # Wait for statistics writer
         print("Waiting until all statistics are contributed ... ")
-        return_code = statistics_writer_process.wait(timeout=120)
+        return_code = statistics_writer_process.wait(timeout=10)
         if return_code == 0:
             print("Done.")
             evaluation_run_end = time.time()
@@ -412,7 +418,7 @@ if __name__ == '__main__':
     setLogLevel('critical')
     if WITH_DNSSEC in add_compile_definitions:
         topo: simple_topo = simple_topo(n = host_count+1)
-        dns_host_name: str = f"h{host_count+1}"
+        dns_host_name = DNS_HOST_NAME
     else:
         topo: simple_topo = simple_topo(n = host_count)
         dns_host_name: str = ""
