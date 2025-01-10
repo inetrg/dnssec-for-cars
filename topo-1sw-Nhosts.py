@@ -22,18 +22,18 @@ from mininet.util import dumpNodeConnections
 from mininet.util import dumpNetConnections
 from pathlib import Path
 
-PUBLISHER_HOST_NAME = 'h1'
-SUBSCRIBER_HOST_NAME = 'h2'
-DNS_HOST_NAME = 'h3'
+PUBLISHER_HOST_NAME = 'h1' # publisher host must be calles h1 for some reason... 
+SUBSCRIBER_HOST_NAME = 'h2' # subscriber host must be calles h + number for some reason...
+DNS_HOST_NAME = 'h3' # dns host must be calles h + something for some reason...
 PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
 
-SERVICE_ID_INT = 1
+SERVICE_ID_INT = 2114
 SERVICE_ID_HEX_STR = "0x{:04x}".format(SERVICE_ID_INT)
 SERVICE_ID = str(int(SERVICE_ID_INT))
 INSTANCE_ID_INT = 1
 INSTANCE_ID_HEX_STR = "0x{:04x}".format(INSTANCE_ID_INT)
 INSTANCE_ID = str(int(INSTANCE_ID_INT))
-CLIENT_ID_INT = 3
+CLIENT_ID_INT = 301
 CLIENT_ID_HEX_STR = "0x{:04x}".format(CLIENT_ID_INT)
 CLIENT_ID = str(CLIENT_ID_INT)
 MAJOR_VERSION = "0"
@@ -162,7 +162,7 @@ def create_publisher_config(host):
     host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {publisher_config_template} {host_config}')
-        create_host_config(host, host_config,"0x0001")
+        create_host_config(host, host_config, SERVICE_ID_HEX_STR)
     
     with open(host_config, 'r') as file:
         config = json.load(file)
