@@ -12,6 +12,7 @@ import time
 from itertools import combinations
 from mininet.topo import Topo
 from mininet.net import Mininet
+from mininet.cli import CLI
 from mininet.link import TCLink
 from mininet.log import setLogLevel
 from mininet.util import dumpNodeConnections
@@ -53,11 +54,11 @@ class car_topology (Topo):
         "Create car topology."
 
         # add switches
-        sRL = self.addSwitch('sRL', dpid='0000000000000001')
-        sFL = self.addSwitch('sFL', dpid='0000000000000002')
-        sRR = self.addSwitch('sRR', dpid='0000000000000003')
-        sFR = self.addSwitch('sFR', dpid='0000000000000004')
-        sC = self.addSwitch('sC', dpid='0000000000000005')
+        sRL = self.addSwitch('s1')
+        sFL = self.addSwitch('s2')
+        sRR = self.addSwitch('s3')
+        sFR = self.addSwitch('s4')
+        sC = self.addSwitch('s5')
 
         # add hosts
         zcRl = self.addHost('zcRL')
@@ -78,24 +79,24 @@ class car_topology (Topo):
         dns = self.addHost(DNSNODENAME)
 
         # add links
-        self.addLink(zcRl, sRL, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='zcRl-eth0', intfName2='sRL-eth1')
-        self.addLink(zcFl, sFL, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='zcFl-eth0', intfName2='sFL-eth1')
-        self.addLink(zcRr, sRR, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='zcRr-eth0', intfName2='sRR-eth1')
-        self.addLink(zcFr, sFR, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='zcFr-eth0', intfName2='sFR-eth1')
-        self.addLink(lRL, sRL, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='lRL-eth0', intfName2='sRL-eth2')
-        self.addLink(lFL, sFL, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='lFL-eth0', intfName2='sFL-eth2')
-        self.addLink(lRR, sRR, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='lRR-eth0', intfName2='sRR-eth2')
-        self.addLink(lFR, sFR, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='lFR-eth0', intfName2='sFR-eth2')
-        self.addLink(cR, sRL, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='cR-eth0', intfName2='sRL-eth3')
-        self.addLink(cF, sFR, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='cF-eth0', intfName2='sFR-eth3')
-        self.addLink(adas, sRR, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='adas-eth0', intfName2='sRR-eth3')
-        self.addLink(inf, sFL, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='inf-eth0', intfName2='sFL-eth3')
-        self.addLink(con, sFL, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='con-eth0', intfName2='sFL-eth4')
-        self.addLink(sRL, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='sRL-eth4', intfName2='sC-eth1')
-        self.addLink(sFL, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='sFL-eth5', intfName2='sC-eth2')
-        self.addLink(sRR, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='sRR-eth4', intfName2='sC-eth3')
-        self.addLink(sFR, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='sFR-eth4', intfName2='sC-eth4')
-        self.addLink(sC, dns, bw=1000, delay='0ms', loss=0, max_queue_size=99999, intfName1='sC-eth5', intfName2=DNSNODENAME+'-eth0')
+        self.addLink(zcRl, sRL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(zcFl, sFL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(zcRr, sRR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(zcFr, sFR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(lRL, sRL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(lFL, sFL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(lRR, sRR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(lFR, sFR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(cR, sRL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(cF, sFR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(adas, sRR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(inf, sFL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(con, sFL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRL, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFL, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRR, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFR, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sC, dns, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
 
 def make_switch_traditional(net: Mininet, switch: str):
     net[switch].cmd('ovs-ofctl add-flow {} action=normal'.format(switch))
@@ -273,18 +274,36 @@ def create_subscriber_certificate(host, serviceId, client_id):
         with open(host_config, 'w') as file:
             json.dump(config, file, indent=4)
 
-def start_someip_app(host, app_name):
+def set_subscriber_counts_to_record():
+    host_configs = Path(f"{SCENARIO_PATH}/vsomeip-configs").rglob('*pub.json')
+    for host_config in host_configs:
+        with open(host_config, 'r') as file:
+            config = json.load(file)
+        count_sub_certs = len(config['host-certificates'])
+        config['subscriber-count-to-record'] = f'{count_sub_certs}'
+        with open(host_config, 'w') as file:
+            json.dump(config, file, indent=4)
+
+def start_someip_app(host, config_file, config_app_name, launch_app_name, launch_params=""):
     host_name = host.__str__()
     if STD_CONDITION:
-        host.cmd(f"env VSOMEIP_CONFIGURATION={SCENARIO_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/{app_name} &> /var/log/{host_name}.std &")
+        host.cmd(f"env VSOMEIP_CONFIGURATION={config_file}  VSOMEIP_APPLICATION_NAME={config_app_name} {PROJECT_PATH}/vsomeip/build/examples/{launch_app_name} &> /var/log/{host_name}.std &")
     else:
-        host.cmd(f"env VSOMEIP_CONFIGURATION={SCENARIO_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/{app_name} &")
+        host.cmd(f"env VSOMEIP_CONFIGURATION={config_file}  VSOMEIP_APPLICATION_NAME={config_app_name} {PROJECT_PATH}/vsomeip/build/examples/{launch_app_name} &")
 
-def start_someip_subscriber_app(host):
-    start_someip_app(host, "my-subscriber")
+def start_someip_subscriber_app(host, service_id, client_id):
+    host_name = host.__str__()
+    config_file = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}_{service_id}_sub.json"
+    config_app_name = f"{host_name}-{service_id}-{client_id}"
+    launch_params = f"--serviceid {service_id} --instanceid {INSTANCE_ID}"
+    start_someip_app(host, config_file, config_app_name, "my-subscriber", launch_params)
 
-def start_someip_publisher_app(host):
-    start_someip_app(host, "my-publisher")
+def start_someip_publisher_app(host, service_id):
+    host_name = host.__str__()
+    config_file = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}_{service_id}_pub.json"
+    config_app_name = f"{host_name}-{service_id}"
+    launch_params = f"--serviceid {service_id} --instanceid {INSTANCE_ID}"
+    start_someip_app(host, config_file, config_app_name, "my-publisher", launch_params)
 
 def stop_subscriber_app(host):
     host.cmd("pkill my-subscriber")
@@ -294,17 +313,21 @@ def stop_publisher_app(host):
 
 def start_evaluation(evaluation_option: str, add_compile_definitions: str, net: Mininet, dns_host_name: str):
     entire_evaluation_start = time.time()
+    if WITH_DNSSEC in add_compile_definitions:
+        print("Starting DNS server ... ")
+        start_dns_server(dns_host)
+        print("Done.")
     # start statistics writer
     print("Starting statistics-writer ...")
     # check if result dir exists and create it if not
-    if not Path(f"{PROJECT_PATH}/statistic-results/{evaluation_option}-series").is_dir():
-        subprocess.run(f"mkdir -p {PROJECT_PATH}/statistic-results/{evaluation_option}-series", shell = True) 
-    # statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", str(1), f"{PROJECT_PATH}/statistic-results/{evaluation_option}-series", evaluation_option])
+    if not Path(f"{SCENARIO_PATH}/statistic-results/{evaluation_option}-series").is_dir():
+        subprocess.run(f"mkdir -p {SCENARIO_PATH}/statistic-results/{evaluation_option}-series", shell = True) 
+    statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", str(1), f"{SCENARIO_PATH}/statistic-results/{evaluation_option}-series", evaluation_option])
     # statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", str(subscriber_count), f"{PROJECT_PATH}/statistic-results", evaluation_option])
     print("Done.")
     # start someip publisher and subscribers
     print("Starting SOME/IP publisher ... ")
-    start_someip_publisher_app(net[PUBLISHER_HOST_NAME])
+    start_someip_publisher_app(net['lRR'], 2114)
     publisher_initialized_file = Path(f"{PROJECT_PATH}/publisher-initialized")
     while not publisher_initialized_file.is_file():
         time.sleep(1)
@@ -312,35 +335,43 @@ def start_evaluation(evaluation_option: str, add_compile_definitions: str, net: 
     time.sleep(1) 
     print("Done.")
     print("Starting SOME/IP subscribers ... ")
-    start_someip_subscriber_app(net[SUBSCRIBER_HOST_NAMES[0]])
+    start_someip_subscriber_app(net['adas'], 2114, 301)
     print("Done.")
     evaluation_run_start = time.time()
     # Wait for statistics writer
-    # print("Waiting until all statistics are contributed ... ")
-    # return_code = statistics_writer_process.wait(timeout=120)
+    print("Waiting until all statistics are contributed ... ")
+    return_code = statistics_writer_process.wait(timeout=10)
     # wait 
     time.sleep(10)
-    # if return_code == 0:
-    #     print("Done.")
-    evaluation_run_end = time.time()
-    #     print(f"RUN ({evaluation_option}): ({evaluation_run_end-evaluation_run_start}s)")
-    # else:
-    #     print(f"statistics writer failed with return code {return_code}")
-    #     print(f"evaluation run {evaluation_option} failed ")
+    if return_code == 0:
+        print("Done.")
+        evaluation_run_end = time.time()
+        print(f"RUN ({evaluation_option}): ({evaluation_run_end-evaluation_run_start}s)")
+    else:
+        print(f"statistics writer failed with return code {return_code}")
+        print(f"evaluation run {evaluation_option} failed ")
     # stop someip publisher, subscribers and dns server
     print("Stopping SOME/IP apps and DNS server, and cleaning up ... ")
-    for host in net.hosts:
-        host_name: str = host.__str__()
-        if host_name != dns_host_name:
-            if host_name != PUBLISHER_HOST_NAME:
-                stop_subscriber_app(host)
-            else:
-                stop_publisher_app(host)
+    stop_subscriber_app(net['adas'])
+    stop_publisher_app(net['lRR'])
     print("Done.")
     # Give an extra second for remaining transmissions
     time.sleep(1)
     entire_evaluation_end = time.time()
     print(f"TOTAL TIME FOR OPTION {evaluation_option}: {entire_evaluation_end - entire_evaluation_start}s")
+
+def start_debug(evaluation_option: str, subscriber_count: int, add_compile_definitions: str, net: Mininet, dns_host_name: str):
+    # start statistics writer
+    print("Starting statistics-writer ...")
+    subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", str(subscriber_count), f"{SCENARIO_PATH}/statistic-results/debug", evaluation_option])
+    print("Done.")
+    # start dns server
+    if WITH_DNSSEC in add_compile_definitions:
+        print("Starting DNS server ... ")
+        start_dns_server(net[dns_host_name])
+        print("Done.")
+    CLI(net)
+    print("Done.")
 
 def cleanup():
     subprocess.run(["pkill", "statistics-writ"])
@@ -408,7 +439,7 @@ def reference_certificates():
             service_conf = json.load(file)
         client_conf['service-certificate-path'] = service_cert
         client_conf['host-certificates'] = ["only applies to services"]
-        if "host" in service_conf['host-certificates'][0]:
+        if "host" in service_conf['host-certificates'][0] or client_cert in service_conf['host-certificates']:
             service_conf['host-certificates'] = [client_cert]
         else:
             service_conf['host-certificates'].append(client_cert)
@@ -421,12 +452,11 @@ def reference_certificates():
 if __name__ == '__main__':
     try:
         parser = argparse.ArgumentParser(description='Starts a car network topology in mininet and runs some connection tests')
-        parser.add_argument('--iperf', type=bool, default=False, help='Run iperf tests')
-        parser.add_argument('--debug', type=bool, default=False, help='Enable debug output, such as network dumps')
-        parser.add_argument('--connectivity', type=bool, default=False, help='Test network connectivity')
-        parser.add_argument('--clean', type=bool, default=False, help='Clean up all mininet interfaces from previous runs')
-        parser.add_argument('--nobuild', type=bool, default=False, help='Do not rebuild vsomeip but use latest build')
-        parser.add_argument('--noeval', type=bool, default=False, help='Do not run evaluation')
+        parser.add_argument('--iperf', action='store_true', default=False, help='Run iperf tests')
+        parser.add_argument('--debug', action='store_true', default=False, help='Enable debug output, such as network dumps')
+        parser.add_argument('--connectivity', action='store_true', default=False, help='Test network connectivity')
+        parser.add_argument('--clean', action='store_true', default=False, help='Clean up all mininet interfaces from previous runs')
+        parser.add_argument('--noeval', action='store_true', default=False, help='Do not run evaluation')
         parser.add_argument('--evaluate', choices=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], default='H', help="""A: vanilla (vsomeip as it is),
                                                                                                                             B: w/ DNSSEC w/o SOME/IP SD,
                                                                                                                             C: w/ service authentication,
@@ -442,10 +472,10 @@ if __name__ == '__main__':
         else:
             setLogLevel('warning')
 
+        print("Cleaning up mininet interfaces ... ")
+        print("Done")
+        subprocess.run(['mn', '-c'])
         if args.clean:
-            print("Cleaning up mininet interfaces ... ")
-            subprocess.run(['mn', '-c'])
-            print("Done")
             print("Removing configs and certificates ... ")
             subprocess.run(f"rm -f {SCENARIO_PATH}/vsomeip-configs/*pub.json", shell=True)
             subprocess.run(f"rm -f {SCENARIO_PATH}/vsomeip-configs/*sub.json", shell=True)
@@ -453,6 +483,8 @@ if __name__ == '__main__':
             cleanup()
             reset_zone_files()
             print("Done.")
+        else: 
+            print("Reusing previous configurations and certificates ... ")
 
         print("Building mininet network ... ")
         topo: car_topology = car_topology()
@@ -468,10 +500,7 @@ if __name__ == '__main__':
         print("Done")
 
         if args.debug:
-            print("Dumping switch information ... ")
-            for switch in net.switches:
-                dump_switch_information(net, switch.__str__())
-            print("Done")
+            dump_infos(net)
 
         if args.connectivity:
             print("Testing network connectivity ... ")
@@ -484,31 +513,31 @@ if __name__ == '__main__':
             print("Done")
 
         add_compile_definitions = compile_definitions[args.evaluate]
-        if not args.nobuild:
-            print("Building vsomeip ... ")
-            subprocess.run(f"sed -i -E 's/add_compile_definitions.*/add_compile_definitions\({add_compile_definitions}\)/' {PROJECT_PATH}/vsomeip/CMakeLists.txt", shell=True)
-            build_vsomeip()
-            print("Done.")
+        print("Building vsomeip ... ")
+        subprocess.run(f"sed -i -E 's/add_compile_definitions.*/add_compile_definitions\({add_compile_definitions}\)/' {PROJECT_PATH}/vsomeip/CMakeLists.txt", shell=True)
+        build_vsomeip()
+        print("Done.")
 
         # create host configs and certificates
-        print("Creating host configs and certificates ... ")
+        print("Creating host configs and certificates ... (this can take some time)")
         dns_host = None
         if WITH_DNSSEC in add_compile_definitions:
             dns_host = net[DNSNODENAME]
         create_publishers(net, dns_host)
         create_subscribers(net, dns_host)
         reference_certificates()
+        set_subscriber_counts_to_record()
         print("Done.")
-        if WITH_DNSSEC in add_compile_definitions:
-            print("Starting DNS server ... ")
-            start_dns_server(net[DNSNODENAME])
+
+        if not args.noeval:
+            print("Starting vsomeip scenario ... ")
+            # Evaluate
+            start_evaluation(args.evaluate, add_compile_definitions, net, DNSNODENAME)
             print("Done.")
-            
-        # if not args.noeval:
-        #     print("Starting vsomeip scenario ... ")
-        #     # Evaluate
-        #     start_evaluation(args.evaluate, add_compile_definitions, net, DNSNODENAME)
-        #     print("Done.")
+        else:
+            print("Starting debug mode ... ")
+            start_debug(args.evaluate, 1, add_compile_definitions, net, DNSNODENAME)
+            print("Done.")
         
     except KeyboardInterrupt:
         print("Caught Ctrl+C. Stopping mininet network.")
