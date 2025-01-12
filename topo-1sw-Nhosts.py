@@ -22,9 +22,7 @@ from mininet.util import dumpNodeConnections
 from mininet.util import dumpNetConnections
 from pathlib import Path
 
-PUBLISHER_HOST_NAME = 'h1' # publisher host must be calles h1 for some reason... 
-SUBSCRIBER_HOST_NAME = 'h2' # subscriber host must be calles h + number for some reason...
-DNS_HOST_NAME = 'h3' # dns host must be calles h + something for some reason...
+PUBLISHER_HOST_NAME = 'h1'
 PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
 
 SERVICE_ID_INT = 2114
@@ -33,9 +31,6 @@ SERVICE_ID = str(int(SERVICE_ID_INT))
 INSTANCE_ID_INT = 1
 INSTANCE_ID_HEX_STR = "0x{:04x}".format(INSTANCE_ID_INT)
 INSTANCE_ID = str(int(INSTANCE_ID_INT))
-CLIENT_ID_INT = 301
-CLIENT_ID_HEX_STR = "0x{:04x}".format(CLIENT_ID_INT)
-CLIENT_ID = str(CLIENT_ID_INT)
 MAJOR_VERSION = "0"
 MINOR_VERSION = "0"
 PUBLISHER_PORT = "30509"
@@ -61,15 +56,9 @@ class simple_topo( Topo ):
         switch = self.addSwitch( 's1' )
 
         # Add hosts with links connecting to switch
-        # for i in range(n):
-        #     host = self.addHost( 'h{}'.format(i + 1) )
-        #     self.addLink( host, switch, bw=1000, delay='0ms', loss=0, max_queue_size=99999 )
-        host1 = self.addHost( PUBLISHER_HOST_NAME )
-        host2 = self.addHost( SUBSCRIBER_HOST_NAME )
-        dns = self.addHost( DNS_HOST_NAME )
-        self.addLink( host1, switch, bw=1000, delay='0ms', loss=0, max_queue_size=99999 )
-        self.addLink( host2, switch, bw=1000, delay='0ms', loss=0, max_queue_size=99999 )
-        self.addLink( dns, switch, bw=1000, delay='0ms', loss=0, max_queue_size=99999 )
+        for i in range(n):
+            host = self.addHost( 'h{}'.format(i + 1) )
+            self.addLink( host, switch, bw=1000, delay='0ms', loss=0, max_queue_size=99999 )
 
 def make_switch_traditional(net: Mininet, switch: str):
     net[switch].cmd('ovs-ofctl add-flow {} action=normal'.format(switch))
@@ -143,7 +132,8 @@ def create_subscriber_config(host):
     host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {subscriber_config_template} {host_config}')
-        create_host_config(host, host_config, CLIENT_ID_HEX_STR, False)
+        client_id = host_name[1:]
+        create_host_config(host, host_config, client_id, False)
     
     with open(host_config, 'r') as file:
         config = json.load(file)
@@ -200,7 +190,8 @@ def create_client_certificate(host):
     private_key = f'{PROJECT_PATH}/certificates/{host_name}.client.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
         host_ip = host.IP(intf=host.defaultIntf())
-        host.cmd(f'{PROJECT_PATH}/client-svcb-and-tlsa-generator.bash {CLIENT_ID} {SERVICE_ID} {INSTANCE_ID} {MAJOR_VERSION} {host_ip} {SUBSCRIBER_PORTS} {PROTOCOL} {host_name}')
+        client_id = host_name[1:]
+        host.cmd(f'{PROJECT_PATH}/client-svcb-and-tlsa-generator.bash {client_id} {SERVICE_ID} {INSTANCE_ID} {MAJOR_VERSION} {host_ip} {SUBSCRIBER_PORTS} {PROTOCOL} {host_name}')
         host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
         with open(host_config, 'r') as file:
             config = json.load(file)
@@ -240,7 +231,7 @@ def set_client_certificate_paths(host, subscriber_count: int):
 
     with open(host_config, 'r') as file:
         config = json.load(file)    
-    client_certificate_paths = [ f'{PROJECT_PATH}/certificates/{SUBSCRIBER_HOST_NAME}.client.cert.pem' ]
+    client_certificate_paths = [f'{PROJECT_PATH}/certificates/h{i}.client.cert.pem' for i in range(2, subscriber_count + 1)]
     config['host-certificates'] = client_certificate_paths
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
@@ -419,7 +410,7 @@ if __name__ == '__main__':
     setLogLevel('critical')
     if WITH_DNSSEC in add_compile_definitions:
         topo: simple_topo = simple_topo(n = host_count+1)
-        dns_host_name = DNS_HOST_NAME
+        dns_host_name = "h"+str(host_count+1)
     else:
         topo: simple_topo = simple_topo(n = host_count)
         dns_host_name: str = ""
