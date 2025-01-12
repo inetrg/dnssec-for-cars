@@ -22,11 +22,11 @@ from mininet.util import dumpNodeConnections
 from mininet.util import dumpNetConnections
 from pathlib import Path
 
-PUBLISHER_HOST_NAME = 'h1' # name is not specific but must be the first alphabetically to receive ip 10.0.0.1 
-SUBSCRIBER_HOST_NAME = 'h2' 
+PUBLISHER_HOST_NAME = 'zcfr' 
+SUBSCRIBER_HOST_NAME = 'adas' 
 PUBLISHER_APP_NAME = PUBLISHER_HOST_NAME + ""
 SUBSCRIBER_APP_NAME = 'SUBSCRIBER_HOST_NAME' + ""
-DNS_HOST_NAME = 'h3' # dns host must be calles h + something for some reason...
+DNS_HOST_NAME = 'dns'
 PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
 SCENARIO_PATH = f"{PROJECT_PATH}/carnet"
 
@@ -62,32 +62,28 @@ class simple_topo( Topo ):
         "Create custom topo."
 
         # Add switch
-        sRL = self.addSwitch('s1')
+        sFR = self.addSwitch('s1')
         sFL = self.addSwitch('s2')
-        sRR = self.addSwitch('s3')
-        sFR = self.addSwitch('s4')
-        sC = self.addSwitch('s5')
+        sC = self.addSwitch('s3')
+        sRR = self.addSwitch('s4')
+        sRL = self.addSwitch('s5')
 
-
+        # add hosts (names must be lower case!)
+        zcRl = self.addHost('zcrl')
+        zcFl = self.addHost('zcfl')
+        zcRr = self.addHost('zcrr')
+        zcFr = self.addHost('zcfr')
+        lRL = self.addHost('lrl')
+        lFL = self.addHost('lfl')
+        lRR = self.addHost('lrr')
+        lFR = self.addHost('lfr')
+        cR = self.addHost('cr')
+        cF = self.addHost('cf')
+        adas = self.addHost('adas')
+        inf = self.addHost('inf')
+        con = self.addHost('con')
         # add DNS node
         dns = self.addHost(DNS_HOST_NAME)
-        host1 = self.addHost( PUBLISHER_HOST_NAME )
-        host2 = self.addHost( SUBSCRIBER_HOST_NAME )
-
-        # add hosts
-        # zcRl = self.addHost('h5')
-        # zcFl = self.addHost('zcFL')
-        # zcRr = self.addHost('zcRR')
-        # zcFr = self.addHost('zcFR')
-        # lRL = self.addHost('lRL')
-        # lFL = self.addHost('lFL')
-        # lRR = self.addHost('lRR')
-        # lFR = self.addHost('lFR')
-        # cR = self.addHost('cR')
-        # cF = self.addHost('cF')
-        # adas = self.addHost('adas')
-        # inf = self.addHost('inf')
-        # con = self.addHost('con')
 
         # Add links
         self.addLink(sRL, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
@@ -95,21 +91,19 @@ class simple_topo( Topo ):
         self.addLink(sRR, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
         self.addLink(sFR, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
         self.addLink(sC, dns, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        self.addLink(sRL, host1, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        self.addLink(sFL, host2, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        # self.addLink(sRL, zcRl, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        # self.addLink(sFL, zcFl, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        # self.addLink(sRR, zcRr, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        # self.addLink(sFR, zcFr, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        # self.addLink(sRL, lRL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        # self.addLink(sFL, lFL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        # self.addLink(sRR, lRR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        # self.addLink(sFR, lFR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        # self.addLink(sRL, cR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        # self.addLink(sFR, cF, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        # self.addLink(sRR, adas, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        # self.addLink(sFL, inf, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-        # self.addLink(sFL, con, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRL, zcRl, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFL, zcFl, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRR, zcRr, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFR, zcFr, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRL, lRL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFL, lFL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRR, lRR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFR, lFR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRL, cR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFR, cF, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRR, adas, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFL, inf, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFL, con, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
 
 def make_switch_traditional(net: Mininet, switch: str):
     net[switch].cmd('ovs-ofctl add-flow {} action=normal'.format(switch))
@@ -183,7 +177,7 @@ def create_subscriber_config(host):
     host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {subscriber_config_template} {host_config}')
-        create_host_config(host, host_config, SUBSCRIBER_APP_NAME, CLIENT_ID_HEX_STR)
+        create_host_config(host, host_config, SUBSCRIBER_APP_NAME, CLIENT_ID_HEX_STR, False)
     
     with open(host_config, 'r') as file:
         config = json.load(file)
@@ -202,7 +196,7 @@ def create_publisher_config(host):
     host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {publisher_config_template} {host_config}')
-        create_host_config(host, host_config, PUBLISHER_APP_NAME, SERVICE_ID_HEX_STR)
+        create_host_config(host, host_config, PUBLISHER_APP_NAME, SERVICE_ID_HEX_STR, True)
     
     with open(host_config, 'r') as file:
         config = json.load(file)
@@ -218,7 +212,7 @@ def create_publisher_config(host):
     if not STD_CONDITION:
         STD_CONDITION = ((config['logging']['console'] == 'true') or (config['logging']['file']['enable'] == 'true'))
 
-def create_host_config(host, host_config: str, app_name, app_id):
+def create_host_config(host, host_config: str, app_name, app_id, is_publisher=False):
     host_name = host.__str__()
     unicast_ip = host.IP(intf=host.defaultIntf())
     with open(host_config, 'r') as file:
@@ -231,6 +225,7 @@ def create_host_config(host, host_config: str, app_name, app_id):
     config['logging']['file']['path'] = f'/var/log/{host_name}.log'
     config['applications'][0]['name'] = app_name
     config['applications'][0]['id'] = app_id
+    config['applications'][0]['is_publisher'] = "true" if is_publisher else "false"
     config['routing'] = app_name#f'{host_name}'
 
     with open(host_config, 'w') as file:
@@ -451,7 +446,10 @@ if __name__ == '__main__':
     # remove configs and certificates for clean start
     if args.clean_start:
         print("Removing configs and certificates ... ")
-        subprocess.run(f"rm -f {SCENARIO_PATH}/vsomeip-configs/h*.json", shell=True)
+        # rm all host configs except the templates vsomeip-udp-mininet-publisher.json and vsomeip-udp-mininet-subscriber.json
+        for file in Path(f"{SCENARIO_PATH}/vsomeip-configs").glob("*.json"):
+            if not file.name.startswith("vsomeip-udp-mininet"):
+                subprocess.run(f"rm -f {file}", shell=True)
         subprocess.run(f"rm -f {SCENARIO_PATH}/certificates/*", shell=True)
         reset_zone_files()
         print("Done.")
@@ -476,24 +474,42 @@ if __name__ == '__main__':
     subprocess.run(f"sed -i -E 's/add_compile_definitions.*/add_compile_definitions\({add_compile_definitions}\)/' {PROJECT_PATH}/vsomeip/CMakeLists.txt", shell=True)
     build_vsomeip()
     print("Done.")
+
+    # dump all mininet infos
+    # dump_infos(net)
+    # for switch in net.switches:
+    #     dump_switch_information(net, switch.__str__())
+    #     dump_switch_flows(net, switch.__str__())
+
     # create host configs and certificates
     print("Creating host configs and certificates ... ")
     create_publisher_config(net[PUBLISHER_HOST_NAME])
     create_service_certificate(net[PUBLISHER_HOST_NAME])
     set_client_certificate_paths(net[PUBLISHER_HOST_NAME], subscriber_count)
+    create_subscriber_config(net[SUBSCRIBER_HOST_NAME])
+    create_client_certificate(net[SUBSCRIBER_HOST_NAME])
+    set_service_certificate_path(net[SUBSCRIBER_HOST_NAME])
+    set_subscriber_count_to_record(net[SUBSCRIBER_HOST_NAME], subscriber_count)
+    set_subscriber_count_to_record(net[PUBLISHER_HOST_NAME], subscriber_count)
+    set_dns_server_ip(net[SUBSCRIBER_HOST_NAME], net[dns_host_name])
+    set_dns_server_ip(net[PUBLISHER_HOST_NAME], net[dns_host_name])
+    if STD_CONDITION:
+        subprocess.run(f'touch /var/log/{SUBSCRIBER_HOST_NAME}.std', shell=True)
+        subprocess.run(f'touch /var/log/{PUBLISHER_HOST_NAME}.std', shell=True)
     for host in net.hosts:
         add_default_route(host)
-        host_name = host.__str__()
-        if host_name != PUBLISHER_HOST_NAME and host_name != dns_host_name:
-            create_subscriber_config(host)
-            create_client_certificate(host)
-            set_service_certificate_path(host)
-        if len(dns_host_name) and host_name != dns_host_name:
-            set_dns_server_ip(host, net[dns_host_name])
-        if host_name != dns_host_name:
-            set_subscriber_count_to_record(host, subscriber_count)
-        if STD_CONDITION:
-            subprocess.run(f'touch /var/log/{host_name}.std', shell=True)
+
+        # host_name = host.__str__()
+        # # if #host_name != PUBLISHER_HOST_NAME and host_name != dns_host_name:
+        # #     create_subscriber_config(host)
+        # #     create_client_certificate(host)
+        # #     set_service_certificate_path(host)
+        # if len(dns_host_name) and host_name != dns_host_name:
+        #     set_dns_server_ip(host, net[dns_host_name])
+        # if host_name != dns_host_name:
+        #     set_subscriber_count_to_record(host, subscriber_count)
+        # if STD_CONDITION:
+        #     subprocess.run(f'touch /var/log/{host_name}.std', shell=True)
     print("Done.")
     # Evaluate
     if args.evaluate and args.runs:
