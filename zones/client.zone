@@ -1,7 +1,7 @@
 $ORIGIN client. ; 'default' domain as FQDN for this zone
 $TTL 86400 ; default time-to-live for this zone
 
-client.   IN  SOA     ns.client. mehmet\.mueller.haw-hamburg.de. (
+client.   IN  SOA     ns.client. example\.example.org. (
         2023112401  ;Serial
         7200        ;Refresh
         3600        ;Retry
