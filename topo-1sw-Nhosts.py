@@ -143,7 +143,7 @@ def create_subscriber_config(host):
     host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {subscriber_config_template} {host_config}')
-        create_host_config(host, host_config, CLIENT_ID_HEX_STR)
+        create_host_config(host, host_config, CLIENT_ID_HEX_STR, False)
     
     with open(host_config, 'r') as file:
         config = json.load(file)
@@ -162,7 +162,7 @@ def create_publisher_config(host):
     host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {publisher_config_template} {host_config}')
-        create_host_config(host, host_config, SERVICE_ID_HEX_STR)
+        create_host_config(host, host_config, SERVICE_ID_HEX_STR, True)
     
     with open(host_config, 'r') as file:
         config = json.load(file)
@@ -175,7 +175,7 @@ def create_publisher_config(host):
     if not STD_CONDITION:
         STD_CONDITION = ((config['logging']['console'] == 'true') or (config['logging']['file']['enable'] == 'true'))
 
-def create_host_config(host, host_config: str, app_id):
+def create_host_config(host, host_config: str, app_id, is_publisher: bool):
     host_name = host.__str__()
     unicast_ip = host.IP(intf=host.defaultIntf())
     with open(host_config, 'r') as file:
@@ -188,6 +188,7 @@ def create_host_config(host, host_config: str, app_id):
     config['logging']['file']['path'] = f'/var/log/{host_name}.log'
     config['applications'][0]['name'] = host_name
     config['applications'][0]['id'] = app_id
+    config['applications'][0]['is_publisher'] = "true" if is_publisher else "false"
     config['routing'] = f'{host_name}'
 
     with open(host_config, 'w') as file:
