@@ -22,8 +22,10 @@ from mininet.util import dumpNodeConnections
 from mininet.util import dumpNetConnections
 from pathlib import Path
 
-PUBLISHER_HOST_NAME = 'h1' # publisher host must be calles h1 for some reason... 
-SUBSCRIBER_HOST_NAME = 'h2' # subscriber host must be calles h + number for some reason...
+PUBLISHER_HOST_NAME = 'h1' # name is not specific but must be the first alphabetically to receive ip 10.0.0.1 
+SUBSCRIBER_HOST_NAME = 'h2' 
+PUBLISHER_APP_NAME = PUBLISHER_HOST_NAME + ""
+SUBSCRIBER_APP_NAME = 'SUBSCRIBER_HOST_NAME' + ""
 DNS_HOST_NAME = 'h3' # dns host must be calles h + something for some reason...
 PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
 SCENARIO_PATH = f"{PROJECT_PATH}/carnet"
@@ -39,8 +41,9 @@ CLIENT_ID_HEX_STR = "0x{:04x}".format(CLIENT_ID_INT)
 CLIENT_ID = str(CLIENT_ID_INT)
 MAJOR_VERSION = "0"
 MINOR_VERSION = "0"
-PUBLISHER_PORT = "30509"
-SUBSCRIBER_PORTS = "40000,40002"
+PUBLISHER_PORT = str(50000+SERVICE_ID_INT)
+SUBSCRIBER_PORTS = str(40000+CLIENT_ID_INT)
+MCAST_IP = "224.0.4.78"
 PROTOCOL = "UDP"
 # compile definitions
 WITH_SERVICE_AUTHENTICATION = 'WITH_SERVICE_AUTHENTICATION'
@@ -59,18 +62,54 @@ class simple_topo( Topo ):
         "Create custom topo."
 
         # Add switch
-        switch = self.addSwitch( 's1' )
+        sRL = self.addSwitch('s1')
+        sFL = self.addSwitch('s2')
+        sRR = self.addSwitch('s3')
+        sFR = self.addSwitch('s4')
+        sC = self.addSwitch('s5')
 
-        # Add hosts with links connecting to switch
-        # for i in range(n):
-        #     host = self.addHost( 'h{}'.format(i + 1) )
-        #     self.addLink( host, switch, bw=1000, delay='0ms', loss=0, max_queue_size=99999 )
+
+        # add DNS node
+        dns = self.addHost(DNS_HOST_NAME)
         host1 = self.addHost( PUBLISHER_HOST_NAME )
         host2 = self.addHost( SUBSCRIBER_HOST_NAME )
-        dns = self.addHost( DNS_HOST_NAME )
-        self.addLink( host1, switch, bw=1000, delay='0ms', loss=0, max_queue_size=99999 )
-        self.addLink( host2, switch, bw=1000, delay='0ms', loss=0, max_queue_size=99999 )
-        self.addLink( dns, switch, bw=1000, delay='0ms', loss=0, max_queue_size=99999 )
+
+        # add hosts
+        # zcRl = self.addHost('h5')
+        # zcFl = self.addHost('zcFL')
+        # zcRr = self.addHost('zcRR')
+        # zcFr = self.addHost('zcFR')
+        # lRL = self.addHost('lRL')
+        # lFL = self.addHost('lFL')
+        # lRR = self.addHost('lRR')
+        # lFR = self.addHost('lFR')
+        # cR = self.addHost('cR')
+        # cF = self.addHost('cF')
+        # adas = self.addHost('adas')
+        # inf = self.addHost('inf')
+        # con = self.addHost('con')
+
+        # Add links
+        self.addLink(sRL, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFL, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRR, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFR, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sC, dns, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRL, host1, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFL, host2, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        # self.addLink(sRL, zcRl, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        # self.addLink(sFL, zcFl, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        # self.addLink(sRR, zcRr, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        # self.addLink(sFR, zcFr, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        # self.addLink(sRL, lRL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        # self.addLink(sFL, lFL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        # self.addLink(sRR, lRR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        # self.addLink(sFR, lFR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        # self.addLink(sRL, cR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        # self.addLink(sFR, cF, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        # self.addLink(sRR, adas, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        # self.addLink(sFL, inf, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        # self.addLink(sFL, con, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
 
 def make_switch_traditional(net: Mininet, switch: str):
     net[switch].cmd('ovs-ofctl add-flow {} action=normal'.format(switch))
@@ -144,7 +183,7 @@ def create_subscriber_config(host):
     host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {subscriber_config_template} {host_config}')
-        create_host_config(host, host_config, CLIENT_ID_HEX_STR)
+        create_host_config(host, host_config, SUBSCRIBER_APP_NAME, CLIENT_ID_HEX_STR)
     
     with open(host_config, 'r') as file:
         config = json.load(file)
@@ -163,12 +202,15 @@ def create_publisher_config(host):
     host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {publisher_config_template} {host_config}')
-        create_host_config(host, host_config, SERVICE_ID_HEX_STR)
+        create_host_config(host, host_config, PUBLISHER_APP_NAME, SERVICE_ID_HEX_STR)
     
     with open(host_config, 'r') as file:
         config = json.load(file)
     config['services'][0]['service'] = SERVICE_ID_HEX_STR
     config['services'][0]['instance'] = INSTANCE_ID_HEX_STR
+    config['services'][0]['unreliable'] = PUBLISHER_PORT
+    config['services'][0]['eventgroups'][0]['multicast']['address'] = MCAST_IP
+    config['services'][0]['eventgroups'][0]['multicast']['port'] = SERVICE_ID
     # config["applications"] = []
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
@@ -176,7 +218,7 @@ def create_publisher_config(host):
     if not STD_CONDITION:
         STD_CONDITION = ((config['logging']['console'] == 'true') or (config['logging']['file']['enable'] == 'true'))
 
-def create_host_config(host, host_config: str, app_id):
+def create_host_config(host, host_config: str, app_name, app_id):
     host_name = host.__str__()
     unicast_ip = host.IP(intf=host.defaultIntf())
     with open(host_config, 'r') as file:
@@ -187,9 +229,9 @@ def create_host_config(host, host_config: str, app_id):
     config['logging']['console'] = 'false'
     config['logging']['file']['enable'] = 'false'
     config['logging']['file']['path'] = f'/var/log/{host_name}.log'
-    config['applications'][0]['name'] = host_name
+    config['applications'][0]['name'] = app_name
     config['applications'][0]['id'] = app_id
-    config['routing'] = f'{host_name}'
+    config['routing'] = app_name#f'{host_name}'
 
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
@@ -250,7 +292,7 @@ def reset_zone_files():
 
 def start_someip_subscriber_app(host):
     host_name = host.__str__()
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={SCENARIO_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {SERVICE_ID} --instanceid {INSTANCE_ID} &"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={SCENARIO_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={SUBSCRIBER_APP_NAME} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {SERVICE_ID} --instanceid {INSTANCE_ID} &"
     if STD_CONDITION:
         host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
     else:
@@ -258,7 +300,7 @@ def start_someip_subscriber_app(host):
 
 def start_someip_publisher_app(host):
     host_name = host.__str__()
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={SCENARIO_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {SERVICE_ID} --instanceid {INSTANCE_ID} &"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={SCENARIO_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={PUBLISHER_APP_NAME} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {SERVICE_ID} --instanceid {INSTANCE_ID} &"
     if STD_CONDITION:
         host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
     else:
