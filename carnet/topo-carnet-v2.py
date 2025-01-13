@@ -166,19 +166,22 @@ def stop_dns_server(dns_host):
     dns_host.cmd('nsd-control stop')
     dns_host.cmd('pkill nsd')
 
-def create_subscriber_config(host):
+def create_subscriber_config(host, service_id, client_id, dns_host_ip_in_hex=None):
     host_name = host.__str__()
     subscriber_config_template = f"{SCENARIO_PATH}/vsomeip-configs/vsomeip-udp-mininet-subscriber.json"
     host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {subscriber_config_template} {host_config}')
-        client_id_hex_str = "0x{:04x}".format(SUBSCRIBER_HOST_NAMES.index(host_name)+1)
-        create_host_config(host, host_config, host_name, client_id_hex_str, False)
+        app_id = "0x{:04x}".format(client_id)
+        app_name = host_name + "-" + str(service_id) + "-" + str(client_id)
+        create_host_config(host, host_config, app_name, app_id, False, dns_host_ip_in_hex)
     
     with open(host_config, 'r') as file:
         config = json.load(file)
-    config['clients'][0]['service'] = SERVICE_ID_HEX_STR
+    config['clients'][0]['service'] = service_id
     config['clients'][0]['instance'] = INSTANCE_ID_HEX_STR
+    port = 40000 + int(client_id)
+    config['clients'][0]['unreliable'] = [port]
     # config["applications"] = []
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
@@ -186,29 +189,30 @@ def create_subscriber_config(host):
     if not STD_CONDITION:
         STD_CONDITION = ((config['logging']['console'] == 'true') or (config['logging']['file']['enable'] == 'true'))
 
-def create_publisher_config(host):
+def create_publisher_config(host, service_id, mcast_ip, dns_host_ip_in_hex=None):
     host_name = host.__str__()
     publisher_config_template = f"{SCENARIO_PATH}/vsomeip-configs/vsomeip-udp-mininet-publisher.json"
     host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {publisher_config_template} {host_config}')
-        create_host_config(host, host_config, PUBLISHER_HOST_NAME, SERVICE_ID_HEX_STR, True)
+        app_id = f"0x{int(service_id):04x}"
+        app_name = host_name + "-" + str(service_id)
+        create_host_config(host, host_config, app_name, app_id, True, dns_host_ip_in_hex)
     
     with open(host_config, 'r') as file:
         config = json.load(file)
-    config['services'][0]['service'] = SERVICE_ID_HEX_STR
-    config['services'][0]['instance'] = INSTANCE_ID_HEX_STR
-    config['services'][0]['unreliable'] = PUBLISHER_PORT
-    config['services'][0]['eventgroups'][0]['multicast']['address'] = MCAST_IP
-    config['services'][0]['eventgroups'][0]['multicast']['port'] = SERVICE_ID
-    # config["applications"] = []
+    config['services'][0]['service'] = f"0x{int(service_id):04x}"
+    config['services'][0]['instance'] = f"0x{int(INSTANCE_ID):04x}"
+    config['services'][0]['unreliable'] = str(50000+service_id)
+    config['services'][0]['eventgroups'][0]['multicast']['address'] = mcast_ip
+    config['services'][0]['eventgroups'][0]['multicast']['port'] = str(service_id)
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
     global STD_CONDITION
     if not STD_CONDITION:
         STD_CONDITION = ((config['logging']['console'] == 'true') or (config['logging']['file']['enable'] == 'true'))
 
-def create_host_config(host, host_config: str, app_name, app_id, is_publisher=False):
+def create_host_config(host, host_config: str, app_name, app_id, is_publisher=False, dns_host_ip_in_hex=None):
     host_name = host.__str__()
     unicast_ip = host.IP(intf=host.defaultIntf())
     with open(host_config, 'r') as file:
@@ -219,22 +223,24 @@ def create_host_config(host, host_config: str, app_name, app_id, is_publisher=Fa
     config['logging']['console'] = 'false'
     config['logging']['file']['enable'] = 'false'
     config['logging']['file']['path'] = f'/var/log/{host_name}.log'
-    config['applications'][0]['name'] = app_name
+    config['applications'][0]['name'] = host_name
     config['applications'][0]['id'] = app_id
     config['applications'][0]['is_publisher'] = "true" if is_publisher else "false"
-    config['routing'] = app_name#f'{host_name}'
-
+    config['routing'] = f'{host_name}'
+    if dns_host_ip_in_hex is not None:
+        config['dns-server-ip'] = f'{dns_host_ip_in_hex}'
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
 
-def create_client_certificate(host):
+def create_subscriber_certificate(host, service_id, client_id):
     host_name = host.__str__()
-    certificate = f'{SCENARIO_PATH}/certificates/{host_name}.client.cert.pem'
-    private_key = f'{SCENARIO_PATH}/certificates/{host_name}.client.key.pem'
+    certname = f'{host_name}_{client_id}'
+    certificate = f'{SCENARIO_PATH}/certificates/{certname}.client.cert.pem'
+    private_key = f'{SCENARIO_PATH}/certificates/{certname}.client.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
         host_ip = host.IP(intf=host.defaultIntf())
-        client_id = SUBSCRIBER_HOST_NAMES.index(host_name)+1
-        host.cmd(f'{SCENARIO_PATH}/sub-svcb-and-tlsa-generator.bash {client_id} {SERVICE_ID} {INSTANCE_ID} {MAJOR_VERSION} {host_ip} {SUBSCRIBER_PORTS + client_id} {PROTOCOL} {host_name}')
+        port = 40000 + int(client_id)
+        host.cmd(f'{SCENARIO_PATH}/sub-svcb-and-tlsa-generator.bash {client_id} {service_id} {INSTANCE_ID} {MAJOR_VERSION} {host_ip} {port} {PROTOCOL} {certname}')
         host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
         with open(host_config, 'r') as file:
             config = json.load(file)
@@ -252,13 +258,15 @@ def set_service_certificate_path(host):
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
 
-def create_service_certificate(host):
+def create_publisher_certificate(host, service_id):
     host_name = host.__str__()
-    certificate = f'{SCENARIO_PATH}/certificates/{host_name}.service.cert.pem'
-    private_key = f'{SCENARIO_PATH}/certificates/{host_name}.service.key.pem'
+    certname = f'{host_name}_{service_id}'
+    certificate = f'{SCENARIO_PATH}/certificates/{certname}.service.cert.pem'
+    private_key = f'{SCENARIO_PATH}/certificates/{certname}.service.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
+        port = 50000+service_id
         host_ip = host.IP(intf=host.defaultIntf())
-        host.cmd(f'{SCENARIO_PATH}/pub-svcb-and-tlsa-generator.bash {SERVICE_ID} {INSTANCE_ID} {MAJOR_VERSION} {MINOR_VERSION} {host_ip} {PUBLISHER_PORT} {PROTOCOL} {host_name}')
+        host.cmd(f'{SCENARIO_PATH}/pub-svcb-and-tlsa-generator.bash {service_id} {INSTANCE_ID} {MAJOR_VERSION} {MINOR_VERSION} {host_ip} {port} {PROTOCOL} {certname}')
         host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
         with open(host_config, 'r') as file:
             config = json.load(file)
@@ -405,6 +413,85 @@ def start_debug(evaluation_option: str, subscriber_count: int, add_compile_defin
     cleanup()
     print("Done.")
 
+def create_publishers(net, dns_host = None):
+    dns_host_ip_in_hex = None
+    if dns_host is not None:
+        dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
+        ip_bytes = dns_host_ip.split(".")
+        ip_bytes_in_hex = [ "{:02x}".format(int(x)) for x in ip_bytes ]
+        dns_host_ip_in_hex = f"0x{''.join(ip_bytes_in_hex)}"
+    # with open (f"{SCENARIO_PATH}/publishers.json", "r") as service_file:
+    #     services = json.load(service_file)
+    # for service in services:
+        # service_id = services[service]["serviceId"]
+        service_id = SERVICE_ID_INT
+        # publisher_port = services[service]["port"]
+        # mcast_ip = services[service]["mcast"]
+        mcast_ip = MCAST_IP
+        # ip = services[service]["ip"]
+        # net_name = services[service]["host"]
+        net_name = PUBLISHER_HOST_NAME
+        if mcast_ip is None:
+            lowerTwoDigetsServiceId = service_id % 256
+            upperTwoDigetsServiceId = service_id // 256
+            mcast_ip = "224.1." + str(upperTwoDigetsServiceId) + "." + str(lowerTwoDigetsServiceId)
+            print (f"Service {service_id} on host {net_name} has no multicast IP. Selecting {mcast_ip} as multicast IP.")
+        create_publisher_config(net[net_name], service_id, mcast_ip, dns_host_ip_in_hex)
+        create_publisher_certificate(net[net_name], service_id)
+
+def create_subscribers(net, dns_host = None):
+    dns_host_ip_in_hex = None
+    if dns_host is not None:
+        dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
+        ip_bytes = dns_host_ip.split(".")
+        ip_bytes_in_hex = [ "{:02x}".format(int(x)) for x in ip_bytes ]
+        dns_host_ip_in_hex = f"0x{''.join(ip_bytes_in_hex)}"
+    # with open (f"{SCENARIO_PATH}/subscribers.json", "r") as service_file:
+    #     clients = json.load(service_file)
+    # for client in clients:
+    #     service_id = clients[client]["serviceId"]
+    #     client_id = clients[client]["clientId"]
+    #     net_name = clients[client]["host"]
+    for net_name in SUBSCRIBER_HOST_NAMES:
+        service_id = SERVICE_ID_INT
+        client_id = SUBSCRIBER_HOST_NAMES.index(net_name)+1
+        create_subscriber_config(net[net_name], service_id, client_id, dns_host_ip_in_hex)
+        create_subscriber_certificate(net[net_name], service_id, client_id)
+
+def reference_certificates():
+    # with open (f"{SCENARIO_PATH}/subscribers.json", "r") as client_file:
+    #     clients = json.load(client_file)
+    # with open (f"{SCENARIO_PATH}/publishers.json", "r") as service_file:
+    #     services = json.load(service_file)
+    # for client in clients:
+    for client in SUBSCRIBER_HOST_NAMES:
+        # service_id = clients[client]["serviceId"]
+        # client_id = clients[client]["clientId"]
+        # client_host = clients[client]["host"]
+        # service_host = services[str(service_id)]["host"]
+        service_id = SERVICE_ID_INT
+        client_id = SUBSCRIBER_HOST_NAMES.index(client)+1
+        client_host = client
+        service_host = PUBLISHER_HOST_NAME
+        client_cert = f"{SCENARIO_PATH}/certificates/{client_host}_{client_id}.client.cert.pem"
+        client_config = f"{SCENARIO_PATH}/vsomeip-configs/{client_host}.json"
+        service_cert = f"{SCENARIO_PATH}/certificates/{service_host}_{service_id}.service.cert.pem"
+        service_config = f"{SCENARIO_PATH}/vsomeip-configs/{service_host}.json"
+        with open(client_config, 'r') as file:
+            client_conf = json.load(file)
+        with open(service_config, 'r') as file:
+            service_conf = json.load(file)
+        client_conf['service-certificate-path'] = service_cert
+        client_conf['host-certificates'] = ["only applies to services"]
+        if "host" in service_conf['host-certificates'][0] or client_cert in service_conf['host-certificates']:
+            service_conf['host-certificates'] = [client_cert]
+        else:
+            service_conf['host-certificates'].append(client_cert)
+        service_conf['service-certificate-path'] = "only applies to clients"
+        with open(client_config, 'w') as file:
+            json.dump(client_conf, file, indent=4)
+        with open(service_config, 'w') as file:
+            json.dump(service_conf, file, indent=4)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Starts vsomeip w/ or w/o security mechanisms and collects timestamps of handshake events')
@@ -475,21 +562,16 @@ if __name__ == '__main__':
 
     # create host configs and certificates
     print("Creating host configs and certificates ... ")
-    create_publisher_config(net[PUBLISHER_HOST_NAME])
-    create_service_certificate(net[PUBLISHER_HOST_NAME])
-    set_client_certificate_paths(net[PUBLISHER_HOST_NAME], subscriber_count)
+    create_publishers(net, net[dns_host_name])    
     set_subscriber_count_to_record(net[PUBLISHER_HOST_NAME], subscriber_count)
-    set_dns_server_ip(net[PUBLISHER_HOST_NAME], net[dns_host_name])
     if STD_CONDITION:
         subprocess.run(f'touch /var/log/{PUBLISHER_HOST_NAME}.std', shell=True)
+    create_subscribers(net, net[dns_host_name])
     for sub_host in SUBSCRIBER_HOST_NAMES:
-        create_subscriber_config(net[sub_host])
-        create_client_certificate(net[sub_host])
-        set_service_certificate_path(net[sub_host])
         set_subscriber_count_to_record(net[sub_host], subscriber_count)
-        set_dns_server_ip(net[sub_host], net[dns_host_name])
         if STD_CONDITION:
             subprocess.run(f'touch /var/log/{sub_host}.std', shell=True)
+    reference_certificates()
     for host in net.hosts:
         add_default_route(host)
 
