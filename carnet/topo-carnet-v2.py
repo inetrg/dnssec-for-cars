@@ -465,14 +465,14 @@ def reference_certificates():
         with open(service_config, 'r') as file:
             service_conf = json.load(file)
         client_conf['service-certificate-path'] = service_cert
-        client_conf['host-certificates'] = ["only applies to services"]        
+        client_conf['client-certificates'] = ["only applies to services"]        
         client_conf['subscriber-count-to-record'] = f'{subscriber_count}'
-        if "host" in service_conf['host-certificates'][0] or client_cert in service_conf['host-certificates']:
-            service_conf['host-certificates'] = [client_cert]
+        if "host" in service_conf['client-certificates'][0] or client_cert in service_conf['client-certificates']:
+            service_conf['client-certificates'] = [client_cert]
         else:
-            service_conf['host-certificates'].append(client_cert)
+            service_conf['client-certificates'].append(client_cert)
         service_conf['service-certificate-path'] = "only applies to clients"
-        count_sub_certs = len(service_conf['host-certificates'])
+        count_sub_certs = len(service_conf['client-certificates'])
         service_conf['subscriber-count-to-record'] = f'{count_sub_certs}'
         with open(client_config, 'w') as file:
             json.dump(client_conf, file, indent=4)

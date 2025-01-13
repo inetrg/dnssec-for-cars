@@ -279,7 +279,7 @@ def set_subscriber_counts_to_record():
     for host_config in host_configs:
         with open(host_config, 'r') as file:
             config = json.load(file)
-        count_sub_certs = len(config['host-certificates'])
+        count_sub_certs = len(config['client-certificates'])
         config['subscriber-count-to-record'] = f'{count_sub_certs}'
         with open(host_config, 'w') as file:
             json.dump(config, file, indent=4)
@@ -438,11 +438,11 @@ def reference_certificates():
         with open(service_config, 'r') as file:
             service_conf = json.load(file)
         client_conf['service-certificate-path'] = service_cert
-        client_conf['host-certificates'] = ["only applies to services"]
-        if "host" in service_conf['host-certificates'][0] or client_cert in service_conf['host-certificates']:
-            service_conf['host-certificates'] = [client_cert]
+        client_conf['client-certificates'] = ["only applies to services"]
+        if "host" in service_conf['client-certificates'][0] or client_cert in service_conf['client-certificates']:
+            service_conf['client-certificates'] = [client_cert]
         else:
-            service_conf['host-certificates'].append(client_cert)
+            service_conf['client-certificates'].append(client_cert)
         service_conf['service-certificate-path'] = "only applies to clients"
         with open(client_config, 'w') as file:
             json.dump(client_conf, file, indent=4)
