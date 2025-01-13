@@ -189,7 +189,6 @@ def create_subscriber_config(host, service_id, client_id, dns_host_ip_in_hex=Non
         json.dump(config, file, indent=4)
 
 def create_publisher_config(host, service_id, mcast_ip, dns_host_ip_in_hex=None):
-    host_name = host.__str__()
     publisher_config_template = f"{SCENARIO_PATH}/vsomeip-configs/vsomeip-udp-mininet-publisher.json"
     host_config = get_publisher_config_path(host, service_id)
     if not Path(host_config).is_file():
@@ -395,9 +394,10 @@ def start_debug(evaluation_option: str, subscriber_count: int, add_compile_defin
     cleanup()
     print("Done.")
 
-def create_publishers(net, dns_host = None):
+def create_publishers(net, dns_host_name = None):
     dns_host_ip_in_hex = None
-    if dns_host is not None:
+    if dns_host_name is not None:
+        dns_host = net[dns_host]
         dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
         ip_bytes = dns_host_ip.split(".")
         ip_bytes_in_hex = [ "{:02x}".format(int(x)) for x in ip_bytes ]
@@ -406,24 +406,25 @@ def create_publishers(net, dns_host = None):
     #     services = json.load(service_file)
     # for service in services:
         # service_id = services[service]["serviceId"]
-        service_id = SERVICE_ID_INT
-        # publisher_port = services[service]["port"]
-        # mcast_ip = services[service]["mcast"]
-        mcast_ip = MCAST_IP
-        # ip = services[service]["ip"]
-        # net_name = services[service]["host"]
-        net_name = PUBLISHER_HOST_NAME
-        if mcast_ip is None:
-            lowerTwoDigetsServiceId = service_id % 256
-            upperTwoDigetsServiceId = service_id // 256
-            mcast_ip = "224.1." + str(upperTwoDigetsServiceId) + "." + str(lowerTwoDigetsServiceId)
-            print (f"Service {service_id} on host {net_name} has no multicast IP. Selecting {mcast_ip} as multicast IP.")
-        create_publisher_config(net[net_name], service_id, mcast_ip, dns_host_ip_in_hex)
-        create_publisher_certificate(net[net_name], service_id)
+    service_id = SERVICE_ID_INT
+    # publisher_port = services[service]["port"]
+    # mcast_ip = services[service]["mcast"]
+    mcast_ip = MCAST_IP
+    # ip = services[service]["ip"]
+    # net_name = services[service]["host"]
+    net_name = PUBLISHER_HOST_NAME
+    if mcast_ip is None:
+        lowerTwoDigetsServiceId = service_id % 256
+        upperTwoDigetsServiceId = service_id // 256
+        mcast_ip = "224.1." + str(upperTwoDigetsServiceId) + "." + str(lowerTwoDigetsServiceId)
+        print (f"Service {service_id} on host {net_name} has no multicast IP. Selecting {mcast_ip} as multicast IP.")
+    create_publisher_config(net[net_name], service_id, mcast_ip, dns_host_ip_in_hex)
+    create_publisher_certificate(net[net_name], service_id)
 
 def create_subscribers(net, dns_host = None):
     dns_host_ip_in_hex = None
-    if dns_host is not None:
+    if dns_host_name is not None:
+        dns_host = net[dns_host]
         dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
         ip_bytes = dns_host_ip.split(".")
         ip_bytes_in_hex = [ "{:02x}".format(int(x)) for x in ip_bytes ]
@@ -465,13 +466,9 @@ def reference_certificates():
         with open(service_config, 'r') as file:
             service_conf = json.load(file)
         client_conf['service-certificate-path'] = service_cert
-        client_conf['client-certificates'] = ["only applies to services"]        
+        client_conf['client-certificates'] = []        
         client_conf['subscriber-count-to-record'] = f'{subscriber_count}'
-        if "host" in service_conf['client-certificates'][0] or client_cert in service_conf['client-certificates']:
-            service_conf['client-certificates'] = [client_cert]
-        else:
-            service_conf['client-certificates'].append(client_cert)
-        service_conf['service-certificate-path'] = "only applies to clients"
+        service_conf['client-certificates'].append({"id": f"0x{client_id:04x}", "certificate-path": client_cert})
         count_sub_certs = len(service_conf['client-certificates'])
         service_conf['subscriber-count-to-record'] = f'{count_sub_certs}'
         with open(client_config, 'w') as file:
@@ -508,9 +505,14 @@ if __name__ == '__main__':
                            'H':f'{WITH_SERVICE_AUTHENTICATION} {WITH_CLIENT_AUTHENTICATION} {WITH_DNSSEC} {WITH_DANE} {WITH_ENCRYPTION}'}
     add_compile_definitions = compile_definitions[evaluation_option]
 
+    print("Cleaning up mininet interfaces ... ")
+    subprocess.run(['mn', '-c'])
+    print("Done")
+
     # remove configs and certificates for clean start
     if args.clean_start:
         print("Removing configs and certificates ... ")
+        cleanup()
         # rm all host configs except the templates vsomeip-udp-mininet-publisher.json and vsomeip-udp-mininet-subscriber.json
         for file in Path(f"{SCENARIO_PATH}/vsomeip-configs").glob("*.json"):
             if not file.name.startswith("vsomeip-udp-mininet"):
@@ -527,7 +529,7 @@ if __name__ == '__main__':
         dns_host_name = DNS_HOST_NAME
     else:
         topo: simple_topo = simple_topo(n = host_count)
-        dns_host_name: str = ""
+        dns_host_name = None
     net: Mininet = Mininet(topo=topo, controller=None, link=TCLink)
     net.start()
     for switch in net.switches:
@@ -544,8 +546,8 @@ if __name__ == '__main__':
     
     # create host configs and certificates
     print("Creating host configs and certificates ... (this may take a while)")
-    create_publishers(net, net[dns_host_name])    
-    create_subscribers(net, net[dns_host_name])
+    create_publishers(net, dns_host_name)    
+    create_subscribers(net, dns_host_name)
     reference_certificates()
     print("Done.")
     # Evaluate

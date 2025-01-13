@@ -68,7 +68,7 @@
     "certificate-path" : "<certificate path>",
     "private-key-path" : "<private key path>",
     "service-certificate-path" : "<service certificate path>",
-    "client-certificates" : ["<host certificate path>", "<host certificate path>", "..."],
+    "client-certificates" : [{"id": "0x0001", "certificate-path": "<host certificate path>"}, {"id": "0x0002", "certificate-path": "<host certificate path>"}],
     "dns-server-ip" : "<dns server ip>",
     "subscriber-count-to-record" : "<subscriber count to record>"
 }

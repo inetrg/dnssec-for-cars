@@ -231,7 +231,9 @@ def set_client_certificate_paths(host, subscriber_count: int):
 
     with open(host_config, 'r') as file:
         config = json.load(file)    
-    client_certificate_paths = [f'{PROJECT_PATH}/certificates/h{i}.client.cert.pem' for i in range(2, subscriber_count + 1)]
+    client_certificate_paths = []
+    for i in range(2, subscriber_count + 2):
+        client_certificate_paths.append({"id": f"0x{i:04x}", "certificate-path": f'{PROJECT_PATH}/certificates/h{i}.client.cert.pem'})
     config['client-certificates'] = client_certificate_paths
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)

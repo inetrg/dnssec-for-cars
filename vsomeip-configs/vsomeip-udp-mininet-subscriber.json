@@ -44,7 +44,7 @@
     "certificate-path" : "<certificate path>",
     "private-key-path" : "<private key path>",
     "service-certificate-path" : "<service certificate path>",
-    "client-certificates" : ["<host>", "<host>", "..."],
+    "client-certificates" : [],
     "dns-server-ip" : "<dns server ip>",
     "subscriber-count-to-record" : "<subscriber count to record>"
 }
