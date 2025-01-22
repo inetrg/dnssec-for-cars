@@ -21,7 +21,9 @@
         {
             "service" : "0x1234",
             "instance" : "0x5678",
-            "unreliable" : [ 40000, 40002 ]
+            "unreliable" : [ 40000, 40002 ],
+            "private-key-path" : "<private key path>",
+            "service-certificate-path" : "<service certificate path>"
         }
     ],
     "udp-receive-buffer-size" : "16777216",
@@ -40,11 +42,5 @@
         "cyclic_offer_delay" : "2000",
         "request_response_delay" : "1500"
     },
-
-    "certificate-path" : "<certificate path>",
-    "private-key-path" : "<private key path>",
-    "service-certificate-path" : "<service certificate path>",
-    "client-certificates" : [],
-    "dns-server-ip" : "<dns server ip>",
-    "subscriber-count-to-record" : "<subscriber count to record>"
+    "dns-server-ip" : "<dns server ip>"
 }

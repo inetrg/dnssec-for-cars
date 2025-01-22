@@ -22,6 +22,8 @@
             "service" : "0x1234",
             "instance" : "0x5678",
             "unreliable" : "30509",
+            "private-key-path" : "<private key path>",
+            "client-certificates" : [],
             "events" :
             [
                 {
@@ -64,11 +66,5 @@
         "cyclic_offer_delay" : "2000",
         "request_response_delay" : "1500"
     },
-
-    "certificate-path" : "<certificate path>",
-    "private-key-path" : "<private key path>",
-    "service-certificate-path" : "<service certificate path>",
-    "client-certificates" : [{"id": "0x0001", "certificate-path": "<host certificate path>"}, {"id": "0x0002", "certificate-path": "<host certificate path>"}],
-    "dns-server-ip" : "<dns server ip>",
-    "subscriber-count-to-record" : "<subscriber count to record>"
+    "dns-server-ip" : "<dns server ip>"
 }

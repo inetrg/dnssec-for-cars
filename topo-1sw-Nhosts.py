@@ -105,15 +105,6 @@ def set_dns_server_ip(host, dns_host):
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
 
-def set_subscriber_count_to_record(host, subscriber_count_to_record: int):
-    host_name = host.__str__()
-    host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
-    with open(host_config, 'r') as file:
-        config = json.load(file)
-    config['subscriber-count-to-record'] = f'{subscriber_count_to_record}'
-    with open(host_config, 'w') as file:
-        json.dump(config, file, indent=4)
-
 def start_dns_server(dns_host):
     dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
     dns_host.cmd(f"sed -i -E 's/.* # mininet-host-ip/    ip-address: {dns_host_ip} # mininet-host-ip/' {PROJECT_PATH}/nsd/nsd.conf")
@@ -133,12 +124,13 @@ def create_subscriber_config(host):
     if not Path(host_config).is_file():
         host.cmd(f'cp {subscriber_config_template} {host_config}')
         client_id = host_name[1:]
-        create_host_config(host, host_config, client_id, False)
+        create_host_config(host, host_config, client_id)
     
     with open(host_config, 'r') as file:
         config = json.load(file)
     config['clients'][0]['service'] = SERVICE_ID_HEX_STR
     config['clients'][0]['instance'] = INSTANCE_ID_HEX_STR
+    config['clients'][0]['client-id'] = f"0x{int(client_id):04x}"
     # config["applications"] = []
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
@@ -152,7 +144,7 @@ def create_publisher_config(host):
     host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {publisher_config_template} {host_config}')
-        create_host_config(host, host_config, SERVICE_ID_HEX_STR, True)
+        create_host_config(host, host_config, SERVICE_ID_HEX_STR)
     
     with open(host_config, 'r') as file:
         config = json.load(file)
@@ -165,7 +157,7 @@ def create_publisher_config(host):
     if not STD_CONDITION:
         STD_CONDITION = ((config['logging']['console'] == 'true') or (config['logging']['file']['enable'] == 'true'))
 
-def create_host_config(host, host_config: str, app_id, is_publisher: bool):
+def create_host_config(host, host_config: str, app_id):
     host_name = host.__str__()
     unicast_ip = host.IP(intf=host.defaultIntf())
     with open(host_config, 'r') as file:
@@ -178,7 +170,6 @@ def create_host_config(host, host_config: str, app_id, is_publisher: bool):
     config['logging']['file']['path'] = f'/var/log/{host_name}.log'
     config['applications'][0]['name'] = host_name
     config['applications'][0]['id'] = app_id
-    config['applications'][0]['is_publisher'] = "true" if is_publisher else "false"
     config['routing'] = f'{host_name}'
 
     with open(host_config, 'w') as file:
@@ -195,8 +186,7 @@ def create_client_certificate(host):
         host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
         with open(host_config, 'r') as file:
             config = json.load(file)
-        config['certificate-path'] = certificate
-        config['private-key-path'] = private_key
+        config['clients'][0]['private-key-path'] = private_key
         with open(host_config, 'w') as file:
             json.dump(config, file, indent=4)
 
@@ -205,7 +195,7 @@ def set_service_certificate_path(host):
     host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
     with open(host_config, 'r') as file:
         config = json.load(file)
-    config['service-certificate-path'] = f'{PROJECT_PATH}/certificates/{PUBLISHER_HOST_NAME}.service.cert.pem'
+    config['clients'][0]['service-certificate-path'] = f'{PROJECT_PATH}/certificates/{PUBLISHER_HOST_NAME}.service.cert.pem'
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
 
@@ -219,8 +209,7 @@ def create_service_certificate(host):
         host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
         with open(host_config, 'r') as file:
             config = json.load(file)
-        config['certificate-path'] = certificate
-        config['private-key-path'] = private_key
+        config['services'][0]['private-key-path'] = private_key
         with open(host_config, 'w') as file:
             json.dump(config, file, indent=4)
 
@@ -234,7 +223,7 @@ def set_client_certificate_paths(host, subscriber_count: int):
     client_certificate_paths = []
     for i in range(2, subscriber_count + 2):
         client_certificate_paths.append({"id": f"0x{i:04x}", "certificate-path": f'{PROJECT_PATH}/certificates/h{i}.client.cert.pem'})
-    config['client-certificates'] = client_certificate_paths
+    config['services'][0]['client-certificates'] = client_certificate_paths
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
 
@@ -276,9 +265,9 @@ def build_vsomeip():
 
 def cleanup():
     subprocess.run(["pkill", "statistics-writ"])
-    subprocess.run(f"rm -f {PROJECT_PATH}/vsomeip-h*", shell=True)
+    subprocess.run(f"rm -f {PROJECT_PATH}/vsomeip-*", shell=True)
     subprocess.run("rm -f /var/log/h*.log", shell=True)
-    subprocess.run(f"rm -f {PROJECT_PATH}/publisher-initialized", shell=True)
+    subprocess.run(f"rm -f {PROJECT_PATH}/publisher-initialized*", shell=True)
     subprocess.run(f"rm -f /var/log/h*.std", shell=True)
 
 def start_evaluation(total_evaluation_runs: int, evaluation_option: str, subscriber_count: int, add_compile_definitions: str, net: Mininet, dns_host_name: str):
@@ -291,7 +280,7 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, subscri
         # check if result dir exists and create it if not
         if not Path(f"{PROJECT_PATH}/statistic-results/{evaluation_option}-series").is_dir():
             subprocess.run(f"mkdir -p {PROJECT_PATH}/statistic-results/{evaluation_option}-series", shell = True) 
-        statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", str(subscriber_count), f"{PROJECT_PATH}/statistic-results/{evaluation_option}-series", evaluation_option])
+        statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", f"[{SERVICE_ID}]", f"[{str(subscriber_count)}]", f"{PROJECT_PATH}/statistic-results/{evaluation_option}-series", evaluation_option+"-"+str(subscriber_count)])
         # statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", str(subscriber_count), f"{PROJECT_PATH}/statistic-results", evaluation_option])
         print("Done.")
         # start dns server
@@ -441,8 +430,6 @@ if __name__ == '__main__':
             set_service_certificate_path(host)
         if len(dns_host_name) and host_name != dns_host_name:
             set_dns_server_ip(host, net[dns_host_name])
-        if host_name != dns_host_name:
-            set_subscriber_count_to_record(host, subscriber_count)
         if STD_CONDITION:
             subprocess.run(f'touch /var/log/{host_name}.std', shell=True)
     print("Done.")
