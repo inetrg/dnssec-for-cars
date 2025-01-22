@@ -1,33 +1,19 @@
 {
-    "network" : "-h2",
+    "network" : "-h1",
     "unicast" : "10.0.0.2",
     "netmask" : "255.0.0.0",
     "logging" : 
     {
-        "level" : "trace",
+        "level" : "fatal",
         "console" : "false",
-        "file" : { "enable" : "true", "path" : "/var/log/carnet/h2.log" },
+        "file" : { "enable" : "false", "path" : "/var/log/h2.log" },
         "dlt" : "true"
     },
-    "applications" :
-    [
-        {
-            "name" : "h2",
-            "id" : "0x1343"
-        }
-    ],
-    "clients" :
-    [
-        {
-            "service" : "0x1234",
-            "instance" : "0x5678",
-            "unreliable" : [ 40000, 40002 ],
-            "private-key-path" : "<private key path>",
-            "service-certificate-path" : "<service certificate path>"
-        }
-    ],
+    "applications" : [],
+    "services" : [],
+    "clients" : [],
     "udp-receive-buffer-size" : "16777216",
-    "routing" : "h2",
+    "routing" : "h1",
     "service-discovery" :
     {
         "enable" : "true",

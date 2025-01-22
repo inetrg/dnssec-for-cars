@@ -44,7 +44,12 @@ if [[ $# -gt 7 ]]; then
 
     svcb_rdata="ipv4hint=$ip_address  port=$port_number  key65280=$dns_instance  key65281=$dns_major  key65282=$dns_minor  key65283=$protocol_id"
     echo $(printf "; SVCB records for minor=%s major=%s instance=%s id=%s\n" "$dns_minor" "$dns_major" "$dns_instance" "$dns_service") >> $ZONE_FILE_PATH
+    echo $(printf "_someip.minor%s.major%s.instance%s.id%s.service.  7200  IN  SVCB  1  .  %s\n" "$dns_minor" "$dns_major" "$dns_instance" "$dns_service" "$svcb_rdata") >> $ZONE_FILE_PATH
+    echo $(printf "_someip.major%s.instance%s.id%s.service.  7200  IN  SVCB  1  .  %s\n" "$dns_major" "$dns_instance" "$dns_service" "$svcb_rdata") >> $ZONE_FILE_PATH
+    echo $(printf "_someip.minor%s.major%s.id%s.service.  7200  IN  SVCB  1  .  %s\n" "$dns_minor" "$dns_major" "$dns_service" "$svcb_rdata") >> $ZONE_FILE_PATH
     echo $(printf "_someip.instance%s.id%s.service.  7200  IN  SVCB  1  .  %s\n" "$dns_instance" "$dns_service" "$svcb_rdata") >> $ZONE_FILE_PATH
+    echo $(printf "_someip.major%s.id%s.service.  7200  IN  SVCB  1  .  %s\n" "$dns_major" "$dns_service" "$svcb_rdata") >> $ZONE_FILE_PATH
+    echo $(printf "_someip.id%s.service.  7200  IN  SVCB  1  .  %s\n" "$dns_service" "$svcb_rdata") >> $ZONE_FILE_PATH
 
 
     CERTIFICATE_CONF="[ req ]
@@ -82,7 +87,12 @@ if [[ $# -gt 7 ]]; then
     nsComment               = \"OpenSSL Generated Certificate\"
 
     [ alternate_names ]
-    DNS.1  = $(printf "_someip.instance%s.id%s.service."                 "$dns_instance" "$dns_service")
+    DNS.1  = $(printf "_someip.minor%s.major%s.instance%s.id%s.service." "$dns_minor" "$dns_major" "$dns_instance" "$dns_service")
+    DNS.2  = $(printf "_someip.major%s.instance%s.id%s.service."         "$dns_major" "$dns_instance" "$dns_service")
+    DNS.3  = $(printf "_someip.minor%s.major%s.id%s.service."            "$dns_minor" "$dns_major" "$dns_service")
+    DNS.4  = $(printf "_someip.instance%s.id%s.service."                 "$dns_instance" "$dns_service")
+    DNS.5  = $(printf "_someip.major%s.id%s.service."                    "$dns_major" "$dns_service")
+    DNS.6  = $(printf "_someip.id%s.service."                            "$dns_service")
     IP.1   = ${ip_address}
     email.1  = user@example.org"
 
