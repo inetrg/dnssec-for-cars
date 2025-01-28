@@ -7,3 +7,5 @@ nsd_server.key
 vsomeip-configs/h*.json
 *.log
 carnet/vsomeip-configs/h*.json
+*.csv
+nsd-*
