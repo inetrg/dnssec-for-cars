@@ -21,16 +21,13 @@ from mininet.log import setLogLevel
 from mininet.util import dumpNodeConnections
 from mininet.util import dumpNetConnections
 from pathlib import Path
-from subprocess import TimeoutExpired
 
 DNS_HOST_NAME = 'dns'
 PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
 SCENARIO_PATH = f"{PROJECT_PATH}/carnet"
-START_DELAY_MS = 10000
 num_pubs_started = 0
 service_sub_counts = dict()
-node_index = 0
-node_names = dict()
+managers = dict()
 
 INSTANCE_ID_INT = 1
 INSTANCE_ID_HEX_STR = "0x{:04x}".format(INSTANCE_ID_INT)
@@ -46,17 +43,6 @@ WITH_DNSSEC = 'WITH_DNSSEC'
 WITH_DANE = 'WITH_DANE'
 WITH_ENCRYPTION = 'WITH_ENCRYPTION'
 
-def get_node_name(host):
-    global node_index
-    global node_names
-    host_name = host.__str__()
-    if host_name in node_names:
-        return node_names[host_name]
-    node_index += 1
-    node_name = f"h{node_index}"
-    node_names[host_name] = node_name
-    return node_name
-
 class car_topo( Topo ):
     "Simple topology example."
 
@@ -70,55 +56,42 @@ class car_topo( Topo ):
         sRR = self.addSwitch('s4')
         sRL = self.addSwitch('s5')
 
+        # add hosts (names must be lower case!)
+        zcRl = self.addHost('zcrl')
+        zcFl = self.addHost('zcfl')
+        zcRr = self.addHost('zcrr')
+        zcFr = self.addHost('zcfr')
+        lRL = self.addHost('lrl')
+        lFL = self.addHost('lfl')
+        lRR = self.addHost('lrr')
+        lFR = self.addHost('lfr')
+        cR = self.addHost('cr')
+        cF = self.addHost('cf')
+        adas = self.addHost('adas')
+        inf = self.addHost('inf')
+        con = self.addHost('con')
         # add DNS node
         dns = self.addHost(DNS_HOST_NAME)
 
+        # Add links
         self.addLink(sRL, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
         self.addLink(sFL, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
         self.addLink(sRR, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
         self.addLink(sFR, sC, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
         self.addLink(sC, dns, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-
-        files = [f"{SCENARIO_PATH}/publishers.json", f"{SCENARIO_PATH}/subscribers.json"]
-        for (file) in files:
-            with open(file, "r") as hosts_file:
-                hosts = json.load(hosts_file)
-            client_id = ""
-            for host in hosts:
-                host_name = hosts[host]["host"].lower()
-                service_id = "-" + str(hosts[host]["serviceId"])
-                if "clientId" in hosts[host]:
-                    client_id = "-" + str(hosts[host]["clientId"])
-                node_name = host_name + service_id + client_id
-                node = self.addHost(get_node_name(node_name))
-                if host_name == "zcrl":
-                    self.addLink(sRL, node, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-                elif host_name == "zcfl":
-                    self.addLink(sFL, node, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-                elif host_name == "zcrr":
-                    self.addLink(sRR, node, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-                elif host_name == "zcfr":
-                    self.addLink(sFR, node, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-                elif host_name == "lrl":
-                    self.addLink(sRL, node, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-                elif host_name == "lfl":
-                    self.addLink(sFL, node, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-                elif host_name == "lrr":
-                    self.addLink(sRR, node, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-                elif host_name == "lfr":
-                    self.addLink(sFR, node, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-                elif host_name == "adas":
-                    self.addLink(sRR, node, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-                elif host_name == "con":
-                    self.addLink(sFL, node, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-                elif host_name == "inf":
-                    self.addLink(sFL, node, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-                elif host_name == "cr":
-                    self.addLink(sRL, node, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-                elif host_name == "cf":
-                    self.addLink(sFR, node, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
-                else:
-                    print(f"ERROR Host {host_name} not found in topology")
+        self.addLink(sRL, zcRl, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFL, zcFl, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRR, zcRr, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFR, zcFr, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRL, lRL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFL, lFL, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRR, lRR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFR, lFR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRL, cR, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFR, cF, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sRR, adas, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFL, inf, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
+        self.addLink(sFL, con, bw=1000, delay='0ms', loss=0, max_queue_size=99999)
 
 def make_switch_traditional(net: Mininet, switch: str):
     net[switch].cmd('ovs-ofctl add-flow {} action=normal'.format(switch))
@@ -170,11 +143,11 @@ def get_subscriber_config_path(host, service_id, client_id):
 
 def get_subscriber_app_name(host, service_id, client_id):
     host_name = host.__str__()
-    return f"{host_name}"#-{service_id}-{client_id}"
+    return f"{host_name}-{service_id}-{client_id}"
 
 def get_subscriber_cert_name(host, service_id, client_id):
     host_name = host.__str__()
-    return f'{host_name}'#_{client_id}'
+    return f'{host_name}_{client_id}'
 
 def get_publisher_config_path(host, service_id):
     host_name = host.__str__()
@@ -182,11 +155,11 @@ def get_publisher_config_path(host, service_id):
 
 def get_publisher_app_name(host, service_id):
     host_name = host.__str__()
-    return f"{host_name}"#-{service_id}"
+    return f"{host_name}-{service_id}"
 
 def get_publisher_cert_name(host, service_id):
     host_name = host.__str__()
-    return f'{host_name}'#_{service_id}'
+    return f'{host_name}_{service_id}'
 
 def create_subscriber_config(host, service_id, client_id, dns_host_ip_in_hex=None):
     host_config = get_subscriber_config_path(host, service_id, client_id)
@@ -304,26 +277,48 @@ def start_someip_subscriber_app(host, service_id, client_id):
     host_config = get_subscriber_config_path(host, service_id, client_id)
     app_name = get_subscriber_app_name(host, service_id, client_id)
     launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {service_id} --instanceid {INSTANCE_ID} &"
-    host.cmd(launch_cmd)
+    host.cmd(f"{launch_cmd}")
 
 def start_someip_publisher_app(host, service_id):
     host_config = get_publisher_config_path(host, service_id)
     app_name = get_publisher_app_name(host, service_id)
     launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {service_id} --instanceid {INSTANCE_ID} &"
-    host.cmd(launch_cmd)
+    host.cmd(f"{launch_cmd}")
+
+def start_managers(net):
+    global num_pubs_started
+    global managers
+    managers = dict()
+    with open (f"{SCENARIO_PATH}/publishers.json", "r") as service_file:
+        services = json.load(service_file)
+    for service in services:
+        net_name = services[service]["host"].lower()
+        if net_name not in managers:
+            service_id = services[service]["serviceId"]
+            managers[net_name] = get_publisher_app_name(net[net_name], services[service]["serviceId"])
+            start_someip_publisher_app(net[net_name], service_id)
+            num_pubs_started += 1
+    with open (f"{SCENARIO_PATH}/subscribers.json", "r") as sub_file:
+        clients = json.load(sub_file)
+    for client in clients:
+        net_name = clients[client]["host"].lower()
+        if net_name not in managers:
+            service_id = clients[client]["serviceId"]
+            client_id = clients[client]["clientId"]
+            managers[net_name] = get_subscriber_app_name(net[net_name], service_id, client_id)
+            start_someip_subscriber_app(net[net_name], service_id, client_id)
 
 def start_all_publishers(net):
     global num_pubs_started
+    global managers
     with open (f"{SCENARIO_PATH}/publishers.json", "r") as service_file:
         services = json.load(service_file)
     for service in services:
         service_id = services[service]["serviceId"]
-        host_name = get_node_name(services[service]["host"].lower() + "-" + str(service_id))
-        # start_someip_publisher_app(net[host_name], service_id)
-        # print (f"Starting publisher for service {service_id} on host {host_name}")
+        host_name = services[service]["host"].lower()
+        if managers[host_name] == get_publisher_app_name(net[host_name], service_id):
+            continue
         start_someip_publisher_app(net[host_name], service_id)
-        # thread = Thread(target=start_someip_publisher_app, args=(net[host_name], service_id))
-        # thread.start()
         num_pubs_started += 1
         # time.sleep(0.01)
 
@@ -333,16 +328,14 @@ def start_all_subscribers(net):
     for client in clients:
         service_id = clients[client]["serviceId"]
         client_id = clients[client]["clientId"]
-        host_name = get_node_name(clients[client]["host"].lower() + "-" + str(service_id) + "-" + str(client_id))
-        # print (f"Starting subscriber for service {service_id} and client {client_id} on host {host_name}")
+        host_name = clients[client]["host"].lower()
+        if managers[host_name] == get_publisher_app_name(net[host_name], service_id):
+            continue
         start_someip_subscriber_app(net[host_name], service_id, client_id)
-        # thread = Thread(target=start_someip_subscriber_app, args=(net[host_name], service_id, client_id))
-        # thread.start()
         # time.sleep(0.01)
 
 def wait_all_publishers_initialized():
     global num_pubs_started
-    print(f"Waiting for all {num_pubs_started} publishers to be initialized ...")
     publisher_initialized_file = Path(f"{PROJECT_PATH}/")
     while True:
         num_pubs_initialized = len(list(publisher_initialized_file.glob("publisher-initialized-*")))
@@ -408,12 +401,17 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
             start_dns_server(net[dns_host_name])
             print("Done.")
         # start someip publisher and subscribers
+        print("Starting SOME/IP manager apps per host ... ")
+        managers_start = time.time()
+        start_managers(net)
+        time.sleep(0.1)
+        managers_end = time.time()
+        print("Done")
         print("Starting SOME/IP publishers ... ")
         publishers_start = time.time()
         start_all_publishers(net)
-        wait_all_publishers_initialized()
+        # wait_all_publishers_initialized()
         publishers_end = time.time()
-        time.sleep(1)
         # Give an extra second for startup
         print("Done.")
         print("Starting SOME/IP subscribers ... ")
@@ -421,16 +419,11 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         start_all_subscribers(net)
         subscribers_end = time.time()
         print("Done.")
-        print(f"Total initialization time: {subscribers_end-publishers_start}s (publishers: {publishers_end-publishers_start}s, subscribers: {subscribers_end-subscribers_start}s)")
+        print(f"Total initialization time: {subscribers_end-managers_start}s (managers: {managers_end-managers_start}s, publishers: {publishers_end-publishers_start}s, subscribers: {subscribers_end-subscribers_start}s)")
         evaluation_run_start = time.time()
         # Wait for statistics writer
         print("Waiting until all statistics are contributed ... ")
-        try:
-            return_code = statistics_writer_process.wait(timeout=30)
-        except TimeoutExpired:
-            print("statistics writer did not finish in time. Killing it ...")
-            statistics_writer_process.kill()
-            return_code = 1
+        return_code = statistics_writer_process.wait(timeout=10)
         if return_code == 0:
             print("Done.")
             evaluation_run_end = time.time()
@@ -464,8 +457,8 @@ def create_publishers(net, dns_host_name = None):
     with open (f"{SCENARIO_PATH}/publishers.json", "r") as service_file:
         services = json.load(service_file)
     for service in services:
+        net_name = services[service]["host"].lower()
         service_id = services[service]["serviceId"]
-        net_name = get_node_name(services[service]["host"].lower() + "-" + str(service_id))
         mcast_ip = services[service]["mcast"]
         if mcast_ip is None:
             lowerTwoDigetsServiceId = service_id % 256
@@ -488,7 +481,7 @@ def create_subscribers(net, dns_host = None):
     for client in clients:
         service_id = clients[client]["serviceId"]
         client_id = clients[client]["clientId"]
-        net_name = get_node_name(clients[client]["host"].lower() + "-" + str(service_id) + "-" + str(client_id))
+        net_name = clients[client]["host"].lower()
         create_subscriber_config(net[net_name], service_id, client_id, dns_host_ip_in_hex)
         create_subscriber_certificate(net[net_name], service_id, client_id)
 
@@ -503,10 +496,8 @@ def reference_certificates():
     for client in clients:
         service_id = clients[client]["serviceId"]
         client_id = clients[client]["clientId"]
-        service_host_name = services[str(service_id)]["host"].lower() + "-" + str(service_id)
-        service_host = get_node_name(service_host_name)
-        client_host_name = clients[client]["host"].lower() + "-" + str(service_id) + "-" + str(client_id)
-        client_host = get_node_name(client_host_name)
+        service_host = services[str(service_id)]["host"].lower()
+        client_host = clients[client]["host"].lower()
 
         if service_host in services_per_host:
             services_per_host[service_host] += 1
@@ -555,9 +546,8 @@ def reference_certificates():
         else:
             service_sub_counts[service_id] = 1
 
-    print("Num Service hosts: ", len(services_per_host))
-    print("Num Client hosts: ", len(clients_per_host))
-    print("Max clients per publisher: ", max(services_per_host.values()))
+    print("Max services per host: ", max(services_per_host.values()))
+    print("Max clients per host: ", max(clients_per_host.values()))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Starts vsomeip w/ or w/o security mechanisms and collects timestamps of handshake events')

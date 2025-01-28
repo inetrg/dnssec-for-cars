@@ -291,7 +291,7 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, subscri
         # start someip publisher and subscribers
         print("Starting SOME/IP publisher ... ")
         start_someip_publisher_app(net[PUBLISHER_HOST_NAME])
-        publisher_initialized_file = Path(f"{PROJECT_PATH}/publisher-initialized")
+        publisher_initialized_file = Path(f"{PROJECT_PATH}/publisher-initialized-{SERVICE_ID}")
         while not publisher_initialized_file.is_file():
             time.sleep(1)
         # Give an extra second for startup

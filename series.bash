@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 RUNTIMESLOG="runtimes.log"
-UPPER_BOUND_HOSTS=26
+UPPER_BOUND_HOSTS=50
 touch $RUNTIMESLOG
 options=("A" "F" "H")
 RUNS=20
