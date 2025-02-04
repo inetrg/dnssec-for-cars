@@ -9,7 +9,12 @@
     sudo apt update
     sudo apt install libboost1.83-all-dev
 - [cmake](https://apt.kitware.com/)
-- [libc-ares-dev](https://packages.ubuntu.com/jammy/libc-ares-dev)
+- [libc-ares-dev](https://packages.ubuntu.com/jammy/libc-ares-dev) 
+    --> Uninstalled 
+    --> get tar release: https://github.com/c-ares/c-ares/releases/download/v1.34.4/c-ares-1.34.4.tar.gz
+    ./configure
+    make
+    sudo make install
 - [cryptopp](https://github.com/weidai11/cryptopp)
 - [cryptopp pem pack](https://github.com/noloader/cryptopp-pem)
 - [openssl](https://packages.ubuntu.com/jammy/openssl)
