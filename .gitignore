@@ -9,3 +9,5 @@ vsomeip-configs/h*.json
 carnet/vsomeip-configs/h*.json
 *.csv
 nsd-*
+carnet/statistic-results/
+statistic-results/
