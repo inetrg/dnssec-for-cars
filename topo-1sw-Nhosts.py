@@ -232,7 +232,7 @@ def reset_zone_files():
 
 def start_someip_subscriber_app(host):
     host_name = host.__str__()
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {SERVICE_ID} --instanceid {INSTANCE_ID} &"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {SERVICE_ID} --instanceid {INSTANCE_ID} --waitms 0 &"
     if STD_CONDITION:
         host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
     else:
@@ -240,7 +240,7 @@ def start_someip_subscriber_app(host):
 
 def start_someip_publisher_app(host):
     host_name = host.__str__()
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {SERVICE_ID} --instanceid {INSTANCE_ID} &"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {SERVICE_ID} --instanceid {INSTANCE_ID} --waitms 0 &"
     if STD_CONDITION:
         host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
     else:
@@ -295,7 +295,7 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, subscri
         while not publisher_initialized_file.is_file():
             time.sleep(1)
         # Give an extra second for startup
-        time.sleep(1) 
+        # time.sleep(1) 
         print("Done.")
         print("Starting SOME/IP subscribers ... ")
         for host in net.hosts:
@@ -387,6 +387,11 @@ if __name__ == '__main__':
                            'G':f'{WITH_SERVICE_AUTHENTICATION} {WITH_CLIENT_AUTHENTICATION} {WITH_DNSSEC} {WITH_DANE}',
                            'H':f'{WITH_SERVICE_AUTHENTICATION} {WITH_CLIENT_AUTHENTICATION} {WITH_DNSSEC} {WITH_DANE} {WITH_ENCRYPTION}'}
     add_compile_definitions = compile_definitions[evaluation_option]
+
+    print("Cleaning up mininet interfaces ... ")
+    subprocess.run(['mn', '-c'])
+    cleanup()
+    print("Done")
 
     # remove configs and certificates for clean start
     if args.clean_start:

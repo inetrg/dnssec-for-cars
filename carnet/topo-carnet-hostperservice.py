@@ -303,13 +303,13 @@ def reset_zone_files():
 def start_someip_subscriber_app(host, service_id, client_id):
     host_config = get_subscriber_config_path(host, service_id, client_id)
     app_name = get_subscriber_app_name(host, service_id, client_id)
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {service_id} --instanceid {INSTANCE_ID} &"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {service_id} --instanceid {INSTANCE_ID} --waitms {START_DELAY_MS} &"
     host.cmd(launch_cmd)
 
 def start_someip_publisher_app(host, service_id):
     host_config = get_publisher_config_path(host, service_id)
     app_name = get_publisher_app_name(host, service_id)
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {service_id} --instanceid {INSTANCE_ID} &"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {service_id} --instanceid {INSTANCE_ID} --waitms {START_DELAY_MS} &"
     host.cmd(launch_cmd)
 
 def start_all_publishers(net):
@@ -413,7 +413,7 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         start_all_publishers(net)
         wait_all_publishers_initialized()
         publishers_end = time.time()
-        time.sleep(1)
+        # time.sleep(1)
         # Give an extra second for startup
         print("Done.")
         print("Starting SOME/IP subscribers ... ")
