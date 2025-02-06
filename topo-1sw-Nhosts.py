@@ -150,6 +150,13 @@ def create_publisher_config(host):
         config = json.load(file)
     config['services'][0]['service'] = SERVICE_ID_HEX_STR
     config['services'][0]['instance'] = INSTANCE_ID_HEX_STR
+    config['services'][0]['events'] = [
+        {"events": f"0x{int(10000+SERVICE_ID_INT):04x}", "is_field" : "true", "update-cycle" : 0},
+        {"events": f"0x{int(20000+SERVICE_ID_INT):04x}", "is_field" : "true"}
+    ]
+    config['services'][0]['eventgroups'] = [
+        {"eventgroup" : f"0x{int(30000+SERVICE_ID_INT):04x}", "events" : [ f"0x{int(10000+SERVICE_ID_INT):04x}", f"0x{int(20000+SERVICE_ID_INT):04x}" ], "multicast" : { "address" : "224.225.226.233", "port" :  "32344"}}
+    ]
     # config["applications"] = []
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
@@ -232,19 +239,19 @@ def reset_zone_files():
 
 def start_someip_subscriber_app(host):
     host_name = host.__str__()
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {SERVICE_ID} --instanceid {INSTANCE_ID} --waitms 0 &"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {SERVICE_ID} --instanceid {INSTANCE_ID} --waitms 10"
     if STD_CONDITION:
         host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
     else:
-        host.cmd(f"{launch_cmd}")
+        host.cmd(f"{launch_cmd} &")
 
 def start_someip_publisher_app(host):
     host_name = host.__str__()
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {SERVICE_ID} --instanceid {INSTANCE_ID} --waitms 0 &"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {SERVICE_ID} --instanceid {INSTANCE_ID} --waitms 0 "
     if STD_CONDITION:
         host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
     else:
-        host.cmd(f"{launch_cmd}")
+        host.cmd(f"{launch_cmd} &")
 
 def stop_subscriber_app(host):
     host.cmd("pkill my-subscriber")
@@ -292,8 +299,8 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, subscri
         print("Starting SOME/IP publisher ... ")
         start_someip_publisher_app(net[PUBLISHER_HOST_NAME])
         publisher_initialized_file = Path(f"{PROJECT_PATH}/publisher-initialized-{SERVICE_ID}")
-        while not publisher_initialized_file.is_file():
-            time.sleep(1)
+        # while not publisher_initialized_file.is_file():
+        #     time.sleep(1)
         # Give an extra second for startup
         # time.sleep(1) 
         print("Done.")
