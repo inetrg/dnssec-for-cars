@@ -42,9 +42,9 @@ if [[ $# -gt 7 ]]; then
     dns_instance=$(printf "0x%04x" $instance_id)
     dns_major=$(printf "0x%02x" $major_version)
 
-    svcb_rdata="ipv4hint=$ip_address key65280=$dns_instance  key65281=$dns_major  key65283=$protocol_id  key65284=$port_numbers"
-    echo $(printf "; SVCB records for major=%s instance=%s service=%s id=%s\n" "$dns_major" "$dns_instance" "$dns_service" "$dns_client") >> $ZONE_FILE_PATH
-    echo $(printf "_someip.major%s.instance%s.service%s.id%s.client.  7200  IN  SVCB  1  .  %s\n" "$dns_major" "$dns_instance" "$dns_service" "$dns_client" "$svcb_rdata") >> $ZONE_FILE_PATH
+    # svcb_rdata="ipv4hint=$ip_address key65280=$dns_instance  key65281=$dns_major  key65283=$protocol_id  key65284=$port_numbers"
+    # echo $(printf "; SVCB records for major=%s instance=%s service=%s id=%s\n" "$dns_major" "$dns_instance" "$dns_service" "$dns_client") >> $ZONE_FILE_PATH
+    # echo $(printf "_someip.major%s.instance%s.service%s.id%s.client.  7200  IN  SVCB  1  .  %s\n" "$dns_major" "$dns_instance" "$dns_service" "$dns_client" "$svcb_rdata") >> $ZONE_FILE_PATH
 
     CERTIFICATE_CONF="[ req ]
     prompt               = no
@@ -81,7 +81,6 @@ if [[ $# -gt 7 ]]; then
     nsComment               = \"OpenSSL Generated Certificate\"
 
     [ alternate_names ]
-    DNS.1  = $(printf "_someip.major%s.instance%s.service%s.id%s.client."         "$dns_major" "$dns_instance" "$dns_service" "$dns_client")
     IP.1   = ${ip_address}
     email.1  = user@example.org"
 

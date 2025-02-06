@@ -340,15 +340,15 @@ def start_all_subscribers(net):
         # thread.start()
         # time.sleep(0.01)
 
-def wait_all_publishers_initialized():
-    global num_pubs_started
-    print(f"Waiting for all {num_pubs_started} publishers to be initialized ...")
-    publisher_initialized_file = Path(f"{PROJECT_PATH}/")
-    while True:
-        num_pubs_initialized = len(list(publisher_initialized_file.glob("publisher-initialized-*")))
-        if (num_pubs_initialized == num_pubs_started):
-            break
-        time.sleep(0.01)
+# def wait_all_publishers_initialized():
+#     global num_pubs_started
+#     print(f"Waiting for all {num_pubs_started} publishers to be initialized ...")
+#     publisher_initialized_file = Path(f"{PROJECT_PATH}/")
+#     while True:
+#         num_pubs_initialized = len(list(publisher_initialized_file.glob("publisher-initialized-*")))
+#         if (num_pubs_initialized == num_pubs_started):
+#             break
+#         time.sleep(0.01)
 
 def stop_all_subscriber_apps(net):
     for host in net.hosts:
@@ -411,9 +411,8 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         print("Starting SOME/IP publishers ... ")
         publishers_start = time.time()
         start_all_publishers(net)
-        wait_all_publishers_initialized()
+        # wait_all_publishers_initialized()
         publishers_end = time.time()
-        # time.sleep(1)
         # Give an extra second for startup
         print("Done.")
         print("Starting SOME/IP subscribers ... ")

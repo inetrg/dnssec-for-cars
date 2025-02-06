@@ -4,7 +4,7 @@
     "netmask" : "255.0.0.0",
     "logging" : 
     {
-        "level" : "trace",
+        "level" : "debug",
         "console" : "false",
         "file" : { "enable" : "true", "path" : "/var/log/carnet/h2.log" },
         "dlt" : "true"
