@@ -318,6 +318,7 @@ def start_someip_subscriber_app(host, pub_id: int, app_name: str):
 
 def start_subscribers(net: Mininet, pub_count: int, sub_count: int, one_sub_host: bool = False):
     if one_sub_host:
+        initial_host_started = False
         sub_host = net['h'+str(pub_count+1)]
     for i in range(1, pub_count+1):
         for j in range(1, sub_count+1):
@@ -326,6 +327,9 @@ def start_subscribers(net: Mininet, pub_count: int, sub_count: int, one_sub_host
                 sub_host = net['h'+str(client_id)]
             app_name = f"sub-{client_id}"
             start_someip_subscriber_app(sub_host, i, app_name)
+            if one_sub_host and not initial_host_started:
+                initial_host_started = True
+                time.sleep(0.001)
 
 def start_someip_publisher_app(host, pub_id: int):
     host_name = host.__str__()
