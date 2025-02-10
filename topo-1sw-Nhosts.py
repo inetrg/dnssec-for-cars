@@ -15,6 +15,7 @@ import time
 from itertools import combinations
 from mininet.topo import Topo
 from mininet.net import Mininet
+from mininet.node import OVSBridge
 from mininet.cli import CLI
 from mininet.link import TCLink
 from mininet.log import setLogLevel
@@ -417,10 +418,10 @@ if __name__ == '__main__':
     else:
         topo: simple_topo = simple_topo(n = host_count)
         dns_host_name: str = ""
-    net: Mininet = Mininet(topo=topo, controller=None, link=TCLink)
+    net: Mininet = Mininet(topo=topo, controller=None, switch=OVSBridge, link=TCLink)
     net.start()
-    for switch in net.switches:
-        make_switch_traditional(net, switch.__str__())
+    # for switch in net.switches:
+    #     make_switch_traditional(net, switch.__str__())
     print("Done.")
     # build vsomeip
     print("Building vsomeip ... ")
