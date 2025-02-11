@@ -24,7 +24,7 @@
         "initial_delay_max" : "100",
         "repetitions_base_delay" : "200",
         "repetitions_max" : "3",
-        "ttl" : "0xFFFFFF",
+        "ttl" : "100",
         "cyclic_offer_delay" : "2000",
         "request_response_delay" : "1500"
     },
