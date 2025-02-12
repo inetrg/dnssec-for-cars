@@ -11,3 +11,4 @@ carnet/vsomeip-configs/h*.json
 nsd-*
 carnet/statistic-results/
 statistic-results/
+publisher-initialized*
