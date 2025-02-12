@@ -23,6 +23,7 @@ from mininet.util import dumpNodeConnections
 from mininet.util import dumpNetConnections
 from pathlib import Path
 from subprocess import TimeoutExpired
+from math import ceil
 
 PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
 
@@ -168,28 +169,55 @@ def create_publisher_config(host, pub_id: int):
     host_name = host.__str__()
     service_id = pub_id
     service_id_hex = "0x{:04x}".format(service_id)
+    app_name = "pub-" + str(service_id)
+    app_id = service_id_hex
     publisher_config_template = f"{PROJECT_PATH}/vsomeip-configs/vsomeip-udp-mininet-publisher.json"
     host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {publisher_config_template} {host_config}')
-        create_host_config(host, host_config, service_id_hex, host_name)
+        create_host_config(host, host_config, app_id, app_name)
+    else:
+        # add another app id to the existing config
+        with open(host_config, 'r') as file:
+            config = json.load(file)
+        app_exists = False
+        new_app_data = {"name": app_name, "id": app_id}
+        for app in config['applications']:
+            if app['name'] == app_name:
+                app_exists = True
+                app = new_app_data
+                break
+        if not app_exists:
+            config['applications'].append(new_app_data)
+        with open(host_config, 'w') as file:
+            json.dump(config, file, indent=4)
     
     with open(host_config, 'r') as file:
         config = json.load(file)
-    config['services'][0]['service'] = service_id_hex
-    config['services'][0]['instance'] = INSTANCE_ID_HEX_STR
-    config['services'][0]['unreliable'] = str(PUBLISHER_PORT+service_id)
-    config['services'][0]['events'] = [
-        {"events": f"0x{int(10000+service_id):04x}", "is_field" : "true", "update-cycle" : 0},
-        {"events": f"0x{int(20000+service_id):04x}", "is_field" : "true"}
-    ]
+    service_exists = False
+    new_service_config = {
+        'service': service_id_hex,
+        'instance': INSTANCE_ID_HEX_STR,
+        'unreliable': str(PUBLISHER_PORT+service_id),
+        'events': [{"events": f"0x{int(10000+service_id):04x}", "is_field" : "true", "update-cycle" : 0},
+        {"events": f"0x{int(20000+service_id):04x}", "is_field" : "true"}]
+    }
     lowerTwoDigetsServiceId = service_id % 256
     upperTwoDigetsServiceId = service_id // 256
     mcast_ip = "224.225." + str(upperTwoDigetsServiceId) + "." + str(lowerTwoDigetsServiceId)
-    config['services'][0]['eventgroups'] = [
+    new_service_config['eventgroups'] = [
         {"eventgroup" : f"0x{int(30000+service_id):04x}", "events" : [ f"0x{int(10000+service_id):04x}", f"0x{int(20000+service_id):04x}" ], "multicast" : { "address" : mcast_ip, "port" :  str(PUBLISHER_MCAST_PORT+service_id) } }
     ]
-    # config["applications"] = []
+    if not config['services']:
+        config['services'] = []
+    else:
+        for service in config['services']:
+            if service['service'] == service_id_hex:
+                service_exists = True
+                service = new_service_config
+                break
+    if not service_exists:
+        config['services'].append(new_service_config)
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
     global STD_CONDITION
@@ -210,6 +238,7 @@ def create_host_config(host, host_config: str, app_id, app_name: str):
     config['applications'][0]['name'] = app_name
     config['applications'][0]['id'] = app_id
     config['clients'] = []
+    config['services'] = []
     config['routing'] = f'{app_name}'
 
     with open(host_config, 'w') as file:
@@ -236,36 +265,45 @@ def create_client_certificate(host, total_pubs, total_subs, pub_id, sub_id):
 
 def create_service_certificate(host, pub_id: int):
     host_name = host.__str__()
-    certificate = f'{PROJECT_PATH}/certificates/{host_name}.service.cert.pem'
-    private_key = f'{PROJECT_PATH}/certificates/{host_name}.service.key.pem'
+    certificate = f'{PROJECT_PATH}/certificates/{pub_id}.service.cert.pem'
+    private_key = f'{PROJECT_PATH}/certificates/{pub_id}.service.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
         host_ip = host.IP(intf=host.defaultIntf())
-        host.cmd(f'{PROJECT_PATH}/service-svcb-and-tlsa-generator.bash {pub_id} {INSTANCE_ID} {MAJOR_VERSION} {MINOR_VERSION} {host_ip} {PUBLISHER_PORT+pub_id} {PROTOCOL} {host_name}')
+        host.cmd(f'{PROJECT_PATH}/service-svcb-and-tlsa-generator.bash {pub_id} {INSTANCE_ID} {MAJOR_VERSION} {MINOR_VERSION} {host_ip} {PUBLISHER_PORT+pub_id} {PROTOCOL} {pub_id}')
         host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
         with open(host_config, 'r') as file:
             config = json.load(file)
-        config['services'][0]['private-key-path'] = private_key
+        # find the correct service id
+        for service in config['services']:
+            if service['service'] == f"0x{pub_id:04x}":
+                service['private-key-path'] = private_key
+                break
         with open(host_config, 'w') as file:
             json.dump(config, file, indent=4)
 
 def get_subscriber_id(total_pubs, total_subs, pub_id, sub_id):
     return total_pubs + (pub_id-1)*total_subs + sub_id
 
-def create_publishers(net: Mininet, pub_count: int, dns_host_name: str):
+def get_publisher_host_id(pub_id, pubs_per_host):
+    return ((pub_id-1) // pubs_per_host) + 1
+
+def create_publishers(net: Mininet, pub_count: int, dns_host_name: str, pubs_per_host: int):
     # publishers are the first nodes from h1 to hpub_count
     for i in range(1, pub_count+1):
-        create_publisher_config(net['h'+str(i)], i)
-        create_service_certificate(net['h'+str(i)], i)
+        host_id = get_publisher_host_id(i, pubs_per_host)
+        create_publisher_config(net['h'+str(host_id)], i)
+        create_service_certificate(net['h'+str(host_id)], i)
         if (dns_host_name != ""):
-            set_dns_server_ip(net['h'+str(i)], net[dns_host_name])
+            set_dns_server_ip(net['h'+str(host_id)], net[dns_host_name])
 
-def create_subscribers(net: Mininet, sub_count: int, pub_count: int, dns_host_name: str, one_sub_host: bool = False):
+def create_subscribers(net: Mininet, sub_count: int, pub_count: int, dns_host_name: str, one_sub_host: bool = False, pubs_per_host: int = 1):
     # subscribers are the have the offset of pub_count from hpub_count+1 to hpub_count+sub_count*pub_count
+    max_pub_host_id = get_publisher_host_id(pub_count, pubs_per_host)
     for i in range(1, pub_count+1):
         for j in range(1, sub_count+1):
             # find the unique subscriber id (publishers take the ids from 1 to pub_count)
             if one_sub_host:
-                sub_host = net['h'+str(pub_count + j)]
+                sub_host = net['h'+str(max_pub_host_id + j)]
             else:
                 subscriber_id = get_subscriber_id(pub_count, sub_count, i, j)
                 sub_host =  net['h'+str(subscriber_id)]
@@ -274,11 +312,12 @@ def create_subscribers(net: Mininet, sub_count: int, pub_count: int, dns_host_na
             if (dns_host_name != ""):
                 set_dns_server_ip(sub_host, net[dns_host_name])
 
-def reference_certificates(net: Mininet, pub_count: int, sub_count: int, one_sub_host: bool = False):
+def reference_certificates(net: Mininet, pub_count: int, sub_count: int, one_sub_host: bool = False, pubs_per_host: int = 1):
     for i in range(1, pub_count+1):
+        host_id = get_publisher_host_id(i, pubs_per_host)
         publisher_id = i
         # set all subscriber certs for this publisher
-        pub_host_name = 'h'+str(publisher_id)
+        pub_host_name = 'h'+str(host_id)
         pub_config = f"{PROJECT_PATH}/vsomeip-configs/{pub_host_name}.json"
         client_certificate_paths = []
         for j in range(1, sub_count+1):
@@ -295,13 +334,17 @@ def reference_certificates(net: Mininet, pub_count: int, sub_count: int, one_sub
             # find the correct client id
             for client in config['clients']:
                 if client['service'] == f"0x{publisher_id:04x}":
-                    client['service-certificate-path'] = f'{PROJECT_PATH}/certificates/{pub_host_name}.service.cert.pem'
+                    client['service-certificate-path'] = f'{PROJECT_PATH}/certificates/{publisher_id}.service.cert.pem'
                     break
             with open(sub_config, 'w') as file:
                 json.dump(config, file, indent=4)
         with open(pub_config, 'r') as file:
             config = json.load(file)    
-        config['services'][0]['client-certificates'] = client_certificate_paths
+        # find the correct service 
+        for service in config['services']:
+            if service['service'] == f"0x{publisher_id:04x}":
+                service['client-certificates'] = client_certificate_paths
+                break
         with open(pub_config, 'w') as file:
             json.dump(config, file, indent=4)        
 
@@ -333,15 +376,17 @@ def start_subscribers(net: Mininet, pub_count: int, sub_count: int, one_sub_host
 
 def start_someip_publisher_app(host, pub_id: int):
     host_name = host.__str__()
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={host_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {pub_id} --instanceid {INSTANCE_ID} "
+    app_name = f"pub-{pub_id}"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {pub_id} --instanceid {INSTANCE_ID} "
     if STD_CONDITION:
         host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
     else:
         host.cmd(f"{launch_cmd} &")
 
-def start_publishers(net: Mininet, pub_count: int):
+def start_publishers(net: Mininet, pub_count: int, pubs_per_host: int):
     for i in range(1, pub_count+1):
-        start_someip_publisher_app(net['h'+str(i)], i)
+        host_id = get_publisher_host_id(i, pubs_per_host)
+        start_someip_publisher_app(net['h'+str(host_id)], i)
 
 def stop_subscriber_app(host):
     host.cmd("pkill my-subscriber")
@@ -349,7 +394,7 @@ def stop_subscriber_app(host):
 def stop_publisher_app(host):
     host.cmd("pkill my-publisher")
 
-def stop_subscribers(net: Mininet, pub_count: int, sub_count: int, one_sub_host: bool = False):
+def stop_subscribers(net: Mininet, pub_count: int, sub_count: int, one_sub_host: bool = False, pubs_per_host: int = 1):
     for i in range(1, pub_count+1):
         for j in range(1, sub_count+1):
             if one_sub_host:
@@ -360,9 +405,10 @@ def stop_subscribers(net: Mininet, pub_count: int, sub_count: int, one_sub_host:
         if one_sub_host:
             break
 
-def stop_publishers(net: Mininet, pub_count: int):
+def stop_publishers(net: Mininet, pub_count: int, pubs_per_host: int):
     for i in range(1, pub_count+1):
-        stop_publisher_app(net['h'+str(i)])
+        host_id = get_publisher_host_id(i, pubs_per_host)
+        stop_publisher_app(net['h'+str(host_id)])
 
 def switch_someip_branch(branch_name: str):
     result = subprocess.run(f"cd {PROJECT_PATH}/vsomeip && git checkout {branch_name}", shell=True)
@@ -382,7 +428,7 @@ def cleanup():
     subprocess.run(f"rm -f {PROJECT_PATH}/publisher-initialized*", shell=True)
     subprocess.run(f"rm -f /var/log/h*.std", shell=True)
 
-def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_compile_definitions: str, net: Mininet, dns_host_name: str, pub_count: int, sub_count: int, one_sub_host: bool = False):
+def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_compile_definitions: str, net: Mininet, dns_host_name: str, pub_count: int, sub_count: int, one_sub_host: bool = False, pubs_per_host: int = 1):
     entire_evaluation_start = time.time()
     current_run = 1
     while current_run <= total_evaluation_runs:
@@ -410,9 +456,9 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         start_subscribers(net, pub_count, sub_count, one_sub_host)
         start_subs_end = time.time()
         print("Done. Took {}s".format(start_subs_end-start_apps_begin))
-        time.sleep(0.001)
+        # time.sleep(0.001)
         print("Starting SOME/IP publishers ... ")
-        start_publishers(net, pub_count)
+        start_publishers(net, pub_count, pubs_per_host)
         start_pubs_end = time.time()
         print("Done. Took {}s, totel app start time: {}s".format(start_pubs_end-start_subs_end, start_pubs_end-start_apps_begin))
         evaluation_run_start = time.time()
@@ -436,7 +482,7 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         # stop someip publisher, subscribers and dns server
         print("Stopping SOME/IP apps and DNS server, and cleaning up ... ")
         stop_subscribers(net, pub_count, sub_count, one_sub_host)
-        stop_publishers(net, pub_count)
+        stop_publishers(net, pub_count, pubs_per_host)
         if WITH_DNSSEC in add_compile_definitions:
             stop_dns_server(net[dns_host_name])
         # cleanup()
@@ -452,6 +498,7 @@ if __name__ == '__main__':
     parser.add_argument('--pubs', type=int, metavar='N', required=True, choices=range(1,0xffff+1), help='Specify the number of publishers. (between 1 (inclusive) and 65536 (exclusive))')
     parser.add_argument('--onesubhost', dest='onesubhost', action='store_true', help='Use only one subscriber host for all subscribers')
     parser.add_argument('--subsperpub', type=int, metavar='N', required=False, default=1, choices=range(1,0xffff+1), help='Specify the number of subscribers per publisher. (between 1 (inclusive) and 65536 (exclusive))')
+    parser.add_argument('--pubsperhost', type=int, metavar='N', required=False, default=1, choices=range(1,0xffff+1), help='Specify the number of publishers to be placed on one host. (between 1 (inclusive) and 65536 (exclusive))')
     parser.add_argument('--evaluate', choices=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], required=True, help="""A: vanilla (vsomeip as it is),
                                                                                                                         B: w/ DNSSEC w/o SOME/IP SD,
                                                                                                                         C: w/ service authentication,
@@ -466,10 +513,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
     pub_count = args.pubs
     sub_count = args.subsperpub
+    host_count: int = get_publisher_host_id(pub_count, args.pubsperhost)
     if args.onesubhost:
-        host_count: int = pub_count + sub_count
+        host_count += sub_count
     else:
-        host_count: int = pub_count + pub_count * sub_count
+        host_count += pub_count * sub_count
     subscriber_count: int = sub_count * pub_count
     evaluation_option: str = args.evaluate
     total_evaluation_runs: int = args.runs
@@ -518,13 +566,13 @@ if __name__ == '__main__':
     print("Done.")
     # create host configs and certificates
     print("Creating host configs and certificates ... ")
-    create_publishers(net, pub_count, dns_host_name)
+    create_publishers(net, pub_count, dns_host_name, args.pubsperhost)
     create_subscribers(net, sub_count, pub_count, dns_host_name, args.onesubhost)
-    reference_certificates(net, pub_count, sub_count, args.onesubhost)
+    reference_certificates(net, pub_count, sub_count, args.onesubhost, args.pubsperhost)
     print("Done.")
     # Evaluate
     if args.evaluate and args.runs:
-        start_evaluation(total_evaluation_runs, evaluation_option, add_compile_definitions, net, dns_host_name, pub_count, sub_count, args.onesubhost)
+        start_evaluation(total_evaluation_runs, evaluation_option, add_compile_definitions, net, dns_host_name, pub_count, sub_count, args.onesubhost, args.pubsperhost)
     print("Stopping mininet network")
     net.stop()
     print("Done.")
