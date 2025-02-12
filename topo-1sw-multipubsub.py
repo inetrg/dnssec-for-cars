@@ -261,12 +261,12 @@ def create_publishers(net: Mininet, pub_count: int, dns_host_name: str):
 
 def create_subscribers(net: Mininet, sub_count: int, pub_count: int, dns_host_name: str, one_sub_host: bool = False):
     # subscribers are the have the offset of pub_count from hpub_count+1 to hpub_count+sub_count*pub_count
-    if one_sub_host:
-        sub_host = net['h'+str(pub_count+1)]
     for i in range(1, pub_count+1):
         for j in range(1, sub_count+1):
             # find the unique subscriber id (publishers take the ids from 1 to pub_count)
-            if not one_sub_host:
+            if one_sub_host:
+                sub_host = net['h'+str(pub_count + j)]
+            else:
                 subscriber_id = get_subscriber_id(pub_count, sub_count, i, j)
                 sub_host =  net['h'+str(subscriber_id)]
             create_subscriber_config(sub_host, pub_count, sub_count, i, j)
@@ -275,8 +275,6 @@ def create_subscribers(net: Mininet, sub_count: int, pub_count: int, dns_host_na
                 set_dns_server_ip(sub_host, net[dns_host_name])
 
 def reference_certificates(net: Mininet, pub_count: int, sub_count: int, one_sub_host: bool = False):
-    if one_sub_host:
-        sub_host_name = 'h'+str(pub_count+1)
     for i in range(1, pub_count+1):
         publisher_id = i
         # set all subscriber certs for this publisher
@@ -287,7 +285,9 @@ def reference_certificates(net: Mininet, pub_count: int, sub_count: int, one_sub
             subscriber_id = get_subscriber_id(pub_count, sub_count, i, j)
             client_certificate_paths.append({"id": f"0x{subscriber_id:04x}", "certificate-path": f'{PROJECT_PATH}/certificates/{subscriber_id}.client.cert.pem'})
             # set the publisher cert at the subscriber
-            if not one_sub_host:
+            if one_sub_host:
+                sub_host_name = 'h'+str(pub_count+j)
+            else:
                 sub_host_name = 'h'+str(subscriber_id)
             sub_config = f"{PROJECT_PATH}/vsomeip-configs/{sub_host_name}.json"
             with open(sub_config, 'r') as file:
@@ -317,19 +317,19 @@ def start_someip_subscriber_app(host, pub_id: int, app_name: str):
         host.cmd(f"{launch_cmd} &")
 
 def start_subscribers(net: Mininet, pub_count: int, sub_count: int, one_sub_host: bool = False):
-    if one_sub_host:
-        initial_host_started = False
-        sub_host = net['h'+str(pub_count+1)]
+    initial_host_started = False
     for i in range(1, pub_count+1):
         for j in range(1, sub_count+1):
             client_id = get_subscriber_id(pub_count, sub_count, i, j)
-            if not one_sub_host:
+            if one_sub_host:
+                sub_host = net['h'+str(pub_count+j)]
+            else:
                 sub_host = net['h'+str(client_id)]
             app_name = f"sub-{client_id}"
             start_someip_subscriber_app(sub_host, i, app_name)
-            if one_sub_host and not initial_host_started:
-                initial_host_started = True
-                time.sleep(0.001)
+        if one_sub_host and not initial_host_started:
+            time.sleep(0.01)
+            initial_host_started = True
 
 def start_someip_publisher_app(host, pub_id: int):
     host_name = host.__str__()
@@ -350,13 +350,15 @@ def stop_publisher_app(host):
     host.cmd("pkill my-publisher")
 
 def stop_subscribers(net: Mininet, pub_count: int, sub_count: int, one_sub_host: bool = False):
-    if one_sub_host:
-        sub_host = net['h'+str(pub_count+1)]
-        stop_subscriber_app(sub_host)
-    else:
-        for i in range(1, pub_count+1):
-            for j in range(1, sub_count+1):
-                stop_subscriber_app(net['h'+str(get_subscriber_id(pub_count, sub_count, i, j))])
+    for i in range(1, pub_count+1):
+        for j in range(1, sub_count+1):
+            if one_sub_host:
+                sub_host = net['h'+str(pub_count+j)]
+            else:
+                sub_host = net['h'+str(get_subscriber_id(pub_count, sub_count, i, j))]
+            stop_subscriber_app(sub_host)
+        if one_sub_host:
+            break
 
 def stop_publishers(net: Mininet, pub_count: int):
     for i in range(1, pub_count+1):
@@ -408,6 +410,7 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         start_subscribers(net, pub_count, sub_count, one_sub_host)
         start_subs_end = time.time()
         print("Done. Took {}s".format(start_subs_end-start_apps_begin))
+        time.sleep(0.001)
         print("Starting SOME/IP publishers ... ")
         start_publishers(net, pub_count)
         start_pubs_end = time.time()
@@ -462,14 +465,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     pub_count = args.pubs
-    if args.onesubhost and args.subsperpub > 1:
-        print("Using only one subscriber host for all subscribers and more than one subscriber per publisher is not supported. Exiting ...")
-        exit(1)
+    sub_count = args.subsperpub
     if args.onesubhost:
-        sub_count = 1
-        host_count: int = pub_count + 1
+        host_count: int = pub_count + sub_count
     else:
-        sub_count = args.subsperpub
         host_count: int = pub_count + pub_count * sub_count
     subscriber_count: int = sub_count * pub_count
     evaluation_option: str = args.evaluate
