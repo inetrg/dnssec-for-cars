@@ -1,11 +1,13 @@
 #!/usr/bin/bash
 RUNTIMESLOG="runtimes.log"
 UPPER_BOUND_HOSTS=50
+LOWER_BOUND_HOSTS=2
 touch $RUNTIMESLOG
 options=("A" "F" "H")
 RUNS=20
+bash ./statistic-results/clear_results.bash
 for option in "${options[@]}"; do
-    for ((host_count = UPPER_BOUND_HOSTS; host_count >= 2; host_count--)); do
+    for ((host_count = $UPPER_BOUND_HOSTS; host_count >= $LOWER_BOUND_HOSTS; host_count--)); do
 
         $(which time) -a -o $RUNTIMESLOG -f "${option}-${host_count}-${RUNS}:\t%E real,\t%U user,\t%S sys" python topo-1sw-Nhosts.py --hosts $host_count --evaluate $option --runs $RUNS --clean-start
         echo "Cleaning up mininet"

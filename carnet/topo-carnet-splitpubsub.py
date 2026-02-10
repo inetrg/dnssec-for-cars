@@ -21,6 +21,7 @@ from mininet.log import setLogLevel
 from mininet.util import dumpNodeConnections
 from mininet.util import dumpNetConnections
 from pathlib import Path
+from subprocess import TimeoutExpired
 
 DNS_HOST_NAME = 'dns'
 PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
@@ -35,6 +36,11 @@ INSTANCE_ID = str(int(INSTANCE_ID_INT))
 MAJOR_VERSION = "0"
 MINOR_VERSION = "0"
 PROTOCOL = "UDP"
+PUBLISHER_PORT = 10000
+SUBSCRIBER_PORT = 20000
+EVENT_ID_1 = 30000
+EVENT_ID_2 = 40000
+EVENT_GROUP_ID = 50000
 # compile definitions
 WITH_SERVICE_AUTHENTICATION = 'WITH_SERVICE_AUTHENTICATION'
 WITH_CLIENT_AUTHENTICATION = 'WITH_CLIENT_AUTHENTICATION'
@@ -42,6 +48,11 @@ NO_SOMEIP_SD = 'NO_SOMEIP_SD'
 WITH_DNSSEC = 'WITH_DNSSEC'
 WITH_DANE = 'WITH_DANE'
 WITH_ENCRYPTION = 'WITH_ENCRYPTION'
+
+apps_per_host = dict()
+hosts = dict()
+sub_apps = dict()
+pub_apps = dict()
 
 class car_topo( Topo ):
     "Simple topology example."
@@ -180,13 +191,14 @@ def create_subscriber_config(host, service_id, client_id, dns_host_ip_in_hex=Non
     config['applications'].append({})
     config['applications'][app_idx]['name'] = app_name
     config['applications'][app_idx]['id'] = "0x{:04x}".format(client_id)
+    apps_per_host[host.__str__()] = app_idx + 1
 
     client_idx = len(config['clients'])
     config['clients'].append({})
     config['clients'][client_idx]['service'] = f"0x{int(service_id):04x}"
     config['clients'][client_idx]['instance'] = INSTANCE_ID_HEX_STR
     config['clients'][client_idx]['client-id'] = f"0x{int(client_id):04x}"
-    port = 40000 + int(client_id)
+    port = SUBSCRIBER_PORT + int(client_id)
     config['clients'][client_idx]['unreliable'] = [port]
 
     with open(host_config, 'w') as file:
@@ -204,19 +216,20 @@ def create_publisher_config(host, service_id, mcast_ip, dns_host_ip_in_hex=None)
     config['applications'].append({})
     config['applications'][app_idx]['name'] = app_name
     config['applications'][app_idx]['id'] = f"0x{int(service_id):04x}"
+    apps_per_host[host.__str__()] = app_idx + 1
 
     service_idx = len(config['services'])
     config['services'].append({})
     config['services'][service_idx]['service'] = f"0x{int(service_id):04x}"
     config['services'][service_idx]['instance'] = f"0x{int(INSTANCE_ID):04x}"
-    config['services'][service_idx]['unreliable'] = str(50000+service_id)
+    config['services'][service_idx]['unreliable'] = str(PUBLISHER_PORT+service_id)
     config['services'][service_idx]['client-certificates'] = []
     config['services'][service_idx]['events'] = [
-        {"events": f"0x{int(10000+service_id):04x}", "is_field" : "true", "update-cycle" : 0},
-        {"events": f"0x{int(20000+service_id):04x}", "is_field" : "true"}
+        {"events": f"0x{int(EVENT_ID_1+service_id):04x}", "is_field" : "true", "update-cycle" : 10000},
+        {"events": f"0x{int(EVENT_ID_2+service_id):04x}", "is_field" : "true"}
     ]
     config['services'][service_idx]['eventgroups'] = [
-        {"eventgroup" : f"0x{int(30000+service_id):04x}", "events" : [ f"0x{int(10000+service_id):04x}", f"0x{int(20000+service_id):04x}" ], "multicast" : { "address" : mcast_ip, "port" :  str(service_id)}}
+        {"eventgroup" : f"0x{int(EVENT_GROUP_ID+service_id):04x}", "events" : [ f"0x{int(EVENT_ID_1+service_id):04x}", f"0x{int(EVENT_ID_2+service_id):04x}" ], "multicast" : { "address" : mcast_ip, "port" :  str(service_id)}}
     ]
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
@@ -245,7 +258,7 @@ def create_subscriber_certificate(host, service_id, client_id):
     private_key = f'{SCENARIO_PATH}/certificates/{certname}.client.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
         host_ip = host.IP(intf=host.defaultIntf())
-        port = 40000 + int(client_id)
+        port = SUBSCRIBER_PORT + int(client_id)
         host.cmd(f'{SCENARIO_PATH}/sub-svcb-and-tlsa-generator.bash {client_id} {service_id} {INSTANCE_ID} {MAJOR_VERSION} {host_ip} {port} {PROTOCOL} {certname}')
     host_config = get_subscriber_config_path(host, service_id, client_id)
     with open(host_config, 'r') as file:
@@ -263,7 +276,7 @@ def create_publisher_certificate(host, service_id):
     certificate = f'{SCENARIO_PATH}/certificates/{certname}.service.cert.pem'
     private_key = f'{SCENARIO_PATH}/certificates/{certname}.service.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
-        port = 50000+service_id
+        port = PUBLISHER_PORT+service_id
         host_ip = host.IP(intf=host.defaultIntf())
         host.cmd(f'{SCENARIO_PATH}/pub-svcb-and-tlsa-generator.bash {service_id} {INSTANCE_ID} {MAJOR_VERSION} {MINOR_VERSION} {host_ip} {port} {PROTOCOL} {certname}')
     host_config = get_publisher_config_path(host, service_id)
@@ -283,13 +296,13 @@ def reset_zone_files():
 def start_someip_subscriber_app(host, service_id, client_id):
     host_config = get_subscriber_config_path(host, service_id, client_id)
     app_name = get_subscriber_app_name(host, service_id, client_id)
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {service_id} --instanceid {INSTANCE_ID} &"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {service_id} --instanceid {INSTANCE_ID} --eventgroupid {EVENT_GROUP_ID + service_id} --eventid {EVENT_ID_1 + service_id} &"
     host.cmd(f"{launch_cmd}")
 
 def start_someip_publisher_app(host, service_id):
     host_config = get_publisher_config_path(host, service_id)
     app_name = get_publisher_app_name(host, service_id)
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {service_id} --instanceid {INSTANCE_ID} &"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {service_id} --instanceid {INSTANCE_ID} --eventgroupid {EVENT_GROUP_ID + service_id} --eventid {EVENT_ID_1 + service_id} &"
     host.cmd(f"{launch_cmd}")
 
 def start_managers(net):
@@ -336,7 +349,7 @@ def start_all_subscribers(net):
         service_id = clients[client]["serviceId"]
         client_id = clients[client]["clientId"]
         host_name = get_net_name(clients[client]["host"], False)
-        if managers[host_name] == get_publisher_app_name(net[host_name], service_id):
+        if managers[host_name] == get_subscriber_app_name(net[host_name], service_id, client_id):
             continue
         start_someip_subscriber_app(net[host_name], service_id, client_id)
         # time.sleep(0.01)
@@ -412,7 +425,7 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         print("Starting SOME/IP manager apps per host ... ")
         managers_start = time.time()
         start_managers(net)
-        time.sleep(0.05)
+        time.sleep(0.1)
         managers_end = time.time()
         print("Done")
         print("Starting SOME/IP publishers ... ")
@@ -431,7 +444,12 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         evaluation_run_start = time.time()
         # Wait for statistics writer
         print("Waiting until all statistics are contributed ... ")
-        return_code = statistics_writer_process.wait(timeout=10)
+        try:
+            return_code = statistics_writer_process.wait(timeout=10)
+        except TimeoutExpired:
+            print("statistics writer did not finish in time. Killing it ...")
+            statistics_writer_process.kill()
+            return_code = 1
         if return_code == 0:
             print("Done.")
             evaluation_run_end = time.time()
@@ -440,6 +458,7 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         else:
             print(f"statistics writer failed with return code {return_code}")
             print(f"{current_run}/{total_evaluation_runs} evaluation run {evaluation_option} failed and will be repeated")
+            current_run += 1
         # stop someip publisher, subscribers and dns server
         print("Stopping SOME/IP apps and DNS server, and cleaning up ... ")
         stop_all_subscriber_apps(net)
@@ -557,6 +576,38 @@ def reference_certificates():
     print("Max services per host: ", max(services_per_host.values()))
     print("Max clients per host: ", max(clients_per_host.values()))
 
+def parse_pub_and_sub_hosts(max_pubs_per_host: int, max_subs_per_host: int):
+    global hosts
+    global pub_apps
+    global sub_apps
+    hosts = dict()
+    pub_apps = dict()
+    sub_apps = dict()
+    # first parse publisher apps and subscriber apps
+    with open(f"{SCENARIO_PATH}/publishers.json", "r") as service_file:
+        services = json.load(service_file)
+    for service in services:
+        host_name = services[service]["host"].lower() + "p"
+        if host_name not in pub_apps:
+            pub_apps[host_name] = []
+        pub_apps[host_name].append(service)
+    with open(f"{SCENARIO_PATH}/subscribers.json", "r") as sub_file:
+        clients = json.load(sub_file)
+    for client in clients:
+        host_name = clients[client]["host"].lower() + "s"
+        if host_name not in sub_apps:
+            sub_apps[host_name] = []
+        sub_apps[host_name].append(client)
+    # then split them into hosts to honor max_pubs_per_host and max_subs_per_host
+    for host_name in pub_apps:
+        num_apps = len(pub_apps[host_name])
+        hosts[host_name] = []
+        num_hosts = (num_apps + max_pubs_per_host - 1) // max_pubs_per_host
+        for i in range(num_hosts):
+            new_host_name = f"{host_name}{i+1}"
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Starts vsomeip w/ or w/o security mechanisms and collects timestamps of handshake events')
     parser.add_argument('--evaluate', choices=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], required=True, help="""A: vanilla (vsomeip as it is),
@@ -600,6 +651,10 @@ if __name__ == '__main__':
         reset_zone_files()
         print("Done.")
 
+    # parse pubs and subs json to identify hosts of apps
+    parse_pub_and_sub_hosts(1000, 1000)
+    pass
+
     # build mininet network
     print("Building mininet network ... ")
     setLogLevel('critical')
@@ -626,6 +681,9 @@ if __name__ == '__main__':
         create_subscribers(net, dns_host_name)
     reference_certificates()
     print("Done.")
+    print("Starting mininet network ... ")
+    print("with hosts: ", [host.__str__() for host in net.hosts])
+    print("number of apps per host: ", apps_per_host)
     # Evaluate
     if args.evaluate and args.runs:
         start_evaluation(total_evaluation_runs, evaluation_option, add_compile_definitions, net, dns_host_name)

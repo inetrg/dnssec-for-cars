@@ -21,6 +21,7 @@ from mininet.log import setLogLevel
 from mininet.util import dumpNodeConnections
 from mininet.util import dumpNetConnections
 from pathlib import Path
+from subprocess import TimeoutExpired
 
 DNS_HOST_NAME = 'dns'
 PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
@@ -35,6 +36,11 @@ INSTANCE_ID = str(int(INSTANCE_ID_INT))
 MAJOR_VERSION = "0"
 MINOR_VERSION = "0"
 PROTOCOL = "UDP"
+PUBLISHER_PORT = 10000
+SUBSCRIBER_PORT = 20000
+EVENT_ID_1 = 30000
+EVENT_ID_2 = 40000
+EVENT_GROUP_ID = 50000
 # compile definitions
 WITH_SERVICE_AUTHENTICATION = 'WITH_SERVICE_AUTHENTICATION'
 WITH_CLIENT_AUTHENTICATION = 'WITH_CLIENT_AUTHENTICATION'
@@ -179,7 +185,7 @@ def create_subscriber_config(host, service_id, client_id, dns_host_ip_in_hex=Non
     config['clients'][client_idx]['service'] = f"0x{int(service_id):04x}"
     config['clients'][client_idx]['instance'] = INSTANCE_ID_HEX_STR
     config['clients'][client_idx]['client-id'] = f"0x{int(client_id):04x}"
-    port = 40000 + int(client_id)
+    port = SUBSCRIBER_PORT + int(client_id)
     config['clients'][client_idx]['unreliable'] = [port]
 
     with open(host_config, 'w') as file:
@@ -202,14 +208,14 @@ def create_publisher_config(host, service_id, mcast_ip, dns_host_ip_in_hex=None)
     config['services'].append({})
     config['services'][service_idx]['service'] = f"0x{int(service_id):04x}"
     config['services'][service_idx]['instance'] = f"0x{int(INSTANCE_ID):04x}"
-    config['services'][service_idx]['unreliable'] = str(50000+service_id)
+    config['services'][service_idx]['unreliable'] = str(PUBLISHER_PORT+service_id)
     config['services'][service_idx]['client-certificates'] = []
     config['services'][service_idx]['events'] = [
-        {"events": f"0x{int(10000+service_id):04x}", "is_field" : "true", "update-cycle" : 0},
-        {"events": f"0x{int(20000+service_id):04x}", "is_field" : "true"}
+        {"events": f"0x{int(EVENT_ID_1+service_id):04x}", "is_field" : "true", "update-cycle" : 0},
+        {"events": f"0x{int(EVENT_ID_2+service_id):04x}", "is_field" : "true"}
     ]
     config['services'][service_idx]['eventgroups'] = [
-        {"eventgroup" : f"0x{int(30000+service_id):04x}", "events" : [ f"0x{int(10000+service_id):04x}", f"0x{int(20000+service_id):04x}" ], "multicast" : { "address" : mcast_ip, "port" :  str(service_id)}}
+        {"eventgroup" : f"0x{int(EVENT_GROUP_ID+service_id):04x}", "events" : [ f"0x{int(EVENT_ID_1+service_id):04x}", f"0x{int(EVENT_ID_2+service_id):04x}" ], "multicast" : { "address" : mcast_ip, "port" :  str(service_id)}}
     ]
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
@@ -238,7 +244,7 @@ def create_subscriber_certificate(host, service_id, client_id):
     private_key = f'{SCENARIO_PATH}/certificates/{certname}.client.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
         host_ip = host.IP(intf=host.defaultIntf())
-        port = 40000 + int(client_id)
+        port = SUBSCRIBER_PORT + int(client_id)
         host.cmd(f'{SCENARIO_PATH}/sub-svcb-and-tlsa-generator.bash {client_id} {service_id} {INSTANCE_ID} {MAJOR_VERSION} {host_ip} {port} {PROTOCOL} {certname}')
     host_config = get_subscriber_config_path(host, service_id, client_id)
     with open(host_config, 'r') as file:
@@ -256,7 +262,7 @@ def create_publisher_certificate(host, service_id):
     certificate = f'{SCENARIO_PATH}/certificates/{certname}.service.cert.pem'
     private_key = f'{SCENARIO_PATH}/certificates/{certname}.service.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
-        port = 50000+service_id
+        port = PUBLISHER_PORT+service_id
         host_ip = host.IP(intf=host.defaultIntf())
         host.cmd(f'{SCENARIO_PATH}/pub-svcb-and-tlsa-generator.bash {service_id} {INSTANCE_ID} {MAJOR_VERSION} {MINOR_VERSION} {host_ip} {port} {PROTOCOL} {certname}')
     host_config = get_publisher_config_path(host, service_id)
@@ -341,7 +347,7 @@ def wait_all_publishers_initialized():
         num_pubs_initialized = len(list(publisher_initialized_file.glob("publisher-initialized-*")))
         if (num_pubs_initialized == num_pubs_started):
             break
-        time.sleep(0.01)
+        # time.sleep(0.01)
 
 def stop_all_subscriber_apps(net):
     for host in net.hosts:
@@ -404,7 +410,7 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         print("Starting SOME/IP manager apps per host ... ")
         managers_start = time.time()
         start_managers(net)
-        time.sleep(0.1)
+        time.sleep(0.01)
         managers_end = time.time()
         print("Done")
         print("Starting SOME/IP publishers ... ")
@@ -423,7 +429,12 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         evaluation_run_start = time.time()
         # Wait for statistics writer
         print("Waiting until all statistics are contributed ... ")
-        return_code = statistics_writer_process.wait(timeout=10)
+        try:
+            return_code = statistics_writer_process.wait(timeout=10)
+        except TimeoutExpired:
+            print("statistics writer did not finish in time. Killing it ...")
+            statistics_writer_process.kill()
+            return_code = 1
         if return_code == 0:
             print("Done.")
             evaluation_run_end = time.time()

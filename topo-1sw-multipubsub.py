@@ -291,7 +291,7 @@ def create_publishers(net: Mininet, pub_count: int, dns_host_name: str, pubs_per
     # publishers are the first nodes from h1 to hpub_count
     for i in range(1, pub_count+1):
         host_id = get_publisher_host_id(i, pubs_per_host)
-        # print(f"Creating publisher {i}/{pub_count} on host {net['h'+str(host_id)]}")
+        print(f"Creating publisher {i}/{pub_count} on host {net['h'+str(host_id)]}")
         create_publisher_config(net['h'+str(host_id)], i)
         create_service_certificate(net['h'+str(host_id)], i)
         if (dns_host_name != ""):
@@ -310,7 +310,7 @@ def create_subscribers(net: Mininet, sub_count: int, pub_count: int, dns_host_na
         for j in range(1, sub_count+1):
             # find the unique subscriber id (publishers take the ids from 1 to pub_count)
             sub_host = net['h' + str(get_subscriber_host_id(pub_count, sub_count, i, j, pubs_per_host, one_sub_host))]
-            # print(f"Creating subscriber {i}/{pub_count} - {j}/{sub_count} on host {sub_host}")
+            print(f"Creating subscriber {i}/{pub_count} - {j}/{sub_count} on host {sub_host}")
             create_subscriber_config(sub_host, pub_count, sub_count, i, j)
             create_client_certificate(sub_host, pub_count, sub_count, i, j)
             if (dns_host_name != ""):
@@ -354,7 +354,7 @@ def reset_zone_files():
 
 def start_someip_subscriber_app(host, pub_id: int, app_name: str):
     host_name = host.__str__()
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {pub_id} --instanceid {INSTANCE_ID} --waitms 10"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {pub_id} --instanceid {INSTANCE_ID} --eventgroupid {30000+pub_id} --eventid {10000+pub_id}"
     if STD_CONDITION:
         host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
     else:
@@ -369,13 +369,14 @@ def start_subscribers(net: Mininet, pub_count: int, sub_count: int, one_sub_host
             app_name = f"sub-{client_id}"
             start_someip_subscriber_app(sub_host, i, app_name)
         if one_sub_host and not initial_host_started:
-            time.sleep(0.01)
+            print("First subscribers started on hosts, waiting")
+            time.sleep(0.001)
             initial_host_started = True
 
 def start_someip_publisher_app(host, pub_id: int):
     host_name = host.__str__()
     app_name = f"pub-{pub_id}"
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {pub_id} --instanceid {INSTANCE_ID} "
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {pub_id} --instanceid {INSTANCE_ID} --eventgroupid {30000+pub_id} --eventid {10000+pub_id}"
     if STD_CONDITION:
         host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
     else:
@@ -387,7 +388,8 @@ def start_publishers(net: Mininet, pub_count: int, pubs_per_host: int):
         start_someip_publisher_app(net['h'+str(host_id)], i)
         # wait if this is the first publisher on a new host
         if i % pubs_per_host == 1:
-            time.sleep(0.01)
+            print("First publisher " + str(i) + " on host " + str(host_id))
+            time.sleep(0.001)
 
 def stop_subscriber_app(host):
     host.cmd("pkill my-subscriber")
@@ -448,6 +450,7 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
             print("Starting DNS server ... ")
             start_dns_server(net[dns_host_name])
             print("Done.")
+        time.sleep(0.1)
         start_apps_begin = time.time()
         # start someip publisher and subscribers
         print("Starting SOME/IP subscribers ... ")
