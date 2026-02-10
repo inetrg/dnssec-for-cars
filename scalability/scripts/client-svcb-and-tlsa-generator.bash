@@ -8,8 +8,8 @@ printUsage() {
 
 if [[ $# -gt 7 ]]; then
     PROJECT_FOLDER_PATH="/home/vm-user/workspace/mininet-vsomeip-evaluation"
-    ZONE_FILE_PATH="${PROJECT_FOLDER_PATH}/zones/client.zone"
-    CERTIFICATES_FOLDER_PATH="${PROJECT_FOLDER_PATH}/certificates"
+    ZONE_FILE_PATH="${PROJECT_FOLDER_PATH}/scalability/zones/client.zone"
+    CERTIFICATES_FOLDER_PATH="${PROJECT_FOLDER_PATH}/scalability/certificates"
     client_id=$1
     service_id=$2
     instance_id=$3

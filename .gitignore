@@ -4,12 +4,12 @@
 *.pem
 nsd_control.key
 nsd_server.key
-vsomeip-configs/h*.json
+h*.json
 *.log
-carnet/vsomeip-configs/h*.json
 *.csv
 nsd-*
 carnet/statistic-results/
 statistic-results/*.csv
 statistic-results/*.txt
 publisher-initialized*
+logs/

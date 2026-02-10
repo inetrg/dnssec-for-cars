@@ -7,7 +7,7 @@ MIN_SUBS=1
 MAX_SUBS=50
 SUB_STEPS=1
 PUBS_PER_HOST=1
-OPTS="--pubsperhost $PUBS_PER_HOST" # --onesubhost
+OPTS="--pubsperhost $PUBS_PER_HOST --onesubhost"
 touch $RUNTIMESLOG
 options=("A" "F" "H")
 RUNS=20

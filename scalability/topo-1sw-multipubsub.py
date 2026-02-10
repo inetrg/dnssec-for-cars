@@ -27,6 +27,10 @@ from math import ceil
 
 PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation/"
 SCENARIO_PATH = PROJECT_PATH + "scalability/"
+ZONE_PATH = SCENARIO_PATH + "zones"
+CONFIG_PATH = SCENARIO_PATH + "vsomeip-configs"
+CERT_PATH = SCENARIO_PATH + "certificates"
+SCRIPT_PATH = SCENARIO_PATH + "scripts"
 
 INSTANCE_ID_INT = 1
 INSTANCE_ID_HEX_STR = "0x{:04x}".format(INSTANCE_ID_INT)
@@ -92,7 +96,7 @@ def add_default_route(host):
 
 def set_dns_server_ip(host, dns_host):
     host_name = host.__str__()
-    host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
+    host_config = f"{CONFIG_PATH}/{host_name}.json"
     dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
     ip_bytes = dns_host_ip.split(".")
     ip_bytes_in_hex = [ "{:02x}".format(int(x)) for x in ip_bytes ]
@@ -106,10 +110,10 @@ def set_dns_server_ip(host, dns_host):
 def start_dns_server(dns_host):
     dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
     dns_host.cmd(f"sed -i -E 's/.* # mininet-host-ip/    ip-address: {dns_host_ip} # mininet-host-ip/' {PROJECT_PATH}/nsd/nsd.conf")
-    dns_host.cmd(f"sed -i -E 's|zonefile: \"/home/vm-user/workspace/mininet-vsomeip-evaluation/zones/service.zone\"|zonefile: \"{SCENARIO_PATH}/zones/service.zone\"|' {PROJECT_PATH}/nsd/nsd.conf")
-    dns_host.cmd(f"sed -i -E 's|zonefile: \"/home/vm-user/workspace/mininet-vsomeip-evaluation/zones/client.zone\"|zonefile: \"{SCENARIO_PATH}/zones/client.zone\"|' {PROJECT_PATH}/nsd/nsd.conf")
-    dns_host.cmd(f"sed -i -E 's/ns\.service\.         IN    A    .*/ns.service.         IN    A    {dns_host_ip}/' {SCENARIO_PATH}/zones/service.zone")
-    dns_host.cmd(f"sed -i -E 's/ns\.client\.         IN    A    .*/ns.client.         IN    A    {dns_host_ip}/' {SCENARIO_PATH}/zones/client.zone")
+    dns_host.cmd(f"sed -i -E 's|zonefile: \"/home/vm-user/workspace/mininet-vsomeip-evaluation/zones/service.zone\"|zonefile: \"{ZONE_PATH}/service.zone\"|' {PROJECT_PATH}/nsd/nsd.conf")
+    dns_host.cmd(f"sed -i -E 's|zonefile: \"/home/vm-user/workspace/mininet-vsomeip-evaluation/zones/client.zone\"|zonefile: \"{ZONE_PATH}/client.zone\"|' {PROJECT_PATH}/nsd/nsd.conf")
+    dns_host.cmd(f"sed -i -E 's/ns\.service\.         IN    A    .*/ns.service.         IN    A    {dns_host_ip}/' {ZONE_PATH}/service.zone")
+    dns_host.cmd(f"sed -i -E 's/ns\.client\.         IN    A    .*/ns.client.         IN    A    {dns_host_ip}/' {ZONE_PATH}/client.zone")
     dns_host.cmd('nsd-control-setup')
     dns_host.cmd(f'nsd -c {PROJECT_PATH}/nsd/nsd.conf')
 
@@ -119,8 +123,8 @@ def stop_dns_server(dns_host):
 
 def create_subscriber_config(host, total_pubs, total_subs, pub_id, sub_id):
     host_name = host.__str__()
-    subscriber_config_template = f"{PROJECT_PATH}/vsomeip-configs/vsomeip-udp-mininet-subscriber.json"
-    host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
+    subscriber_config_template = f"{CONFIG_PATH}/vsomeip-udp-mininet-subscriber.json"
+    host_config = f"{CONFIG_PATH}/{host_name}.json"
     client_id = get_subscriber_id(total_pubs, total_subs, pub_id, sub_id)
     app_name = f"sub-{client_id}"
     app_id = f"0x{int(client_id):04x}"
@@ -174,8 +178,8 @@ def create_publisher_config(host, pub_id: int):
     service_id_hex = "0x{:04x}".format(service_id)
     app_name = "pub-" + str(service_id)
     app_id = service_id_hex
-    publisher_config_template = f"{PROJECT_PATH}/vsomeip-configs/vsomeip-udp-mininet-publisher.json"
-    host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
+    publisher_config_template = f"{CONFIG_PATH}/vsomeip-udp-mininet-publisher.json"
+    host_config = f"{CONFIG_PATH}/{host_name}.json"
     if not Path(host_config).is_file():
         host.cmd(f'cp {publisher_config_template} {host_config}')
         create_host_config(host, host_config, app_id, app_name)
@@ -250,12 +254,12 @@ def create_host_config(host, host_config: str, app_id, app_name: str):
 def create_client_certificate(host, total_pubs, total_subs, pub_id, sub_id):
     host_name = host.__str__()
     client_id = get_subscriber_id(total_pubs, total_subs, pub_id, sub_id)
-    certificate = f'{PROJECT_PATH}/certificates/{client_id}.client.cert.pem'
-    private_key = f'{PROJECT_PATH}/certificates/{client_id}.client.key.pem'
+    certificate = f'{CERT_PATH}/{client_id}.client.cert.pem'
+    private_key = f'{CERT_PATH}/{client_id}.client.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
         host_ip = host.IP(intf=host.defaultIntf())
-        host.cmd(f'{PROJECT_PATH}/client-svcb-and-tlsa-generator.bash {client_id} {pub_id} {INSTANCE_ID} {MAJOR_VERSION} {host_ip} {SUBSCRIBER_PORT + client_id} {PROTOCOL} {client_id}')
-        host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
+        host.cmd(f'{SCRIPT_PATH}/client-svcb-and-tlsa-generator.bash {client_id} {pub_id} {INSTANCE_ID} {MAJOR_VERSION} {host_ip} {SUBSCRIBER_PORT + client_id} {PROTOCOL} {client_id}')
+        host_config = f"{CONFIG_PATH}/{host_name}.json"
         with open(host_config, 'r') as file:
             config = json.load(file)
         # find the correct client id
@@ -268,12 +272,12 @@ def create_client_certificate(host, total_pubs, total_subs, pub_id, sub_id):
 
 def create_service_certificate(host, pub_id: int):
     host_name = host.__str__()
-    certificate = f'{PROJECT_PATH}/certificates/{pub_id}.service.cert.pem'
-    private_key = f'{PROJECT_PATH}/certificates/{pub_id}.service.key.pem'
+    certificate = f'{CERT_PATH}/{pub_id}.service.cert.pem'
+    private_key = f'{CERT_PATH}/{pub_id}.service.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
         host_ip = host.IP(intf=host.defaultIntf())
-        host.cmd(f'{PROJECT_PATH}/service-svcb-and-tlsa-generator.bash {pub_id} {INSTANCE_ID} {MAJOR_VERSION} {MINOR_VERSION} {host_ip} {PUBLISHER_PORT+pub_id} {PROTOCOL} {pub_id}')
-        host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
+        host.cmd(f'{SCRIPT_PATH}/service-svcb-and-tlsa-generator.bash {pub_id} {INSTANCE_ID} {MAJOR_VERSION} {MINOR_VERSION} {host_ip} {PUBLISHER_PORT+pub_id} {PROTOCOL} {pub_id}')
+        host_config = f"{CONFIG_PATH}/{host_name}.json"
         with open(host_config, 'r') as file:
             config = json.load(file)
         # find the correct service id
@@ -325,20 +329,20 @@ def reference_certificates(net: Mininet, pub_count: int, sub_count: int, one_sub
         publisher_id = i
         # set all subscriber certs for this publisher
         pub_host_name = 'h'+str(host_id)
-        pub_config = f"{PROJECT_PATH}/vsomeip-configs/{pub_host_name}.json"
+        pub_config = f"{CONFIG_PATH}/{pub_host_name}.json"
         client_certificate_paths = []
         for j in range(1, sub_count+1):
             subscriber_id = get_subscriber_id(pub_count, sub_count, i, j)
-            client_certificate_paths.append({"id": f"0x{subscriber_id:04x}", "certificate-path": f'{PROJECT_PATH}/certificates/{subscriber_id}.client.cert.pem'})
+            client_certificate_paths.append({"id": f"0x{subscriber_id:04x}", "certificate-path": f'{CERT_PATH}/{subscriber_id}.client.cert.pem'})
             # set the publisher cert at the subscriber
             sub_host_name = 'h' + str(get_subscriber_host_id(pub_count, sub_count, i, j, pubs_per_host, one_sub_host))
-            sub_config = f"{PROJECT_PATH}/vsomeip-configs/{sub_host_name}.json"
+            sub_config = f"{CONFIG_PATH}/{sub_host_name}.json"
             with open(sub_config, 'r') as file:
                 config = json.load(file)
             # find the correct client id
             for client in config['clients']:
                 if client['service'] == f"0x{publisher_id:04x}":
-                    client['service-certificate-path'] = f'{PROJECT_PATH}/certificates/{publisher_id}.service.cert.pem'
+                    client['service-certificate-path'] = f'{CERT_PATH}/{publisher_id}.service.cert.pem'
                     break
             with open(sub_config, 'w') as file:
                 json.dump(config, file, indent=4)
@@ -353,11 +357,11 @@ def reference_certificates(net: Mininet, pub_count: int, sub_count: int, one_sub
             json.dump(config, file, indent=4)        
 
 def reset_zone_files():
-    subprocess.run(["su", "-", "vm-user", "-c", f"{PROJECT_PATH}/reset-zone-file.bash"])
+    subprocess.run(["su", "-", "vm-user", "-c", f"{SCRIPT_PATH}/reset-zone-file.bash"])
 
 def start_someip_subscriber_app(host, pub_id: int, app_name: str):
     host_name = host.__str__()
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {pub_id} --instanceid {INSTANCE_ID} --eventgroupid {30000+pub_id} --eventid {10000+pub_id}"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={CONFIG_PATH}/{host_name}.json  VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {pub_id} --instanceid {INSTANCE_ID} --eventgroupid {30000+pub_id} --eventid {10000+pub_id}"
     if STD_CONDITION:
         host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
     else:
@@ -379,7 +383,7 @@ def start_subscribers(net: Mininet, pub_count: int, sub_count: int, one_sub_host
 def start_someip_publisher_app(host, pub_id: int):
     host_name = host.__str__()
     app_name = f"pub-{pub_id}"
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={PROJECT_PATH}/vsomeip-configs/{host_name}.json  VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {pub_id} --instanceid {INSTANCE_ID} --eventgroupid {30000+pub_id} --eventid {10000+pub_id}"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={CONFIG_PATH}/{host_name}.json  VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {pub_id} --instanceid {INSTANCE_ID} --eventgroupid {30000+pub_id} --eventid {10000+pub_id}"
     if STD_CONDITION:
         host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
     else:
@@ -424,11 +428,14 @@ def build_vsomeip():
     subprocess.run(f'su - vm-user -c "$(which cmake) --build {PROJECT_PATH}/vsomeip/build --config Release --target examples -- -j$(nproc)"', shell=True)
     subprocess.run(f'su - vm-user -c "$(which cmake) --build {PROJECT_PATH}/vsomeip/build --config Release --target statistics-writer -- -j$(nproc)"', shell=True)
 
+def remove_temporary_files():
+    subprocess.run(f"rm -f {PROJECT_PATH}/vsomeip-*", shell=True)
+    subprocess.run(f"rm -f {PROJECT_PATH}/publisher-initialized*", shell=True)
+
 def cleanup():
     subprocess.run(["pkill", "statistics-writ"])
-    subprocess.run(f"rm -f {PROJECT_PATH}/vsomeip-*", shell=True)
+    remove_temporary_files()
     subprocess.run("rm -f /var/log/multihost/h*.log", shell=True)
-    subprocess.run(f"rm -f {PROJECT_PATH}/publisher-initialized*", shell=True)
     subprocess.run(f"rm -f /var/log/h*.std", shell=True)
 
 def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_compile_definitions: str, net: Mininet, dns_host_name: str, pub_count: int, sub_count: int, one_sub_host: bool = False, pubs_per_host: int = 1):
@@ -443,10 +450,10 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         member_counts = "[" + ",".join(str(sub_count) for i in range(1, pub_count+1)) + "]"
         print(f"services: {services}")
         print(f"member_counts: {member_counts}")
-        if not Path(f"{PROJECT_PATH}/statistic-results/{evaluation_option}-series").is_dir():
-            subprocess.run(f"mkdir -p {PROJECT_PATH}/statistic-results/{evaluation_option}-series", shell = True) 
-        statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", services, member_counts, f"{PROJECT_PATH}/statistic-results/{evaluation_option}-series", evaluation_option+"-"+str(pub_count)+"-"+str(sub_count)])
-        # statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", str(subscriber_count), f"{PROJECT_PATH}/statistic-results", evaluation_option])
+        if not Path(f"{SCENARIO_PATH}/statistic-results/{evaluation_option}-series").is_dir():
+            subprocess.run(f"mkdir -p {SCENARIO_PATH}/statistic-results/{evaluation_option}-series", shell = True) 
+        statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", services, member_counts, f"{SCENARIO_PATH}/statistic-results/{evaluation_option}-series", evaluation_option+"-"+str(pub_count)+"-"+str(sub_count)])
+        # statistics_writer_process = subprocess.Popen([f"{PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", str(subscriber_count), f"{SCENARIO_PATH}/statistic-results", evaluation_option])
         print("Done.")
         # start dns server
         if WITH_DNSSEC in add_compile_definitions:
@@ -544,8 +551,8 @@ if __name__ == '__main__':
     # remove configs and certificates for clean start
     if args.clean_start:
         print("Removing configs and certificates ... ")
-        subprocess.run(f"rm -f {PROJECT_PATH}/vsomeip-configs/h*.json", shell=True)
-        subprocess.run(f"rm -f {PROJECT_PATH}/certificates/*", shell=True)
+        subprocess.run(f"rm -f {CONFIG_PATH}/h*.json", shell=True)
+        subprocess.run(f"rm -f {CERT_PATH}/*", shell=True)
         reset_zone_files()
         print("Done.")
 
@@ -580,6 +587,7 @@ if __name__ == '__main__':
         start_evaluation(total_evaluation_runs, evaluation_option, add_compile_definitions, net, dns_host_name, pub_count, sub_count, args.onesubhost, args.pubsperhost)
     print("Stopping mininet network")
     net.stop()
+    remove_temporary_files()
     print("Done.")
 else:
     # Command to start CLI w/ topo only: sudo -E mn --mac --controller none --custom ~/vscode-workspaces/topo-1sw-Nhosts.py --topo simple_topo
