@@ -25,7 +25,8 @@ from pathlib import Path
 from subprocess import TimeoutExpired
 from math import ceil
 
-PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
+PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation/"
+SCENARIO_PATH = PROJECT_PATH + "scalability/"
 
 INSTANCE_ID_INT = 1
 INSTANCE_ID_HEX_STR = "0x{:04x}".format(INSTANCE_ID_INT)
@@ -91,7 +92,7 @@ def add_default_route(host):
 
 def set_dns_server_ip(host, dns_host):
     host_name = host.__str__()
-    host_config = f"{PROJECT_PATH}/vsomeip-configs/{host_name}.json"
+    host_config = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}.json"
     dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
     ip_bytes = dns_host_ip.split(".")
     ip_bytes_in_hex = [ "{:02x}".format(int(x)) for x in ip_bytes ]
@@ -105,8 +106,10 @@ def set_dns_server_ip(host, dns_host):
 def start_dns_server(dns_host):
     dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
     dns_host.cmd(f"sed -i -E 's/.* # mininet-host-ip/    ip-address: {dns_host_ip} # mininet-host-ip/' {PROJECT_PATH}/nsd/nsd.conf")
-    dns_host.cmd(f"sed -i -E 's/ns\.service\.         IN    A    .*/ns.service.         IN    A    {dns_host_ip}/' {PROJECT_PATH}/zones/service.zone")
-    dns_host.cmd(f"sed -i -E 's/ns\.client\.         IN    A    .*/ns.client.         IN    A    {dns_host_ip}/' {PROJECT_PATH}/zones/client.zone")
+    dns_host.cmd(f"sed -i -E 's|zonefile: \"/home/vm-user/workspace/mininet-vsomeip-evaluation/zones/service.zone\"|zonefile: \"{SCENARIO_PATH}/zones/service.zone\"|' {PROJECT_PATH}/nsd/nsd.conf")
+    dns_host.cmd(f"sed -i -E 's|zonefile: \"/home/vm-user/workspace/mininet-vsomeip-evaluation/zones/client.zone\"|zonefile: \"{SCENARIO_PATH}/zones/client.zone\"|' {PROJECT_PATH}/nsd/nsd.conf")
+    dns_host.cmd(f"sed -i -E 's/ns\.service\.         IN    A    .*/ns.service.         IN    A    {dns_host_ip}/' {SCENARIO_PATH}/zones/service.zone")
+    dns_host.cmd(f"sed -i -E 's/ns\.client\.         IN    A    .*/ns.client.         IN    A    {dns_host_ip}/' {SCENARIO_PATH}/zones/client.zone")
     dns_host.cmd('nsd-control-setup')
     dns_host.cmd(f'nsd -c {PROJECT_PATH}/nsd/nsd.conf')
 

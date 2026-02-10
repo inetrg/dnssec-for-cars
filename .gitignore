@@ -10,5 +10,6 @@ carnet/vsomeip-configs/h*.json
 *.csv
 nsd-*
 carnet/statistic-results/
-statistic-results/
+statistic-results/*.csv
+statistic-results/*.txt
 publisher-initialized*
