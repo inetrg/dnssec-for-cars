@@ -49,6 +49,8 @@ WITH_DNSSEC = 'WITH_DNSSEC'
 WITH_DANE = 'WITH_DANE'
 WITH_ENCRYPTION = 'WITH_ENCRYPTION'
 
+STD_CONDITION = False
+
 class car_topo( Topo ):
     "Simple topology example."
 
@@ -218,7 +220,7 @@ def create_publisher_config(host, service_id, mcast_ip, dns_host_ip_in_hex=None)
         {"eventgroup" : f"0x{int(EVENT_GROUP_ID+service_id):04x}", "events" : [ f"0x{int(EVENT_ID_1+service_id):04x}", f"0x{int(EVENT_ID_2+service_id):04x}" ], "multicast" : { "address" : mcast_ip, "port" :  str(service_id)}}
     ]
     with open(host_config, 'w') as file:
-        json.dump(config, file, indent=4)
+        json.dump(config, file, indent=4)    
 
 def create_host_config(host, host_config: str, app_name, dns_host_ip_in_hex=None):
     config_template = f"{SCENARIO_PATH}/vsomeip-configs/vsomeip-udp-mininet-multihost.json"
@@ -237,6 +239,9 @@ def create_host_config(host, host_config: str, app_name, dns_host_ip_in_hex=None
         config['dns-server-ip'] = f'{dns_host_ip_in_hex}'
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
+    global STD_CONDITION
+    if not STD_CONDITION:
+        STD_CONDITION = ((config['logging']['console'] == 'true') or (config['logging']['file']['enable'] == 'true'))
 
 def create_subscriber_certificate(host, service_id, client_id):
     certname = get_subscriber_cert_name(host, service_id, client_id)
@@ -282,14 +287,20 @@ def reset_zone_files():
 def start_someip_subscriber_app(host, service_id, client_id):
     host_config = get_subscriber_config_path(host, service_id, client_id)
     app_name = get_subscriber_app_name(host, service_id, client_id)
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {service_id} --instanceid {INSTANCE_ID} &"
-    host.cmd(f"{launch_cmd}")
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {service_id} --instanceid {INSTANCE_ID} --eventgroupid {EVENT_GROUP_ID+service_id} --eventid {EVENT_ID_1+service_id}"
+    if STD_CONDITION:
+        host.cmd(f"{launch_cmd}> /var/log/{host.__str__()}.std &")
+    else:
+        host.cmd(f"{launch_cmd} &")
 
 def start_someip_publisher_app(host, service_id):
     host_config = get_publisher_config_path(host, service_id)
     app_name = get_publisher_app_name(host, service_id)
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {service_id} --instanceid {INSTANCE_ID} &"
-    host.cmd(f"{launch_cmd}")
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {service_id} --instanceid {INSTANCE_ID} --eventgroupid {EVENT_GROUP_ID+service_id} --eventid {EVENT_ID_1+service_id}"
+    if STD_CONDITION:
+        host.cmd(f"{launch_cmd}> /var/log/{host.__str__()}.std &")
+    else:
+        host.cmd(f"{launch_cmd} &")
 
 def start_managers(net):
     global num_pubs_started
@@ -362,10 +373,6 @@ def stop_subscriber_app(host):
 
 def stop_publisher_app(host):
     host.cmd("pkill -f my-publisher")
-
-def switch_someip_branch(branch_name: str):
-    result = subprocess.run(f"cd {PROJECT_PATH}/vsomeip && git checkout {branch_name}", shell=True)
-    return result.returncode
 
 def build_vsomeip():
     # subprocess.run(["su", "-", "vm-user", "-c", f"{PROJECT_PATH}/build_vsomeip.bash"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

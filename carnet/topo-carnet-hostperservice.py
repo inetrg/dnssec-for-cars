@@ -26,7 +26,6 @@ from subprocess import TimeoutExpired
 DNS_HOST_NAME = 'dns'
 PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
 SCENARIO_PATH = f"{PROJECT_PATH}/carnet"
-START_DELAY_MS = 10000
 num_pubs_started = 0
 service_sub_counts = dict()
 node_index = 0
@@ -38,6 +37,11 @@ INSTANCE_ID = str(int(INSTANCE_ID_INT))
 MAJOR_VERSION = "0"
 MINOR_VERSION = "0"
 PROTOCOL = "UDP"
+PUBLISHER_PORT = 10000
+SUBSCRIBER_PORT = 20000
+EVENT_ID_1 = 30000
+EVENT_ID_2 = 40000
+EVENT_GROUP_ID = 50000
 # compile definitions
 WITH_SERVICE_AUTHENTICATION = 'WITH_SERVICE_AUTHENTICATION'
 WITH_CLIENT_AUTHENTICATION = 'WITH_CLIENT_AUTHENTICATION'
@@ -45,6 +49,8 @@ NO_SOMEIP_SD = 'NO_SOMEIP_SD'
 WITH_DNSSEC = 'WITH_DNSSEC'
 WITH_DANE = 'WITH_DANE'
 WITH_ENCRYPTION = 'WITH_ENCRYPTION'
+
+STD_CONDITION = False
 
 def get_node_name(host):
     global node_index
@@ -206,7 +212,7 @@ def create_subscriber_config(host, service_id, client_id, dns_host_ip_in_hex=Non
     config['clients'][client_idx]['service'] = f"0x{int(service_id):04x}"
     config['clients'][client_idx]['instance'] = INSTANCE_ID_HEX_STR
     config['clients'][client_idx]['client-id'] = f"0x{int(client_id):04x}"
-    port = 40000 + int(client_id)
+    port = SUBSCRIBER_PORT + int(client_id)
     config['clients'][client_idx]['unreliable'] = [port]
 
     with open(host_config, 'w') as file:
@@ -229,14 +235,14 @@ def create_publisher_config(host, service_id, mcast_ip, dns_host_ip_in_hex=None)
     config['services'].append({})
     config['services'][service_idx]['service'] = f"0x{int(service_id):04x}"
     config['services'][service_idx]['instance'] = f"0x{int(INSTANCE_ID):04x}"
-    config['services'][service_idx]['unreliable'] = str(50000+service_id)
+    config['services'][service_idx]['unreliable'] = str(PUBLISHER_PORT+service_id)
     config['services'][service_idx]['client-certificates'] = []
     config['services'][service_idx]['events'] = [
-        {"events": f"0x{int(10000+service_id):04x}", "is_field" : "true", "update-cycle" : 0},
-        {"events": f"0x{int(20000+service_id):04x}", "is_field" : "true"}
+        {"events": f"0x{int(EVENT_ID_1+service_id):04x}", "is_field" : "true", "update-cycle" : 0},
+        {"events": f"0x{int(EVENT_ID_2+service_id):04x}", "is_field" : "true"}
     ]
     config['services'][service_idx]['eventgroups'] = [
-        {"eventgroup" : f"0x{int(30000+service_id):04x}", "events" : [ f"0x{int(10000+service_id):04x}", f"0x{int(20000+service_id):04x}" ], "multicast" : { "address" : mcast_ip, "port" :  str(service_id)}}
+        {"eventgroup" : f"0x{int(EVENT_GROUP_ID+service_id):04x}", "events" : [ f"0x{int(EVENT_ID_1+service_id):04x}", f"0x{int(EVENT_ID_2+service_id):04x}" ], "multicast" : { "address" : mcast_ip, "port" :  str(service_id)}}
     ]
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
@@ -258,6 +264,9 @@ def create_host_config(host, host_config: str, app_name, dns_host_ip_in_hex=None
         config['dns-server-ip'] = f'{dns_host_ip_in_hex}'
     with open(host_config, 'w') as file:
         json.dump(config, file, indent=4)
+    global STD_CONDITION
+    if not STD_CONDITION:
+        STD_CONDITION = ((config['logging']['console'] == 'true') or (config['logging']['file']['enable'] == 'true'))
 
 def create_subscriber_certificate(host, service_id, client_id):
     certname = get_subscriber_cert_name(host, service_id, client_id)
@@ -265,7 +274,7 @@ def create_subscriber_certificate(host, service_id, client_id):
     private_key = f'{SCENARIO_PATH}/certificates/{certname}.client.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
         host_ip = host.IP(intf=host.defaultIntf())
-        port = 40000 + int(client_id)
+        port = SUBSCRIBER_PORT + int(client_id)
         host.cmd(f'{SCENARIO_PATH}/sub-svcb-and-tlsa-generator.bash {client_id} {service_id} {INSTANCE_ID} {MAJOR_VERSION} {host_ip} {port} {PROTOCOL} {certname}')
     host_config = get_subscriber_config_path(host, service_id, client_id)
     with open(host_config, 'r') as file:
@@ -283,7 +292,7 @@ def create_publisher_certificate(host, service_id):
     certificate = f'{SCENARIO_PATH}/certificates/{certname}.service.cert.pem'
     private_key = f'{SCENARIO_PATH}/certificates/{certname}.service.key.pem'
     if not (Path(certificate).is_file() and Path(private_key).is_file()):
-        port = 50000+service_id
+        port = PUBLISHER_PORT+service_id
         host_ip = host.IP(intf=host.defaultIntf())
         host.cmd(f'{SCENARIO_PATH}/pub-svcb-and-tlsa-generator.bash {service_id} {INSTANCE_ID} {MAJOR_VERSION} {MINOR_VERSION} {host_ip} {port} {PROTOCOL} {certname}')
     host_config = get_publisher_config_path(host, service_id)
@@ -303,14 +312,20 @@ def reset_zone_files():
 def start_someip_subscriber_app(host, service_id, client_id):
     host_config = get_subscriber_config_path(host, service_id, client_id)
     app_name = get_subscriber_app_name(host, service_id, client_id)
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {service_id} --instanceid {INSTANCE_ID} --waitms {START_DELAY_MS} &"
-    host.cmd(launch_cmd)
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {service_id} --instanceid {INSTANCE_ID} --eventgroupid {EVENT_GROUP_ID+service_id} --eventid {EVENT_ID_1+service_id}"
+    if STD_CONDITION:
+        host.cmd(f"{launch_cmd}> /var/log/{host.__str__()}.std &")
+    else:
+        host.cmd(f"{launch_cmd} &")
 
 def start_someip_publisher_app(host, service_id):
     host_config = get_publisher_config_path(host, service_id)
     app_name = get_publisher_app_name(host, service_id)
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {service_id} --instanceid {INSTANCE_ID} --waitms {START_DELAY_MS} &"
-    host.cmd(launch_cmd)
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {service_id} --instanceid {INSTANCE_ID} --eventgroupid {EVENT_GROUP_ID+service_id} --eventid {EVENT_ID_1+service_id}"
+    if STD_CONDITION:
+        host.cmd(f"{launch_cmd}> /var/log/{host.__str__()}.std &")
+    else:
+        host.cmd(f"{launch_cmd} &")
 
 def start_all_publishers(net):
     global num_pubs_started
@@ -363,10 +378,6 @@ def stop_subscriber_app(host):
 
 def stop_publisher_app(host):
     host.cmd("pkill -f my-publisher")
-
-def switch_someip_branch(branch_name: str):
-    result = subprocess.run(f"cd {PROJECT_PATH}/vsomeip && git checkout {branch_name}", shell=True)
-    return result.returncode
 
 def build_vsomeip():
     # subprocess.run(["su", "-", "vm-user", "-c", f"{PROJECT_PATH}/build_vsomeip.bash"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
