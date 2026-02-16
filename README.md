@@ -94,7 +94,7 @@ The scalability study is implemented in ```scalability/topo-1sw-multipubsub.py``
 To run the full scalability study from the paper execute the series script in the ```scalability``` directory: 
 ```sudo bash series_multipubsub.bash``` 
 
-The study runs 20 runs for each of the 3 configurations (Vanilla, Full Authentication, DNSSEC-DANE-DANCE) with 1 publisher and varying subscriber counts of 1 to 50. Subscribers are grouped with 1 subscriber per publisher on the same node.
+The study runs 20 runs for each of the 3 configurations (Vanilla, Full Authentication, DNSSEC-DANE-DANCE) with 1 publisher and varying subscriber counts of 1 to 50. Each subscriber is hosted on a separate node.
 
 The ```scalabilty/evaluation.ipynb``` notebook contains parsing and aggregation functions for collected statistic results. 
 
