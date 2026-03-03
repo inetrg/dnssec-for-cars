@@ -296,7 +296,7 @@ def reset_zone_files():
 def start_someip_subscriber_app(host, service_id, client_id):
     host_config = get_subscriber_config_path(host, service_id, client_id)
     app_name = get_subscriber_app_name(host, service_id, client_id)
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {service_id} --instanceid {INSTANCE_ID} --eventgroupid {EVENT_GROUP_ID + service_id} --eventid {EVENT_ID_1 + service_id} &"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {service_id} --instanceid {INSTANCE_ID} --eventgroupid {EVENT_GROUP_ID + service_id} --eventid {EVENT_ID_1 + service_id} --clientid {client_id} &"
     host.cmd(f"{launch_cmd}")
 
 def start_someip_publisher_app(host, service_id):

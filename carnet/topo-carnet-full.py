@@ -11,7 +11,9 @@ topology enables one to pass in '--topo=mytopo' from the command line.
 import argparse
 import subprocess
 import json
+import os
 import time
+from datetime import datetime
 from itertools import combinations
 from mininet.topo import Topo
 from mininet.net import Mininet
@@ -26,9 +28,12 @@ from subprocess import TimeoutExpired
 DNS_HOST_NAME = 'dns'
 PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
 SCENARIO_PATH = f"{PROJECT_PATH}/carnet"
+LOGS_PATH = f"/var/log/carnet"
 num_pubs_started = 0
+num_subs_started = 0
 service_sub_counts = dict()
 managers = dict()
+eval_start = time.time()
 
 INSTANCE_ID_INT = 1
 INSTANCE_ID_HEX_STR = "0x{:04x}".format(INSTANCE_ID_INT)
@@ -233,7 +238,7 @@ def create_host_config(host, host_config: str, app_name, dns_host_ip_in_hex=None
         config = json.load(file)
     config['network'] = f'-{host_name}'
     config['unicast'] = unicast_ip
-    config['logging']['file']['path'] = f'/var/log/carnet/{host_name}.log'
+    config['logging']['file']['path'] = f'{LOGS_PATH}/{host_name}.log'
     config['routing'] = app_name
     if dns_host_ip_in_hex is not None:
         config['dns-server-ip'] = f'{dns_host_ip_in_hex}'
@@ -287,9 +292,9 @@ def reset_zone_files():
 def start_someip_subscriber_app(host, service_id, client_id):
     host_config = get_subscriber_config_path(host, service_id, client_id)
     app_name = get_subscriber_app_name(host, service_id, client_id)
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {service_id} --instanceid {INSTANCE_ID} --eventgroupid {EVENT_GROUP_ID+service_id} --eventid {EVENT_ID_1+service_id}"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {service_id} --instanceid {INSTANCE_ID} --eventgroupid {EVENT_GROUP_ID+service_id} --eventid {EVENT_ID_1+service_id} --clientid {client_id}"
     if STD_CONDITION:
-        host.cmd(f"{launch_cmd}> /var/log/{host.__str__()}.std &")
+        host.cmd(f"{launch_cmd}> {LOGS_PATH}/{host.__str__()}.std &")
     else:
         host.cmd(f"{launch_cmd} &")
 
@@ -298,14 +303,17 @@ def start_someip_publisher_app(host, service_id):
     app_name = get_publisher_app_name(host, service_id)
     launch_cmd = f"env VSOMEIP_CONFIGURATION={host_config} VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {service_id} --instanceid {INSTANCE_ID} --eventgroupid {EVENT_GROUP_ID+service_id} --eventid {EVENT_ID_1+service_id}"
     if STD_CONDITION:
-        host.cmd(f"{launch_cmd}> /var/log/{host.__str__()}.std &")
+        host.cmd(f"{launch_cmd}> {LOGS_PATH}/{host.__str__()}.std &")
     else:
         host.cmd(f"{launch_cmd} &")
 
 def start_managers(net):
     global num_pubs_started
+    global num_subs_started
     global managers
     managers = dict()
+    num_pubs_started = 0
+    num_subs_started = 0
     with open (f"{SCENARIO_PATH}/publishers.json", "r") as service_file:
         services = json.load(service_file)
     for service in services:
@@ -314,6 +322,7 @@ def start_managers(net):
             service_id = services[service]["serviceId"]
             managers[net_name] = get_publisher_app_name(net[net_name], services[service]["serviceId"])
             start_someip_publisher_app(net[net_name], service_id)
+            print(f"Started SOME/IP manager app {managers[net_name]} on host {net_name} for service {service_id}")
             num_pubs_started += 1
     with open (f"{SCENARIO_PATH}/subscribers.json", "r") as sub_file:
         clients = json.load(sub_file)
@@ -324,6 +333,22 @@ def start_managers(net):
             client_id = clients[client]["clientId"]
             managers[net_name] = get_subscriber_app_name(net[net_name], service_id, client_id)
             start_someip_subscriber_app(net[net_name], service_id, client_id)
+            print(f"Started SOME/IP manager app for {managers[net_name]} on host {net_name} for service {service_id} client {client_id}")
+            num_subs_started += 1
+
+def wait_all_managers_initialized():
+    global num_pubs_started
+    global num_subs_started
+    global managers
+    manager_initialized_path = Path(f"{PROJECT_PATH}/")
+    print(f"Waiting until all SOME/IP manager apps ({num_pubs_started} publishers and {num_subs_started} subscribers) are initialized ...")
+    while True:
+        num_pubs_initialized = len(list( manager_initialized_path.glob("publisher-initialized-*")))
+        num_subs_initialized = len(list(manager_initialized_path.glob("subscriber-initialized-*")))
+        if (num_pubs_initialized == num_pubs_started) and (num_subs_initialized == num_subs_started):
+            break
+        print (f"Still waiting for initialization: {num_pubs_initialized}/{num_pubs_started} publishers and {num_subs_initialized}/{num_subs_started} subscribers")
+        time.sleep(0.001)
 
 def start_all_publishers(net):
     global num_pubs_started
@@ -340,6 +365,7 @@ def start_all_publishers(net):
         # time.sleep(0.01)
 
 def start_all_subscribers(net):
+    global num_subs_started
     with open (f"{SCENARIO_PATH}/subscribers.json", "r") as service_file:
         clients = json.load(service_file)
     for client in clients:
@@ -349,6 +375,7 @@ def start_all_subscribers(net):
         if managers[host_name] == get_publisher_app_name(net[host_name], service_id):
             continue
         start_someip_subscriber_app(net[host_name], service_id, client_id)
+        num_subs_started += 1
         # time.sleep(0.01)
 
 def wait_all_publishers_initialized():
@@ -385,6 +412,7 @@ def cleanup():
     subprocess.run(["pkill", "statistics-writ"])
     subprocess.run(f"rm -f {PROJECT_PATH}/vsomeip-*", shell=True)
     subprocess.run(f"rm -f {PROJECT_PATH}/publisher-initialized*", shell=True)
+    subprocess.run(f"rm -f {PROJECT_PATH}/subscriber-initialized*", shell=True)
 
 def start_statistics_writer(evaluation_option: str):
     global service_sub_counts
@@ -401,7 +429,7 @@ def start_statistics_writer(evaluation_option: str):
     print("Done.")
     return statistics_writer_process
 
-def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_compile_definitions: str, net: Mininet, dns_host_name: str):
+def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_compile_definitions: str, net: Mininet, dns_host_name: str, copy_logs: bool):
     entire_evaluation_start = time.time()
     current_run = 1
     while current_run <= total_evaluation_runs:
@@ -417,9 +445,10 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         print("Starting SOME/IP manager apps per host ... ")
         managers_start = time.time()
         start_managers(net)
-        time.sleep(0.01)
+        wait_all_managers_initialized()
         managers_end = time.time()
         print("Done")
+        time.sleep(1)        
         print("Starting SOME/IP publishers ... ")
         publishers_start = time.time()
         start_all_publishers(net)
@@ -450,12 +479,15 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         else:
             print(f"statistics writer failed with return code {return_code}")
             print(f"{current_run}/{total_evaluation_runs} evaluation run {evaluation_option} failed and will be repeated")
+            current_run += 1
         # stop someip publisher, subscribers and dns server
         print("Stopping SOME/IP apps and DNS server, and cleaning up ... ")
         stop_all_subscriber_apps(net)
         stop_all_publisher_apps(net)
         if WITH_DNSSEC in add_compile_definitions:
             stop_dns_server(net[dns_host_name])
+        if copy_logs:
+            copy_logs_to_scenario_folder(evaluation_option, current_run - 1, return_code)
         cleanup()
         print("Done.")
         # Give an extra second for remaining transmissions
@@ -567,6 +599,22 @@ def reference_certificates():
     print("Max services per host: ", max(services_per_host.values()))
     print("Max clients per host: ", max(clients_per_host.values()))
 
+def copy_logs_to_scenario_folder(evaluation_option: str, run: int, return_code: int, move_logs: bool = True):
+    global eval_start
+    time_stamp = datetime.fromtimestamp(eval_start).strftime("%Y%m%d-%H%M%S")
+    out_path = f"{SCENARIO_PATH}/logs/{evaluation_option}-series/{time_stamp}/run-{run}-"
+    subprocess.run(f"rm -rf {out_path}*", shell=True, check=True)
+    if return_code == 0:
+        out_path += "success"
+    else:
+        out_path += "failure"
+    os.makedirs(out_path, exist_ok=True)
+    # Copy logs from all logs from LOGS_PATH to out_path
+    if move_logs:
+        subprocess.run(f"mv {LOGS_PATH}/*.log {out_path}/", shell=True, check=True)
+    else:
+        subprocess.run(f"cp {LOGS_PATH}/*.log {out_path}/", shell=True, check=True)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Starts vsomeip w/ or w/o security mechanisms and collects timestamps of handshake events')
     parser.add_argument('--evaluate', choices=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], required=True, help="""A: vanilla (vsomeip as it is),
@@ -579,6 +627,7 @@ if __name__ == '__main__':
                                                                                                                         H: w/ service and client authentication + DNSSEC + DANE + payload encryption""")
     parser.add_argument('--runs', type=int, metavar='N', required=False, help='Specify the number of runs for the evaluation or omit this parameter to start the interactive mode with mininet CLI')
     parser.add_argument('--clean-start', dest='clean_start', action='store_true', help='Removes certificates and host configs causing them to be recreated')
+    parser.add_argument('--copy-logs', dest='copy_logs', action='store_true', default=False, help='Copy logs to scenario folder for every evaluation run')
 
     args = parser.parse_args()
     evaluation_option: str = args.evaluate
@@ -596,7 +645,7 @@ if __name__ == '__main__':
     print("Cleaning up mininet interfaces ... ")
     subprocess.run(['mn', '-c'])
     cleanup()
-    subprocess.run(f"rm -f /var/log/carnet/*", shell=True)
+    subprocess.run(f"rm -f {LOGS_PATH}/*", shell=True)
     print("Done")
 
     # remove configs and certificates for clean start
@@ -638,7 +687,7 @@ if __name__ == '__main__':
     print("Done.")
     # Evaluate
     if args.evaluate and args.runs:
-        start_evaluation(total_evaluation_runs, evaluation_option, add_compile_definitions, net, dns_host_name)
+        start_evaluation(total_evaluation_runs, evaluation_option, add_compile_definitions, net, dns_host_name, args.copy_logs)
     print("Stopping mininet network")
     net.stop()
     print("Done.")

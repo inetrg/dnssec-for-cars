@@ -359,9 +359,9 @@ def reference_certificates(net: Mininet, pub_count: int, sub_count: int, one_sub
 def reset_zone_files():
     subprocess.run(["su", "-", "vm-user", "-c", f"{SCRIPT_PATH}/reset-zone-file.bash"])
 
-def start_someip_subscriber_app(host, pub_id: int, app_name: str):
+def start_someip_subscriber_app(host, pub_id: int, app_name: str, client_id: int):
     host_name = host.__str__()
-    launch_cmd = f"env VSOMEIP_CONFIGURATION={CONFIG_PATH}/{host_name}.json  VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {pub_id} --instanceid {INSTANCE_ID} --eventgroupid {30000+pub_id} --eventid {10000+pub_id}"
+    launch_cmd = f"env VSOMEIP_CONFIGURATION={CONFIG_PATH}/{host_name}.json  VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {pub_id} --instanceid {INSTANCE_ID} --eventgroupid {30000+pub_id} --eventid {10000+pub_id} --clientid {client_id}"
     if STD_CONDITION:
         host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
     else:
@@ -374,10 +374,10 @@ def start_subscribers(net: Mininet, pub_count: int, sub_count: int, one_sub_host
             client_id = get_subscriber_id(pub_count, sub_count, i, j)
             sub_host = net['h'+str(get_subscriber_host_id(pub_count, sub_count, i, j, pubs_per_host, one_sub_host))]
             app_name = f"sub-{client_id}"
-            start_someip_subscriber_app(sub_host, i, app_name)
+            start_someip_subscriber_app(sub_host, i, app_name, client_id)
         if one_sub_host and not initial_host_started:
             print("First subscribers started on hosts, waiting")
-            time.sleep(0.001)
+            time.sleep(0.01)
             initial_host_started = True
 
 def start_someip_publisher_app(host, pub_id: int):
@@ -396,7 +396,7 @@ def start_publishers(net: Mininet, pub_count: int, pubs_per_host: int):
         # wait if this is the first publisher on a new host
         if i % pubs_per_host == 1:
             print("First publisher " + str(i) + " on host " + str(host_id))
-            time.sleep(0.001)
+            time.sleep(0.01)
 
 def stop_subscriber_app(host):
     host.cmd("pkill my-subscriber")
@@ -431,6 +431,7 @@ def build_vsomeip():
 def remove_temporary_files():
     subprocess.run(f"rm -f {PROJECT_PATH}/vsomeip-*", shell=True)
     subprocess.run(f"rm -f {PROJECT_PATH}/publisher-initialized*", shell=True)
+    subprocess.run(f"rm -f {PROJECT_PATH}/subscriber-initialized*", shell=True)
 
 def cleanup():
     subprocess.run(["pkill", "statistics-writ"])
@@ -476,7 +477,7 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         # Wait for statistics writer
         print("Waiting until all statistics are contributed ... ")
         try:
-            return_code = statistics_writer_process.wait(timeout=10)
+            return_code = statistics_writer_process.wait(timeout=5)
         except TimeoutExpired:
             print("statistics writer did not finish in time. Killing it ...")
             statistics_writer_process.kill()

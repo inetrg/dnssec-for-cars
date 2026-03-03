@@ -295,7 +295,7 @@ def start_someip_subscriber_app(host, service_id, client_id):
     host_name = host.__str__()
     config_file = f"{SCENARIO_PATH}/vsomeip-configs/{host_name}_{service_id}_sub.json"
     config_app_name = f"{host_name}-{service_id}-{client_id}"
-    launch_params = f"--serviceid {service_id} --instanceid {INSTANCE_ID}"
+    launch_params = f"--serviceid {service_id} --instanceid {INSTANCE_ID} --clientid {client_id}"
     start_someip_app(host, config_file, config_app_name, "my-subscriber", launch_params)
 
 def start_someip_publisher_app(host, service_id):
