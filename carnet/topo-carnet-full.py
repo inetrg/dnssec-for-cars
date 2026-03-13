@@ -348,7 +348,7 @@ def wait_all_managers_initialized():
         if (num_pubs_initialized == num_pubs_started) and (num_subs_initialized == num_subs_started):
             break
         print (f"Still waiting for initialization: {num_pubs_initialized}/{num_pubs_started} publishers and {num_subs_initialized}/{num_subs_started} subscribers")
-        time.sleep(0.001)
+        time.sleep(0.01)
 
 def start_all_publishers(net):
     global num_pubs_started
@@ -362,7 +362,7 @@ def start_all_publishers(net):
             continue
         start_someip_publisher_app(net[host_name], service_id)
         num_pubs_started += 1
-        # time.sleep(0.01)
+        time.sleep(0.01)
 
 def start_all_subscribers(net):
     global num_subs_started
@@ -372,11 +372,11 @@ def start_all_subscribers(net):
         service_id = clients[client]["serviceId"]
         client_id = clients[client]["clientId"]
         host_name = clients[client]["host"].lower()
-        if managers[host_name] == get_publisher_app_name(net[host_name], service_id):
+        if managers[host_name] == get_subscriber_app_name(net[host_name], service_id, client_id):
             continue
         start_someip_subscriber_app(net[host_name], service_id, client_id)
         num_subs_started += 1
-        # time.sleep(0.01)
+        time.sleep(0.01)
 
 def wait_all_publishers_initialized():
     global num_pubs_started
@@ -466,7 +466,7 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         # Wait for statistics writer
         print("Waiting until all statistics are contributed ... ")
         try:
-            return_code = statistics_writer_process.wait(timeout=10)
+            return_code = statistics_writer_process.wait(timeout=5)
         except TimeoutExpired:
             print("statistics writer did not finish in time. Killing it ...")
             statistics_writer_process.kill()
@@ -486,12 +486,12 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         stop_all_publisher_apps(net)
         if WITH_DNSSEC in add_compile_definitions:
             stop_dns_server(net[dns_host_name])
+        # Give an extra second for remaining operations
+        time.sleep(1)
         if copy_logs:
             copy_logs_to_scenario_folder(evaluation_option, current_run - 1, return_code)
         cleanup()
         print("Done.")
-        # Give an extra second for remaining transmissions
-        time.sleep(1)
     entire_evaluation_end = time.time()
     print(f"TOTAL TIME FOR OPTION {evaluation_option} in {total_evaluation_runs} RUN/S: {entire_evaluation_end - entire_evaluation_start}s")
 

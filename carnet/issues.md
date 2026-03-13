@@ -3,6 +3,9 @@ Collected logs contain the following issues. Some of them may not be technically
 
 ## A-Series
 
+### Clean start not running
+Using --clean-start option causes the scenario execution to fail within wait for publishers... 
+
 ### Missing messages 
 > Didn't receive a multicast SD message for 2200ms.
 
@@ -59,4 +62,28 @@ Should we cache nonces for a certain time? Maybe 5 offer cycles? Or cache the 5 
 maybe multiple TLSA resolutions? 
     - not because of tlsa_reply_ptr = tlsa_reply_ptr->tlsa_reply_next_;
 
+which caches are responible?
+    std::shared_ptr<challenge_nonce_cache> challenge_nonce_cache_; <-- do this one first as it has the most direct connection to the issue
+    std::shared_ptr<eventgroup_subscription_cache> eventgroup_subscription_cache_;
+    std::shared_ptr<eventgroup_subscription_ack_cache> eventgroup_subscription_ack_cache_;
 
+> [warning] validate_subscribe_ack_and_verify_signature SIGNATURE NOT VERIFIED for service: 5002 instance: 1
+
+This should be fixed now!
+
+### Anything special with these services?
+6075
+7013
+6054
+
+
+### Should we do something about premature offers:
+
+process_offerservice_serviceentry: Offer for required but not yet requested service
+
+
+### Something gets stuck with DNSSEC replies when processing 
+
+TLSA 52 
+
+SVCB 64
