@@ -147,11 +147,11 @@ def reset_zone_files():
 
 def start_dns_server(dns_host):
     dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
-    dns_host.cmd(f"sed -i -E 's/.* # mininet-host-ip/    ip-address: {dns_host_ip} # mininet-host-ip/' {SCENARIO_PATH}/nsd/nsd.conf")
+    dns_host.cmd(f"sed -i -E 's/.* # mininet-host-ip/    ip-address: {dns_host_ip} # mininet-host-ip/' {PROJECT_PATH}/nsd/nsd.conf")
     dns_host.cmd(f"sed -i -E 's/ns\.service\.         IN    A    .*/ns.service.         IN    A    {dns_host_ip}/' {SCENARIO_PATH}/zones/service.zone")
     dns_host.cmd(f"sed -i -E 's/ns\.client\.         IN    A    .*/ns.client.         IN    A    {dns_host_ip}/' {SCENARIO_PATH}/zones/client.zone")
     dns_host.cmd('nsd-control-setup')
-    dns_host.cmd(f'nsd -c {SCENARIO_PATH}/nsd/nsd.conf')
+    dns_host.cmd(f'nsd -c {PROJECT_PATH}/nsd/nsd.conf')
 
 def set_dns_server_ip(host, dns_host):
     host_name = host.__str__()
