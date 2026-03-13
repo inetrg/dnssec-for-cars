@@ -314,16 +314,6 @@ def start_managers(net):
     managers = dict()
     num_pubs_started = 0
     num_subs_started = 0
-    with open (f"{SCENARIO_PATH}/publishers.json", "r") as service_file:
-        services = json.load(service_file)
-    for service in services:
-        net_name = services[service]["host"].lower()
-        if net_name not in managers:
-            service_id = services[service]["serviceId"]
-            managers[net_name] = get_publisher_app_name(net[net_name], services[service]["serviceId"])
-            start_someip_publisher_app(net[net_name], service_id)
-            print(f"Started SOME/IP manager app {managers[net_name]} on host {net_name} for service {service_id}")
-            num_pubs_started += 1
     with open (f"{SCENARIO_PATH}/subscribers.json", "r") as sub_file:
         clients = json.load(sub_file)
     for client in clients:
@@ -335,6 +325,16 @@ def start_managers(net):
             start_someip_subscriber_app(net[net_name], service_id, client_id)
             print(f"Started SOME/IP manager app for {managers[net_name]} on host {net_name} for service {service_id} client {client_id}")
             num_subs_started += 1
+    with open (f"{SCENARIO_PATH}/publishers.json", "r") as service_file:
+        services = json.load(service_file)
+    for service in services:
+        net_name = services[service]["host"].lower()
+        if net_name not in managers:
+            service_id = services[service]["serviceId"]
+            managers[net_name] = get_publisher_app_name(net[net_name], services[service]["serviceId"])
+            start_someip_publisher_app(net[net_name], service_id)
+            print(f"Started SOME/IP manager app {managers[net_name]} on host {net_name} for service {service_id}")
+            num_pubs_started += 1
 
 def wait_all_managers_initialized():
     global num_pubs_started
@@ -441,6 +441,8 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
             print("Starting DNS server ... ")
             start_dns_server(net[dns_host_name])
             print("Done.")
+        time.sleep(0.1)
+        start_apps_begin = time.time()
         # start someip publisher and subscribers
         print("Starting SOME/IP manager apps per host ... ")
         managers_start = time.time()
@@ -448,20 +450,19 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         wait_all_managers_initialized()
         managers_end = time.time()
         print("Done")
-        time.sleep(1)        
-        print("Starting SOME/IP publishers ... ")
-        publishers_start = time.time()
-        start_all_publishers(net)
-        # wait_all_publishers_initialized()
-        publishers_end = time.time()
-        # Give an extra second for startup
-        print("Done.")
+        time.sleep(0.01)        
         print("Starting SOME/IP subscribers ... ")
         subscribers_start = time.time()
         start_all_subscribers(net)
         subscribers_end = time.time()
         print("Done.")
-        print(f"Total initialization time: {subscribers_end-managers_start}s (managers: {managers_end-managers_start}s, publishers: {publishers_end-publishers_start}s, subscribers: {subscribers_end-subscribers_start}s)")
+        print("Starting SOME/IP publishers ... ")
+        publishers_start = time.time()
+        start_all_publishers(net)
+        # wait_all_publishers_initialized()
+        publishers_end = time.time()
+        print("Done.")
+        print(f"Total initialization time: {publishers_end-start_apps_begin}s (managers: {managers_end-managers_start}s, publishers: {publishers_end-publishers_start}s, subscribers: {subscribers_end-subscribers_start}s)")
         evaluation_run_start = time.time()
         # Wait for statistics writer
         print("Waiting until all statistics are contributed ... ")

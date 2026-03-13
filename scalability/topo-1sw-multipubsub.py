@@ -51,6 +51,9 @@ WITH_ENCRYPTION = 'WITH_ENCRYPTION'
 
 STD_CONDITION = False
 
+pub_managers = {}
+sub_managers = {}
+
 class simple_topo( Topo ):
     "Simple topology example."
 
@@ -131,6 +134,8 @@ def create_subscriber_config(host, total_pubs, total_subs, pub_id, sub_id):
     if not Path(host_config).is_file():
         host.cmd(f'cp {subscriber_config_template} {host_config}')
         create_host_config(host, host_config, app_id, app_name)
+        sub_managers[host_name] = {"pub_id": pub_id, "client_id": client_id, "app_name": app_name, "app_id": app_id}
+        print(f"New sub host --> created sub manager for subscriber {pub_id}/{sub_id} with client id {client_id} on host {host_name}")
     else:
         # add another app id to the existing config
         with open(host_config, 'r') as file:
@@ -183,6 +188,8 @@ def create_publisher_config(host, pub_id: int):
     if not Path(host_config).is_file():
         host.cmd(f'cp {publisher_config_template} {host_config}')
         create_host_config(host, host_config, app_id, app_name)
+        pub_managers[host_name] = {"pub_id": pub_id, "app_name": app_name, "app_id": app_id}
+        print(f"New pub host --> created pub manager for publisher {pub_id} with app id {app_id} on host {host_name}")
     else:
         # add another app id to the existing config
         with open(host_config, 'r') as file:
@@ -359,8 +366,7 @@ def reference_certificates(net: Mininet, pub_count: int, sub_count: int, one_sub
 def reset_zone_files():
     subprocess.run(["su", "-", "vm-user", "-c", f"{SCRIPT_PATH}/reset-zone-file.bash"])
 
-def start_someip_subscriber_app(host, pub_id: int, app_name: str, client_id: int):
-    host_name = host.__str__()
+def start_someip_subscriber_app(host_name: str, pub_id: int, app_name: str, client_id: int):
     launch_cmd = f"env VSOMEIP_CONFIGURATION={CONFIG_PATH}/{host_name}.json  VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-subscriber --serviceid {pub_id} --instanceid {INSTANCE_ID} --eventgroupid {30000+pub_id} --eventid {10000+pub_id} --clientid {client_id}"
     if STD_CONDITION:
         host.cmd(f"{launch_cmd}> /var/log/{host_name}.std &")
@@ -368,20 +374,17 @@ def start_someip_subscriber_app(host, pub_id: int, app_name: str, client_id: int
         host.cmd(f"{launch_cmd} &")
 
 def start_subscribers(net: Mininet, pub_count: int, sub_count: int, one_sub_host: bool, pubs_per_host: int):
-    initial_host_started = False
     for i in range(1, pub_count+1):
         for j in range(1, sub_count+1):
             client_id = get_subscriber_id(pub_count, sub_count, i, j)
-            sub_host = net['h'+str(get_subscriber_host_id(pub_count, sub_count, i, j, pubs_per_host, one_sub_host))]
+            sub_host = 'h'+str(get_subscriber_host_id(pub_count, sub_count, i, j, pubs_per_host, one_sub_host))
             app_name = f"sub-{client_id}"
-            start_someip_subscriber_app(sub_host, i, app_name, client_id)
-        if one_sub_host and not initial_host_started:
-            print("First subscribers started on hosts, waiting")
-            time.sleep(0.01)
-            initial_host_started = True
+            if not sub_managers[sub_host]['client_id'] == client_id:
+                start_someip_subscriber_app(sub_host, i, app_name, client_id)
+            else:
+                print(f"Skip manager (already startet) for subscriber {i}/{j} on host {sub_host}")
 
-def start_someip_publisher_app(host, pub_id: int):
-    host_name = host.__str__()
+def start_someip_publisher_app(host_name: str, pub_id: int):
     app_name = f"pub-{pub_id}"
     launch_cmd = f"env VSOMEIP_CONFIGURATION={CONFIG_PATH}/{host_name}.json  VSOMEIP_APPLICATION_NAME={app_name} {PROJECT_PATH}/vsomeip/build/examples/my-publisher --serviceid {pub_id} --instanceid {INSTANCE_ID} --eventgroupid {30000+pub_id} --eventid {10000+pub_id}"
     if STD_CONDITION:
@@ -392,11 +395,37 @@ def start_someip_publisher_app(host, pub_id: int):
 def start_publishers(net: Mininet, pub_count: int, pubs_per_host: int):
     for i in range(1, pub_count+1):
         host_id = get_publisher_host_id(i, pubs_per_host)
-        start_someip_publisher_app(net['h'+str(host_id)], i)
-        # wait if this is the first publisher on a new host
-        if i % pubs_per_host == 1:
-            print("First publisher " + str(i) + " on host " + str(host_id))
-            time.sleep(0.01)
+        host_name = 'h'+str(host_id)
+        if not pub_managers[host_name]['pub_id'] == i:
+            start_someip_publisher_app(host_name, i)
+        else:
+            print(f"Skip manager (already startet) for publisher {i} on host {host_name}")
+
+def start_managers():
+    global pub_managers
+    global sub_managers
+    print(f"Startung sub managers: {sub_managers}")
+    for host_name, manager_info in sub_managers.items():
+        start_someip_subscriber_app(host_name, manager_info['pub_id'], manager_info['app_name'], manager_info['client_id'])
+    print(f"Starting pub managers: {pub_managers}")
+    for host_name, manager_info in pub_managers.items():
+        start_someip_publisher_app(host_name, manager_info['pub_id'])
+    # time.sleep(0.01)
+
+def wait_all_managers_initialized():
+    global pub_managers
+    global sub_managers
+    num_pubs_started = len(pub_managers)
+    num_subs_started = len(sub_managers)
+    manager_initialized_path = Path(f"{PROJECT_PATH}/")
+    print(f"Waiting until all SOME/IP manager apps ({num_pubs_started} publishers and {num_subs_started} subscribers) are initialized ...")
+    while True:
+        num_pubs_initialized = len(list(manager_initialized_path.glob("publisher-initialized-*")))
+        num_subs_initialized = len(list(manager_initialized_path.glob("subscriber-initialized-*")))
+        if (num_pubs_initialized == num_pubs_started) and (num_subs_initialized == num_subs_started):
+            break
+        print (f"Still waiting for initialization: {num_pubs_initialized}/{num_pubs_started} publishers and {num_subs_initialized}/{num_subs_started} subscribers")
+        time.sleep(0.001)
 
 def stop_subscriber_app(host):
     host.cmd("pkill my-subscriber")
@@ -464,15 +493,25 @@ def start_evaluation(total_evaluation_runs: int, evaluation_option: str, add_com
         time.sleep(0.1)
         start_apps_begin = time.time()
         # start someip publisher and subscribers
+        print("Starting SOME/IP manager apps per host ... ")
+        managers_start = time.time()
+        start_managers()
+        wait_all_managers_initialized()
+        managers_end = time.time()
+        print("Done. Took {}s".format(managers_end-start_apps_begin))
+        time.sleep(0.01)
+        # start someip publisher and subscribers
         print("Starting SOME/IP subscribers ... ")
+        subscribers_start = time.time()
         start_subscribers(net, pub_count, sub_count, one_sub_host, pubs_per_host)
-        start_subs_end = time.time()
-        print("Done. Took {}s".format(start_subs_end-start_apps_begin))
+        subscribers_end = time.time()
+        print("Done. Took {}s".format(subscribers_end-start_apps_begin))
         # time.sleep(0.001)
         print("Starting SOME/IP publishers ... ")
+        publishers_start = time.time()
         start_publishers(net, pub_count, pubs_per_host)
-        start_pubs_end = time.time()
-        print("Done. Took {}s, totel app start time: {}s".format(start_pubs_end-start_subs_end, start_pubs_end-start_apps_begin))
+        publishers_end = time.time()
+        print(f"Total initialization time: {publishers_end-start_apps_begin}s (managers: {managers_end-managers_start}s, publishers: {publishers_end-publishers_start}s, subscribers: {subscribers_end-subscribers_start}s)")
         evaluation_run_start = time.time()
         # Wait for statistics writer
         print("Waiting until all statistics are contributed ... ")
