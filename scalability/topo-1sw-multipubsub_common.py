@@ -8,17 +8,18 @@ publishers and subscribers per publisher.
 
 import argparse
 import subprocess
-import json
-import time
+import sys
 from pathlib import Path
-from math import ceil
 
 from mininet.topo import Topo
 from mininet.net import Mininet
 from mininet.node import OVSBridge
-from mininet.cli import CLI
 from mininet.link import TCLink
 from mininet.log import setLogLevel
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from mininet_vsomeip_base_scenario import VSomeIPTopologyBase
 
@@ -49,8 +50,6 @@ class ScalabilityScenario(VSomeIPTopologyBase):
         self.pub_count = 0
         self.sub_count = 0
         self.pubs_per_host = 1
-        self.pub_managers = {}
-        self.sub_managers = {}
         self.one_sub_host = False
 
     # ========== SCENARIO CONFIGURATION ==========
@@ -87,38 +86,15 @@ class ScalabilityScenario(VSomeIPTopologyBase):
 
     def create_publishers(self, net, dns_host=None):
         """Create all publisher configurations and certificates."""
-        dns_host_ip_in_hex = None
-        if dns_host is not None and dns_host != "":
-            dns_host_obj = net[dns_host]
-            dns_host_ip = dns_host_obj.IP(intf=dns_host_obj.defaultIntf())
-            ip_bytes = dns_host_ip.split(".")
-            ip_bytes_in_hex = ["{:02x}".format(int(x)) for x in ip_bytes]
-            dns_host_ip_in_hex = f"0x{''.join(ip_bytes_in_hex)}"
-
         for i in range(1, self.pub_count + 1):
             host_id = self._get_publisher_host_id(i)
             print(f"Creating publisher {i}/{self.pub_count} on host h{host_id}")
             host = net[f'h{host_id}']
             self.create_publisher_config(host, i)
             self.create_publisher_certificate(host, i)
-            if dns_host_ip_in_hex:
-                self._set_dns_server_ip(host, dns_host_ip_in_hex)
-            # Track as manager if first on host
-            if f'h{host_id}' not in self.pub_managers:
-                app_name = self.get_publisher_app_name(host, i)
-                app_id = f"0x{i:04x}"
-                self.pub_managers[f'h{host_id}'] = {"pub_id": i, "app_name": app_name, "app_id": app_id}
 
     def create_subscribers(self, net, dns_host=None):
         """Create all subscriber configurations and certificates."""
-        dns_host_ip_in_hex = None
-        if dns_host is not None and dns_host != "":
-            dns_host_obj = net[dns_host]
-            dns_host_ip = dns_host_obj.IP(intf=dns_host_obj.defaultIntf())
-            ip_bytes = dns_host_ip.split(".")
-            ip_bytes_in_hex = ["{:02x}".format(int(x)) for x in ip_bytes]
-            dns_host_ip_in_hex = f"0x{''.join(ip_bytes_in_hex)}"
-
         for i in range(1, self.pub_count + 1):
             for j in range(1, self.sub_count + 1):
                 sub_host_id = self._get_subscriber_host_id(i, j)
@@ -126,19 +102,6 @@ class ScalabilityScenario(VSomeIPTopologyBase):
                 print(f"Creating subscriber {i}/{self.pub_count} - {j}/{self.sub_count} on host h{sub_host_id}")
                 self.create_subscriber_config(sub_host, i, j)
                 self.create_subscriber_certificate(sub_host, i, j)
-                if dns_host_ip_in_hex:
-                    self._set_dns_server_ip(sub_host, dns_host_ip_in_hex)
-
-    def _set_dns_server_ip(self, host, dns_host_ip_in_hex):
-        """Set DNS server IP in host configuration."""
-        host_name = host.__str__()
-        host_config = self.get_publisher_config_path(host, 1)  # Will update config
-        if Path(host_config).is_file():
-            with open(host_config, 'r') as file:
-                config = json.load(file)
-            config['dns-server-ip'] = dns_host_ip_in_hex
-            with open(host_config, 'w') as file:
-                json.dump(config, file, indent=4)
 
 
 if __name__ == '__main__':
@@ -156,6 +119,7 @@ if __name__ == '__main__':
                                                                                                                         G: w/ service and client authentication + DNSSEC + DANE,
                                                                                                                         H: w/ service and client authentication + DNSSEC + DANE + payload encryption""")
     parser.add_argument('--runs', type=int, metavar='N', required=False, help='Specify the number of runs for the evaluation or omit this parameter to start the interactive mode with mininet CLI')
+    parser.add_argument('--repeat-on-failure', dest='repeat_on_failure', action='store_true', help='Repeats a run in case of failure.')
     parser.add_argument('--clean-start', dest='clean_start', action='store_true', help='Removes certificates and host configs causing them to be recreated')
 
     args = parser.parse_args()
@@ -183,9 +147,7 @@ if __name__ == '__main__':
     # remove configs and certificates for clean start
     if args.clean_start:
         print("Removing configs and certificates ... ")
-        subprocess.run(f"rm -f {CONFIG_PATH}/h*.json", shell=True)
-        subprocess.run(f"rm -f {CERT_PATH}/*", shell=True)
-        scenario.reset_zone_files()
+        scenario.delete_configs_and_certs()
         print("Done.")
 
     # build mininet network
@@ -195,6 +157,7 @@ if __name__ == '__main__':
     if scenario.WITH_DNSSEC in add_compile_definitions:
         topo = simple_topo(n=host_count + 1)
         dns_host_name = "h" + str(host_count + 1)
+        scenario.dns_host_name = dns_host_name
     else:
         topo = simple_topo(n=host_count)
 
@@ -202,30 +165,27 @@ if __name__ == '__main__':
     net.start()
     for host in net.hosts:
         scenario.add_default_route(host)
+    if scenario.WITH_DNSSEC in add_compile_definitions:
+        scenario.dns_host_hex_ip = scenario._get_dns_host_ip_in_hex(net, dns_host_name)
     print("Done.")
 
     # build vsomeip
     print("Building vsomeip ... ")
-    subprocess.run(f"sed -i -E 's/add_compile_definitions.*/add_compile_definitions\({add_compile_definitions}\)/' {PROJECT_PATH}/vsomeip/CMakeLists.txt", shell=True)
-    scenario.build_vsomeip()
+    scenario.build_vsomeip(add_compile_definitions)
     print("Done.")
 
     # create host configs and certificates
     print("Creating host configs and certificates ... ")
     scenario.create_publishers(net, dns_host_name)
     scenario.create_subscribers(net, dns_host_name)
-    scenario.reference_certificates(net)
+    scenario.reference_certificates()
     print("Done.")
 
     # Evaluate
     if args.evaluate and args.runs:
-        scenario.start_evaluation(total_evaluation_runs, evaluation_option, add_compile_definitions, net, dns_host_name)
+        scenario.start_evaluation(total_evaluation_runs, evaluation_option, args.repeat_on_failure, add_compile_definitions, net)
 
     print("Stopping mininet network")
     net.stop()
     scenario.cleanup()
     print("Done.")
-
-else:
-    # Command to start CLI w/ topo only: sudo -E mn --mac --controller none --custom ~/vscode-workspaces/topo-1sw-Nhosts.py --topo simple_topo
-    topos = {'simple_topo': (lambda: simple_topo())}

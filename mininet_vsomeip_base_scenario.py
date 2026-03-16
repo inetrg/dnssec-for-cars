@@ -58,13 +58,13 @@ class VSomeIPTopologyBase(ABC):
 
     # ========== TIER 1: SCENARIO CONFIGURATION (set by subclass) ==========
 
-    PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation/"
+    PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
     SCENARIO_PATH = None  # Must be set by subclass
     CONFIG_PATH = None  # Must be set by subclass
-    CONFIG_TEMPLATE_PATH = PROJECT_PATH + "vsomeip-config-templates" # May be set by subclass
+    CONFIG_TEMPLATE_PATH = PROJECT_PATH + "/vsomeip-config-templates/vsomeip-udp-mininet-multihost.json" # May be set by subclass
     CERT_PATH = None  # Must be set by subclass
     ZONE_PATH = None  # Must be set by subclass
-    SCRIPT_PATH = PROJECT_PATH + "scripts" # May be set by subclass
+    SCRIPT_PATH = PROJECT_PATH + "/scripts" # May be set by subclass
     LOGS_PATH = None  # May be set by subclass
     NSD_CONF_PATH = f"{PROJECT_PATH}/nsd/nsd.conf"
 
@@ -93,6 +93,8 @@ class VSomeIPTopologyBase(ABC):
         self.publishers = {}
         self.managers = {}
         self.service_sub_counts = {}
+        self.dns_host_name = ""
+        self.dns_host_hex_ip = None
 
     # ========== TIER 1 & 2: NETWORK UTILITIES (SHARED) ==========
 
@@ -145,7 +147,6 @@ class VSomeIPTopologyBase(ABC):
         Path(self.ZONE_PATH).mkdir(parents=True, exist_ok=True)
         Path(self.LOGS_PATH).mkdir(parents=True, exist_ok=True)
 
-
     # ========== TIER 2: INFRASTRUCTURE MANAGEMENT ==========
 
     def start_dns_server(self, dns_host):
@@ -164,12 +165,25 @@ class VSomeIPTopologyBase(ABC):
         dns_host.cmd('nsd-control stop')
         dns_host.cmd('pkill nsd')
 
+    def _get_dns_host_ip_in_hex(self, net: Mininet, dns_host=None):
+        if self.dns_host_hex_ip is not None:
+            return self.dns_host_hex_ip
+        dns_host_ip_in_hex = None
+        if dns_host is not None and dns_host != "":
+            dns_host_obj = net[dns_host]
+            dns_host_ip = dns_host_obj.IP(intf=dns_host_obj.defaultIntf())
+            dns_host_ip_in_hex = self._convert_ip_to_hex(dns_host_ip)
+        return dns_host_ip_in_hex
+
     def reset_zone_files(self):
         """Reset zone files to default state."""
         subprocess.run(["su", "-", "vm-user", "-c", f"{self.SCENARIO_PATH}/reset-zone-files.bash"])
 
-    def build_vsomeip(self):
+    def build_vsomeip(self, add_compile_definitions):
         """Build vsomeip project."""
+        # set compile opts
+        subprocess.run(f"sed -i -E 's/add_compile_definitions.*/add_compile_definitions\({add_compile_definitions}\)/' {self.PROJECT_PATH}/vsomeip/CMakeLists.txt", shell=True)
+
         subprocess.run(f'su - vm-user -c "cmake -B {self.PROJECT_PATH}/vsomeip/build -S {self.PROJECT_PATH}/vsomeip"', shell=True)
         subprocess.run(f'su - vm-user -c "$(which cmake) --build {self.PROJECT_PATH}/vsomeip/build --config Release --target all -- -j$(nproc)"', shell=True)
         subprocess.run(f'su - vm-user -c "$(which cmake) --build {self.PROJECT_PATH}/vsomeip/build --config Release --target examples -- -j$(nproc)"', shell=True)
@@ -181,6 +195,12 @@ class VSomeIPTopologyBase(ABC):
         subprocess.run(f"rm -f {self.PROJECT_PATH}/vsomeip-*", shell=True)
         subprocess.run(f"rm -f {self.PROJECT_PATH}/publisher-initialized*", shell=True)
         subprocess.run(f"rm -f {self.PROJECT_PATH}/subscriber-initialized*", shell=True)
+
+    def delete_configs_and_certs(self):
+        """Delete all generated configurations and certificates."""
+        subprocess.run(f"rm -f {self.CONFIG_PATH}/h*.json", shell=True)
+        subprocess.run(f"rm -f {self.CERT_PATH}/*", shell=True)
+        self.reset_zone_files()
 
     def stop_subscriber_app(self, host):
         """Stop subscriber application on host."""
@@ -224,8 +244,6 @@ class VSomeIPTopologyBase(ABC):
         host_name = host.__str__()
         return f'{host_name}_{client_id}'
 
-        f"0x{int(service_id):04x}"
-
     def _get_cert_path(self, cert_name, cert_type):
         """Get full certificate path. cert_type should be 'service' or 'client'."""
         return f'{self.CERT_PATH}/{cert_name}.{cert_type}.cert.pem'
@@ -234,11 +252,11 @@ class VSomeIPTopologyBase(ABC):
         """Get full private key path. cert_type should be 'service' or 'client'."""
         return f'{self.CERT_PATH}/{cert_name}.{cert_type}.key.pem'
 
-    # def _convert_ip_to_hex(self, ip_address: str) -> str:
-    #     """Convert dotted decimal IP address to hex format (0xAABBCCDD)."""
-    #     ip_bytes = ip_address.split(".")
-    #     ip_bytes_in_hex = ["{:02x}".format(int(x)) for x in ip_bytes]
-    #     return f"0x{''.join(ip_bytes_in_hex)}"
+    def _convert_ip_to_hex(self, ip_address: str) -> str:
+        """Convert dotted decimal IP address to hex format (0xAABBCCDD)."""
+        ip_bytes = ip_address.split(".")
+        ip_bytes_in_hex = ["{:02x}".format(int(x)) for x in ip_bytes]
+        return f"0x{''.join(ip_bytes_in_hex)}"
 
     def _reset_state(self):
         """Reset instance state counters for a new evaluation run."""
@@ -253,7 +271,7 @@ class VSomeIPTopologyBase(ABC):
 
     # ========== TIER 2: CONFIGURATION MANAGEMENT ==========
 
-    def create_host_config(self, host, host_config: str, app_name, dns_host_ip_in_hex=None):
+    def create_host_config(self, host, host_config: str, app_name):
         """Check if host config exists, if yes return, else create new.
 
         This is a generic implementation used by both publishers and subscribers.
@@ -278,8 +296,8 @@ class VSomeIPTopologyBase(ABC):
             config['logging']['file']['path'] = f'{self.LOGS_PATH}/{host_name}.log'
         config['routing'] = app_name
 
-        if dns_host_ip_in_hex is not None:
-            config['dns-server-ip'] = f'{dns_host_ip_in_hex}'
+        if self.dns_host_hex_ip is not None:
+            config['dns-server-ip'] = f'{self.dns_host_hex_ip}'
 
         with open(host_config, 'w') as file:
             json.dump(config, file, indent=4)
@@ -437,7 +455,7 @@ class VSomeIPTopologyBase(ABC):
         client_id_str = f"0x{int(client_id):04x}"
         service_id_str = f"0x{service_id:04x}"
         for client in config['clients']:
-            if client['client'] == client_id_str and client['service'] == service_id_str:
+            if client['client-id'] == client_id_str and client['service'] == service_id_str:
                 client['private-key-path'] = private_key
                 break
 
@@ -459,7 +477,7 @@ class VSomeIPTopologyBase(ABC):
                         cert_name = self.get_subscriber_cert_name(self.subscribers[client_id]['host_name'], service_id, client_id)
                         cert_path = self._get_cert_path(cert_name, 'client')
                         if not any(cert['id'] == f"0x{client_id:04x}" for cert in client_certs):
-                            cert_path.append({
+                            client_certs.append({
                                 "id": f"0x{client_id:04x}",
                                 "certificate-path": cert_path
                             })
@@ -467,14 +485,14 @@ class VSomeIPTopologyBase(ABC):
             for client in config['clients']:
                 service_id = int(client['service'], 16)
                 client_id = int(client['client-id'], 16)
-                cert_name = self.get_publisher_cert_name(self.publishers[service_id].host_name, service_id)
+                cert_name = self.get_publisher_cert_name(self.publishers[service_id]['host_name'], service_id)
                 cert_path = self._get_cert_path(cert_name, 'service')
                 client['service-certificate-path'] = cert_path 
 
-    def initialize_missing_from_config(self, net, dns_host):
+    def initialize_missing_from_config(self, net):
         for host in net.hosts:
             host_name = host.__str__()
-            if host_name == dns_host:
+            if host_name == self.dns_host_name:
                 continue
             if host_name not in self.hosts:
                 self.hosts.append(host_name)
@@ -607,7 +625,6 @@ class VSomeIPTopologyBase(ABC):
         print(f"member_counts: {member_counts}")
         return subprocess.Popen([f"{self.PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", services, member_counts, out_path, evaluation_option])
 
-
     # ========== TIER 3: EVALUATION LOOP ==========
 
     def _process_evaluation_run(self, evaluation_option, run, return_code):
@@ -615,9 +632,9 @@ class VSomeIPTopologyBase(ABC):
         pass
 
     def start_evaluation(self, total_evaluation_runs: int, evaluation_option: str, repeat_failure: bool,
-                        add_compile_definitions: str, net: Mininet, dns_host_name: str):
+                        add_compile_definitions: str, net: Mininet):
         """Run evaluation with given parameters."""
-        self.initialize_missing_from_config(net, dns_host_name)
+        self.initialize_missing_from_config(net)
         entire_evaluation_start = time.time()
         current_run = 1
 
@@ -634,7 +651,7 @@ class VSomeIPTopologyBase(ABC):
             # Start DNS server if needed
             if self.WITH_DNSSEC in add_compile_definitions:
                 print("Starting DNS server ... ")
-                self.start_dns_server(net[dns_host_name])
+                self.start_dns_server(net[self.dns_host_name])
                 time.sleep(0.1)
                 print("Done.")
 
@@ -683,7 +700,7 @@ class VSomeIPTopologyBase(ABC):
             else:
                 print(f"statistics writer failed with return code {return_code}")
                 print(f"{current_run}/{total_evaluation_runs} evaluation run {evaluation_option} failed and will be repeated")
-                if not repeat_failure
+                if not repeat_failure:
                     current_run += 1
 
             # Stop apps
@@ -693,7 +710,7 @@ class VSomeIPTopologyBase(ABC):
                 self.stop_publisher_app(host)
 
             if self.WITH_DNSSEC in add_compile_definitions:
-                self.stop_dns_server(net[dns_host_name])
+                self.stop_dns_server(net[self.dns_host_name])
 
             time.sleep(1)
 
