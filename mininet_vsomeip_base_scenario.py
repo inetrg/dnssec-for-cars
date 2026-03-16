@@ -220,6 +220,7 @@ class VSomeIPTopologyBase(ABC):
         subprocess.run(f"rm -f {self.PROJECT_PATH}/publisher-initialized*", shell=True)
         subprocess.run(f"rm -f {self.PROJECT_PATH}/subscriber-initialized*", shell=True)
         subprocess.run(f"rm -f {self.LOGS_PATH}/*.log", shell=True)
+        subprocess.run(f"rm -f {self.LOGS_PATH}/*.std", shell=True)
 
     def delete_configs_and_certs(self):
         """Delete all generated configurations and certificates."""
@@ -468,9 +469,7 @@ class VSomeIPTopologyBase(ABC):
         if not (Path(certificate).is_file() and Path(private_key).is_file()):
             host_ip = host.IP(intf=host.defaultIntf())
             port = self.SUBSCRIBER_PORT + int(client_id)
-            cmd = f"{self.SCRIPT_PATH}/gen_client_dns_and_cert.bash --client {client_id} --service {service_id} --ip {host_ip} --port {port} --file-name {certname} --scenario {self.SCENARIO} --major-version {self.MAJOR_VERSION} --instance {self.INSTANCE_ID} --protocol {self.PROTOCOL}"
-            print(f"Generating certificate for subscriber with command: {cmd}")
-            host.cmd(cmd)
+            host.cmd(f"{self.SCRIPT_PATH}/gen_client_dns_and_cert.bash --client {client_id} --service {service_id} --ip {host_ip} --port {port} --file-name {certname} --scenario {self.SCENARIO} --major-version {self.MAJOR_VERSION} --instance {self.INSTANCE_ID} --protocol {self.PROTOCOL}")
 
         # update key in own host config
         host_config = self.get_host_config_path(host.__str__())
@@ -563,13 +562,13 @@ class VSomeIPTopologyBase(ABC):
     def _build_publisher_launch_cmd(self, host_name, service_id, app_name):
         """Build publisher launch command."""
         config_path = self.get_host_config_path(host_name)
-        launch_cmd = f"env VSOMEIP_CONFIGURATION={config_path} VSOMEIP_APPLICATION_NAME={app_name} {self.PROJECT_PATH}/vsomeip/build/examples/{self.PUBLISHER_PROGRAM} --serviceid {service_id} --instanceid {self.INSTANCE_ID} --eventgroupid {self.EVENT_GROUP_ID + service_id} --eventid {self.EVENT_ID_1 + service_id}"
+        launch_cmd = f"env VSOMEIP_CONFIGURATION={config_path} VSOMEIP_APPLICATION_NAME={app_name} {self.PROJECT_PATH}/vsomeip/build/examples/{self.PUBLISHER_PROGRAM} --serviceid {service_id} --instanceid {self.INSTANCE_ID} --eventgroupid {self.EVENT_GROUP_ID + service_id} --eventid {self.EVENT_ID_1 + service_id} "
         return launch_cmd
 
     def _build_subscriber_launch_cmd(self, host_name, service_id, client_id, app_name):
         """Build subscriber launch command."""
         config_path = self.get_host_config_path(host_name)
-        launch_cmd = f"env VSOMEIP_CONFIGURATION={config_path} VSOMEIP_APPLICATION_NAME={app_name} {self.PROJECT_PATH}/vsomeip/build/examples/{self.SUBSCRIBER_PROGRAM} --serviceid {service_id} --instanceid {self.INSTANCE_ID} --eventgroupid {self.EVENT_GROUP_ID + service_id} --eventid {self.EVENT_ID_1 + service_id} --clientid {client_id}"
+        launch_cmd = f"env VSOMEIP_CONFIGURATION={config_path} VSOMEIP_APPLICATION_NAME={app_name} {self.PROJECT_PATH}/vsomeip/build/examples/{self.SUBSCRIBER_PROGRAM} --serviceid {service_id} --instanceid {self.INSTANCE_ID} --eventgroupid {self.EVENT_GROUP_ID + service_id} --eventid {self.EVENT_ID_1 + service_id} --clientid {client_id} "
         return launch_cmd
 
     def start_someip_publisher_app(self, host, service_id):

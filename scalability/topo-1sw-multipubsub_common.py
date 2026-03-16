@@ -98,14 +98,15 @@ class ScalabilityScenario(VSomeIPTopologyBase):
 
     def create_subscribers(self, net, dns_host=None):
         """Create all subscriber configurations and certificates."""
+        client_id = 1 # we need a unique client id for each subscriber
         for i in range(1, self.pub_count + 1):
             for j in range(1, self.sub_count + 1):
                 sub_host_id = self._get_subscriber_host_id(i, j)
                 sub_host = net[f'h{sub_host_id}']
-                print(f"Creating subscriber {i}/{self.pub_count} - {j}/{self.sub_count} on host h{sub_host_id}")
-                self.create_subscriber_config(sub_host, i, j)
-                self.create_subscriber_certificate(sub_host, i, j)
-
+                print(f"Creating subscriber {i}/{self.pub_count} - {j}/{self.sub_count} with id {client_id} on host h{sub_host_id}")
+                self.create_subscriber_config(sub_host, i, client_id)
+                self.create_subscriber_certificate(sub_host, i, client_id)
+                client_id += 1
 
 if __name__ == '__main__':
     parser = _get_parser_with_common_args()
@@ -175,8 +176,8 @@ if __name__ == '__main__':
     print("Done.")
 
     # Evaluate
-    # if args.evaluate and args.runs:
-        # scenario.start_evaluation(total_evaluation_runs, evaluation_option, args.repeat_on_failure, add_compile_definitions, net)
+    if args.evaluate and args.runs:
+        scenario.start_evaluation(total_evaluation_runs, evaluation_option, args.repeat_on_failure, add_compile_definitions, net)
 
     print("Stopping mininet network")
     net.stop()
