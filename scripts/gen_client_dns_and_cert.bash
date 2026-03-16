@@ -79,7 +79,7 @@ parseProtocol() {
 
 validateRequired() {
     local missing=()
-    [[ -z "$CLIENT_ID"]] && missing+=("--client")
+    [[ -z "$CLIENT_ID" ]] && missing+=("--client")
     [[ -z "$SERVICE_ID" ]] && missing+=("--service")
     [[ -z "$IP_ADDRESS" ]] && missing+=("--ip")
     [[ -z "$PORT_NUMBER" ]] && missing+=("--port")

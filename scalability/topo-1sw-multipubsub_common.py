@@ -9,6 +9,9 @@ publishers and subscribers per publisher.
 import argparse
 import subprocess
 import sys
+import os
+import time
+from datetime import datetime
 from pathlib import Path
 
 from mininet.topo import Topo
@@ -21,7 +24,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from mininet_vsomeip_base_scenario import VSomeIPTopologyBase
+from mininet_vsomeip_base_scenario import VSomeIPTopologyBase, _get_parser_with_common_args
 
 
 class simple_topo(Topo):
@@ -105,27 +108,17 @@ class ScalabilityScenario(VSomeIPTopologyBase):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Starts vsomeip w/ or w/o security mechanisms and collects timestamps of handshake events')
+    parser = _get_parser_with_common_args()
     parser.add_argument('--pubs', type=int, metavar='N', required=True, choices=range(1, 0xffff + 1), help='Specify the number of publishers. (between 1 (inclusive) and 65536 (exclusive))')
     parser.add_argument('--onesubhost', dest='onesubhost', action='store_true', help='Use only one subscriber host for all subscribers')
     parser.add_argument('--subsperpub', type=int, metavar='N', required=False, default=1, choices=range(1, 0xffff + 1), help='Specify the number of subscribers per publisher. (between 1 (inclusive) and 65536 (exclusive))')
     parser.add_argument('--pubsperhost', type=int, metavar='N', required=False, default=1, choices=range(1, 0xffff + 1), help='Specify the number of publishers to be placed on one host. (between 1 (inclusive) and 65536 (exclusive))')
-    parser.add_argument('--evaluate', choices=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], required=True, help="""A: vanilla (vsomeip as it is),
-                                                                                                                        B: w/ DNSSEC w/o SOME/IP SD,
-                                                                                                                        C: w/ service authentication,
-                                                                                                                        D: w/ service authentication + DNSSEC + DANE w/o SOME/IP SD,
-                                                                                                                        E: w/ service and client authentiction,
-                                                                                                                        F: w/ service and client authentiction + payload encryption,
-                                                                                                                        G: w/ service and client authentication + DNSSEC + DANE,
-                                                                                                                        H: w/ service and client authentication + DNSSEC + DANE + payload encryption""")
-    parser.add_argument('--runs', type=int, metavar='N', required=False, help='Specify the number of runs for the evaluation or omit this parameter to start the interactive mode with mininet CLI')
-    parser.add_argument('--repeat-on-failure', dest='repeat_on_failure', action='store_true', help='Repeats a run in case of failure.')
-    parser.add_argument('--clean-start', dest='clean_start', action='store_true', help='Removes certificates and host configs causing them to be recreated')
 
     args = parser.parse_args()
     pub_count = args.pubs
     sub_count = args.subsperpub
     scenario = ScalabilityScenario()
+    scenario.set_copy_logs(args.copy_logs)
     scenario.set_parameters(pub_count, sub_count, args.pubsperhost, args.onesubhost)
 
     host_count = scenario._get_publisher_host_id(pub_count)
@@ -182,8 +175,8 @@ if __name__ == '__main__':
     print("Done.")
 
     # Evaluate
-    if args.evaluate and args.runs:
-        scenario.start_evaluation(total_evaluation_runs, evaluation_option, args.repeat_on_failure, add_compile_definitions, net)
+    # if args.evaluate and args.runs:
+        # scenario.start_evaluation(total_evaluation_runs, evaluation_option, args.repeat_on_failure, add_compile_definitions, net)
 
     print("Stopping mininet network")
     net.stop()

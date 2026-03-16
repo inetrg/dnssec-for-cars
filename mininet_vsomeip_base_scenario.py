@@ -7,9 +7,12 @@ extracting common functionality and providing a well-organized interface
 for scenario-specific implementations.
 """
 
+import argparse
 import subprocess
 import json
+import os
 import time
+from datetime import datetime
 from abc import ABC, abstractmethod
 from pathlib import Path
 from subprocess import TimeoutExpired
@@ -18,6 +21,22 @@ from itertools import combinations
 from mininet.net import Mininet
 from mininet.util import dumpNodeConnections, dumpNetConnections
 
+
+def _get_parser_with_common_args():
+    parser = argparse.ArgumentParser(description='Starts vsomeip w/ or w/o security mechanisms and collects timestamps of handshake events')
+    parser.add_argument('--evaluate', choices=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], required=True, help="""A: vanilla (vsomeip as it is),
+                                                                                                                        B: w/ DNSSEC w/o SOME/IP SD,
+                                                                                                                        C: w/ service authentication,
+                                                                                                                        D: w/ service authentication + DNSSEC + DANE w/o SOME/IP SD,
+                                                                                                                        E: w/ service and client authentiction,
+                                                                                                                        F: w/ service and client authentiction + payload encryption,
+                                                                                                                        G: w/ service and client authentication + DNSSEC + DANE,
+                                                                                                                        H: w/ service and client authentication + DNSSEC + DANE + payload encryption""")
+    parser.add_argument('--runs', type=int, metavar='N', required=False, help='Specify the number of runs for the evaluation or omit this parameter to start the interactive mode with mininet CLI')
+    parser.add_argument('--repeat-on-failure', dest='repeat_on_failure', action='store_true', help='Repeats a run in case of failure.')
+    parser.add_argument('--clean-start', dest='clean_start', action='store_true', help='Removes certificates and host configs causing them to be recreated')
+    parser.add_argument('--copy-logs', dest='copy_logs', action='store_true', default=False, help='Copy logs to scenario folder for every evaluation run')
+    return parser
 
 class VSomeIPTopologyBase(ABC):
     """Base class for SOME/IP evaluation scenarios.
@@ -61,7 +80,7 @@ class VSomeIPTopologyBase(ABC):
     PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
     SCENARIO_PATH = None  # Must be set by subclass
     CONFIG_PATH = None  # Must be set by subclass
-    CONFIG_TEMPLATE_PATH = PROJECT_PATH + "/vsomeip-config-templates/vsomeip-udp-mininet-multihost.json" # May be set by subclass
+    CONFIG_TEMPLATE_PATH = PROJECT_PATH + "/template-configs/vsomeip-udp-mininet-multihost.json" # May be set by subclass
     CERT_PATH = None  # Must be set by subclass
     ZONE_PATH = None  # Must be set by subclass
     SCRIPT_PATH = PROJECT_PATH + "/scripts" # May be set by subclass
@@ -95,6 +114,7 @@ class VSomeIPTopologyBase(ABC):
         self.service_sub_counts = {}
         self.dns_host_name = ""
         self.dns_host_hex_ip = None
+        self.copy_logs = False
 
     # ========== TIER 1 & 2: NETWORK UTILITIES (SHARED) ==========
 
@@ -147,6 +167,10 @@ class VSomeIPTopologyBase(ABC):
         Path(self.ZONE_PATH).mkdir(parents=True, exist_ok=True)
         Path(self.LOGS_PATH).mkdir(parents=True, exist_ok=True)
 
+    def set_copy_logs(self, copy_logs):
+        """Set whether to copy logs to scenario folder after each evaluation run."""
+        self.copy_logs = copy_logs
+
     # ========== TIER 2: INFRASTRUCTURE MANAGEMENT ==========
 
     def start_dns_server(self, dns_host):
@@ -177,7 +201,7 @@ class VSomeIPTopologyBase(ABC):
 
     def reset_zone_files(self):
         """Reset zone files to default state."""
-        subprocess.run(["su", "-", "vm-user", "-c", f"{self.SCENARIO_PATH}/reset-zone-files.bash"])
+        subprocess.run(["su", "-", "vm-user", "-c", f"{self.SCENARIO_PATH}/scripts/reset-zone-file.bash"])
 
     def build_vsomeip(self, add_compile_definitions):
         """Build vsomeip project."""
@@ -195,6 +219,7 @@ class VSomeIPTopologyBase(ABC):
         subprocess.run(f"rm -f {self.PROJECT_PATH}/vsomeip-*", shell=True)
         subprocess.run(f"rm -f {self.PROJECT_PATH}/publisher-initialized*", shell=True)
         subprocess.run(f"rm -f {self.PROJECT_PATH}/subscriber-initialized*", shell=True)
+        subprocess.run(f"rm -f {self.LOGS_PATH}/*.log", shell=True)
 
     def delete_configs_and_certs(self):
         """Delete all generated configurations and certificates."""
@@ -440,11 +465,12 @@ class VSomeIPTopologyBase(ABC):
         certname = self.get_subscriber_cert_name(host, service_id, client_id)
         certificate = self._get_cert_path(certname, 'client')
         private_key = self._get_key_path(certname, 'client')
-
         if not (Path(certificate).is_file() and Path(private_key).is_file()):
             host_ip = host.IP(intf=host.defaultIntf())
             port = self.SUBSCRIBER_PORT + int(client_id)
-            host.cmd(f"{self.SCRIPT_PATH}/gen_client_dns_and_cert.bash --client {client_id}--service {service_id} --ip {host_ip} --port {port} --file-name {certname} --scenario {self.SCENARIO} --major-version {self.MAJOR_VERSION} --instance {self.INSTANCE_ID} --protocol {self.PROTOCOL}")
+            cmd = f"{self.SCRIPT_PATH}/gen_client_dns_and_cert.bash --client {client_id} --service {service_id} --ip {host_ip} --port {port} --file-name {certname} --scenario {self.SCENARIO} --major-version {self.MAJOR_VERSION} --instance {self.INSTANCE_ID} --protocol {self.PROTOCOL}"
+            print(f"Generating certificate for subscriber with command: {cmd}")
+            host.cmd(cmd)
 
         # update key in own host config
         host_config = self.get_host_config_path(host.__str__())
@@ -488,6 +514,9 @@ class VSomeIPTopologyBase(ABC):
                 cert_name = self.get_publisher_cert_name(self.publishers[service_id]['host_name'], service_id)
                 cert_path = self._get_cert_path(cert_name, 'service')
                 client['service-certificate-path'] = cert_path 
+
+            with open(host_config, "w") as config_file:
+                json.dump(config, config_file, indent=4)
 
     def initialize_missing_from_config(self, net):
         for host in net.hosts:
@@ -627,6 +656,24 @@ class VSomeIPTopologyBase(ABC):
 
     # ========== TIER 3: EVALUATION LOOP ==========
 
+    def _copy_logs_to_scenario_folder(self, evaluation_option: str, run: int, return_code: int, move_logs: bool = True):
+        """Copy or move logs to scenario folder."""
+        time_stamp = datetime.fromtimestamp(self.eval_start).strftime("%Y%m%d-%H%M%S")
+        out_path = f"{self.LOGS_PATH}/{evaluation_option}-series/{time_stamp}/run-{run}-"
+        subprocess.run(f"rm -rf {out_path}*", shell=True, check=True)
+
+        if return_code == 0:
+            out_path += "success"
+        else:
+            out_path += "failure"
+
+        os.makedirs(out_path, exist_ok=True)
+
+        if move_logs:
+            subprocess.run(f"mv {self.LOGS_PATH}/*.log {out_path}/", shell=True, check=True)
+        else:
+            subprocess.run(f"cp {self.LOGS_PATH}/*.log {out_path}/", shell=True, check=True)
+
     def _process_evaluation_run(self, evaluation_option, run, return_code):
         """Process evaluation run results (e.g., copy logs). Hook for subclass customization."""
         pass
@@ -715,6 +762,9 @@ class VSomeIPTopologyBase(ABC):
             time.sleep(1)
 
             # Hook for subclass-specific processing
+            
+            if self.copy_logs:
+                self._copy_logs_to_scenario_folder(evaluation_option, current_run, return_code)
             self._process_evaluation_run(evaluation_option, current_run - 1, return_code)
 
             self.cleanup()
