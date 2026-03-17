@@ -201,7 +201,7 @@ class VSomeIPTopologyBase(ABC):
 
     def reset_zone_files(self):
         """Reset zone files to default state."""
-        subprocess.run(["su", "-", "vm-user", "-c", f"{self.SCENARIO_PATH}/scripts/reset-zone-file.bash"])
+        subprocess.run(["su", "-", "vm-user", "-c", f"{self.SCENARIO_PATH}/reset-zone-file.bash"])
 
     def build_vsomeip(self, add_compile_definitions):
         """Build vsomeip project."""
