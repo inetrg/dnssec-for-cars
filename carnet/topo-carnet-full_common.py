@@ -8,6 +8,7 @@ endpoints loaded from JSON configuration files.
 
 import argparse
 import subprocess
+import sys
 import json
 import os
 import time
@@ -19,14 +20,13 @@ from mininet.net import Mininet
 from mininet.link import TCLink
 from mininet.log import setLogLevel
 
-from mininet_vsomeip_base_scenario import VSomeIPTopologyBase
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
+from mininet_vsomeip_base_scenario import VSomeIPTopologyBase, _get_parser_with_common_args
 
 DNS_HOST_NAME = 'dns'
-PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
-SCENARIO_PATH = f"{PROJECT_PATH}/carnet"
-LOGS_PATH = f"/var/log/carnet"
-
 
 class car_topo(Topo):
     """CarNet topology with switches and named hosts."""
@@ -80,169 +80,76 @@ class car_topo(Topo):
 class CarNetScenario(VSomeIPTopologyBase):
     """CarNet scenario with JSON-defined publishers and subscribers."""
 
-    # Scenario-specific paths
-    SCENARIO_PATH = SCENARIO_PATH
-    CONFIG_PATH = f"{SCENARIO_PATH}/vsomeip-configs"
-    CERT_PATH = f"{SCENARIO_PATH}/certificates"
-    ZONE_PATH = f"{SCENARIO_PATH}/zones"
-    LOGS_PATH = LOGS_PATH
-
-    # Scenario-specific port configuration
-    PUBLISHER_PORT = 10000
-    SUBSCRIBER_PORT = 20000
-    EVENT_ID_1 = 30000
-    EVENT_ID_2 = 40000
-    EVENT_GROUP_ID = 50000
+    SCENARIO_FOLDER = "carnet"
 
     def __init__(self):
         """Initialize scenario."""
         super().__init__()
-        self.service_sub_counts = {}
-        self.managers = {}
-        self.eval_start = time.time()
-        self.copy_logs_flag = False
-
-    def set_copy_logs(self, copy_logs: bool):
-        """Enable/disable log copying after evaluation runs."""
-        self.copy_logs_flag = copy_logs
+        self.scenario_dirs(self.SCENARIO_FOLDER)
 
     def get_publisher_multicast_ip(self, service_id):
         """Get multicast IP from publishers.json or use default."""
-        try:
-            with open(f"{self.SCENARIO_PATH}/publishers.json", "r") as f:
-                services = json.load(f)
-            for service in services:
-                if services[service]["serviceId"] == service_id:
-                    mcast_ip = services[service].get("mcast")
-                    if mcast_ip:
-                        return mcast_ip
-        except:
-            pass
+        with open(f"{self.SCENARIO_PATH}/publishers.json", "r") as f:
+            services = json.load(f)
+        for service in services:
+            if services[service]["serviceId"] == service_id:
+                mcast_ip = services[service]["mcast"]
+                if mcast_ip is not None:
+                    return mcast_ip
+                break
         # Fallback calculation
         lowerTwoDigetsServiceId = service_id % 256
         upperTwoDigetsServiceId = service_id // 256
-        return "224.1." + str(upperTwoDigetsServiceId) + "." + str(lowerTwoDigetsServiceId)
-
-    def _make_switch_traditional(self, net, switch: str):
-        """Configure switch for traditional operation."""
-        net[switch].cmd('ovs-ofctl add-flow {} action=normal'.format(switch))
+        mcast_ip =  "224.1." + str(upperTwoDigetsServiceId) + "." + str(lowerTwoDigetsServiceId)
+        print (f"Service {service_id} has no multicast IP. Selecting {mcast_ip} as multicast IP.")
+        return mcast_ip
 
     # ========== CONFIGURATION CREATION ==========
 
     # ========== MANAGER/APP STARTUP ==========
 
-    def start_subscribers(self, net):
-        """Start all subscriber applications."""
-        with open(f"{self.SCENARIO_PATH}/subscribers.json", "r") as service_file:
-            clients = json.load(service_file)
-
-        for client in clients:
-            service_id = clients[client]["serviceId"]
-            client_id = clients[client]["clientId"]
-            host_name = clients[client]["host"].lower()
-            app_name = self.get_subscriber_app_name(net[host_name], service_id, client_id)
-
-            if self.managers.get(host_name) == app_name:
-                continue
-
-            self.start_someip_subscriber_app(net[host_name], service_id, client_id)
-            self.num_subs_started += 1
-            time.sleep(0.01)
-
     # ========== EVALUATION SUPPORT ==========
 
-    def _process_evaluation_run(self, evaluation_option, run, return_code):
-        """Process evaluation run - copy logs if enabled."""
-        if self.copy_logs_flag:
-            self._copy_logs_to_scenario_folder(evaluation_option, run, return_code)
-
-    def _copy_logs_to_scenario_folder(self, evaluation_option: str, run: int, return_code: int, move_logs: bool = True):
-        """Copy or move logs to scenario folder."""
-        time_stamp = datetime.fromtimestamp(self.eval_start).strftime("%Y%m%d-%H%M%S")
-        out_path = f"{self.SCENARIO_PATH}/logs/{evaluation_option}-series/{time_stamp}/run-{run}-"
-        subprocess.run(f"rm -rf {out_path}*", shell=True, check=True)
-
-        if return_code == 0:
-            out_path += "success"
-        else:
-            out_path += "failure"
-
-        os.makedirs(out_path, exist_ok=True)
-
-        if move_logs:
-            subprocess.run(f"mv {self.LOGS_PATH}/*.log {out_path}/", shell=True, check=True)
-        else:
-            subprocess.run(f"cp {self.LOGS_PATH}/*.log {out_path}/", shell=True, check=True)
-
-    def create_publishers(self, net, dns_host_name=None):
+    def create_publishers(self, net):
         """Create all publisher configurations and certificates."""
-        dns_host_ip_in_hex = None
-        if dns_host_name is not None:
-            dns_host = net[dns_host_name]
-            dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
-            ip_bytes = dns_host_ip.split(".")
-            ip_bytes_in_hex = ["{:02x}".format(int(x)) for x in ip_bytes]
-            dns_host_ip_in_hex = f"0x{''.join(ip_bytes_in_hex)}"
-
         with open(f"{self.SCENARIO_PATH}/publishers.json", "r") as service_file:
             services = json.load(service_file)
-
+        total_services = len(services)
+        service_count = 0
         for service in services:
+            service_count += 1
             net_name = services[service]["host"].lower()
             service_id = services[service]["serviceId"]
-            self.create_publisher_config(net[net_name], service_id)
-            self.create_publisher_certificate(net[net_name], service_id)
-            if dns_host_ip_in_hex:
-                self._set_dns_server_ip(net[net_name], dns_host_ip_in_hex)
+            print(f"Creating publisher {service_count}/{total_services} for service {service_id} on host {net_name}")
+            host = net[net_name]
+            if host is None:
+                print(f"Error: Host {net_name} not found in topology. Skipping publisher for service {service_id}.")
+                continue
+            self.create_publisher_config(host, service_id)
+            self.create_publisher_certificate(host, service_id)
 
-    def create_subscribers(self, net, dns_host_name=None):
+    def create_subscribers(self, net):
         """Create all subscriber configurations and certificates."""
-        dns_host_ip_in_hex = None
-        if dns_host_name is not None:
-            dns_host = net[dns_host_name]
-            dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
-            ip_bytes = dns_host_ip.split(".")
-            ip_bytes_in_hex = ["{:02x}".format(int(x)) for x in ip_bytes]
-            dns_host_ip_in_hex = f"0x{''.join(ip_bytes_in_hex)}"
-
         with open(f"{self.SCENARIO_PATH}/subscribers.json", "r") as service_file:
             clients = json.load(service_file)
-
+        total_clients = len(clients)
+        client_count = 0    
         for client in clients:
+            client_count += 1
             service_id = clients[client]["serviceId"]
             client_id = clients[client]["clientId"]
             net_name = clients[client]["host"].lower()
-            self.create_subscriber_config(net[net_name], service_id, client_id)
-            self.create_subscriber_certificate(net[net_name], service_id, client_id)
-            if dns_host_ip_in_hex:
-                self._set_dns_server_ip(net[net_name], dns_host_ip_in_hex)
-
-    def _set_dns_server_ip(self, host, dns_host_ip_in_hex):
-        """Set DNS server IP in host configuration."""
-        host_name = host.__str__()
-        host_config = f"{self.CONFIG_PATH}/{host_name}.json"
-        if Path(host_config).is_file():
-            with open(host_config, 'r') as file:
-                config = json.load(file)
-            config['dns-server-ip'] = dns_host_ip_in_hex
-            with open(host_config, 'w') as file:
-                json.dump(config, file, indent=4)
-
+            host = net[net_name]
+            if host is None:
+                print(f"Error: Host {net_name} not found in topology. Skipping subscriber with id {client_id} for service {service_id}.")
+                continue
+            print(f"Creating subscriber {client_count}/{total_clients} for service {service_id} with id {client_id} on host {net_name}")
+            self.create_subscriber_config(host, service_id, client_id)
+            self.create_subscriber_certificate(host, service_id, client_id)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Starts vsomeip w/ or w/o security mechanisms and collects timestamps of handshake events')
-    parser.add_argument('--evaluate', choices=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], required=True, help="""A: vanilla (vsomeip as it is),
-                                                                                                                        B: w/ DNSSEC w/o SOME/IP SD,
-                                                                                                                        C: w/ service authentication,
-                                                                                                                        D: w/ service authentication + DNSSEC + DANE w/o SOME/IP SD,
-                                                                                                                        E: w/ service and client authentiction,
-                                                                                                                        F: w/ service and client authentiction + payload encryption,
-                                                                                                                        G: w/ service and client authentication + DNSSEC + DANE,
-                                                                                                                        H: w/ service and client authentication + DNSSEC + DANE + payload encryption""")
-    parser.add_argument('--runs', type=int, metavar='N', required=False, help='Specify the number of runs for the evaluation or omit this parameter to start the interactive mode with mininet CLI')
-    parser.add_argument('--clean-start', dest='clean_start', action='store_true', help='Removes certificates and host configs causing them to be recreated')
-    parser.add_argument('--copy-logs', dest='copy_logs', action='store_true', default=False, help='Copy logs to scenario folder for every evaluation run')
-
+    parser = _get_parser_with_common_args()
+    
     args = parser.parse_args()
     evaluation_option = args.evaluate
     total_evaluation_runs = args.runs
@@ -255,17 +162,12 @@ if __name__ == '__main__':
     print("Cleaning up mininet interfaces ... ")
     subprocess.run(['mn', '-c'])
     scenario.cleanup()
-    subprocess.run(f"rm -f {LOGS_PATH}/*", shell=True)
     print("Done")
 
     # remove configs and certificates for clean start
     if args.clean_start:
         print("Removing configs and certificates ... ")
-        for file in Path(f"{SCENARIO_PATH}/vsomeip-configs").glob("*.json"):
-            if not file.name.startswith("vsomeip-udp-mininet"):
-                subprocess.run(f"rm -f {file}", shell=True)
-        subprocess.run(f"rm -f {SCENARIO_PATH}/certificates/*", shell=True)
-        scenario.reset_zone_files()
+        scenario.delete_configs_and_certs()
         print("Done.")
 
     # build mininet network
@@ -273,41 +175,35 @@ if __name__ == '__main__':
     setLogLevel('critical')
     topo = car_topo()
     dns_host_name = DNS_HOST_NAME
+    scenario.dns_host_name = dns_host_name
     net = Mininet(topo=topo, controller=None, link=TCLink)
     net.start()
-
-    scenario_instance = CarNetScenario()
-    for switch in net.switches:
-        scenario_instance._make_switch_traditional(net, switch.__str__())
-
-    for host in net.hosts:
-        scenario.add_default_route(host)
-
+    scenario.make_switches_traditional(net)
+    scenario.add_default_route_to_hosts(net)
+    scenario.dns_host_hex_ip = scenario._get_dns_host_ip_in_hex(net, dns_host_name)
     print("Done.")
 
     # build vsomeip
     print("Building vsomeip ... ")
-    subprocess.run(f"sed -i -E 's/add_compile_definitions.*/add_compile_definitions\({add_compile_definitions}\)/' {PROJECT_PATH}/vsomeip/CMakeLists.txt", shell=True)
-    scenario.build_vsomeip()
+    scenario.build_vsomeip(add_compile_definitions)
     print("Done.")
 
     # create host configs and certificates
-    print("Creating host configs and certificates ... (this may take a while)")
+    
     if args.clean_start:
-        scenario.create_publishers(net, dns_host_name)
-        scenario.create_subscribers(net, dns_host_name)
-
-    scenario.reference_certificates()
-    print("Done.")
+        print("Creating host configs and certificates ... (this may take a while)")
+        scenario.create_subscribers(net)
+        scenario.create_publishers(net)
+        scenario.reference_certificates()
+        print("Done.")
+    else:
+        print("Reusing existing host configs and certificates ... ")
 
     # Evaluate
     if args.evaluate and args.runs:
-        scenario.start_evaluation(total_evaluation_runs, evaluation_option, add_compile_definitions, net, dns_host_name)
+        scenario.start_evaluation(total_evaluation_runs, evaluation_option, args.repeat_on_failure, add_compile_definitions, net)
 
     print("Stopping mininet network")
     net.stop()
+    scenario.cleanup()
     print("Done.")
-
-else:
-    # Command to start CLI w/ topo only: sudo -E mn --mac --controller none --custom ~/vscode-workspaces/topo-carnet-full.py --topo car_topo
-    topos = {'car_topo': (lambda: car_topo())}

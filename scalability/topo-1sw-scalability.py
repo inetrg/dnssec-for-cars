@@ -87,7 +87,7 @@ class ScalabilityScenario(VSomeIPTopologyBase):
 
     # ========== PUBLISHER/SUBSCRIBER SETUP ==========
 
-    def create_publishers(self, net, dns_host=None):
+    def create_publishers(self, net):
         """Create all publisher configurations and certificates."""
         for i in range(1, self.pub_count + 1):
             host_id = self._get_publisher_host_id(i)
@@ -96,7 +96,7 @@ class ScalabilityScenario(VSomeIPTopologyBase):
             self.create_publisher_config(host, i)
             self.create_publisher_certificate(host, i)
 
-    def create_subscribers(self, net, dns_host=None):
+    def create_subscribers(self, net):
         """Create all subscriber configurations and certificates."""
         client_id = 1 # we need a unique client id for each subscriber
         for i in range(1, self.pub_count + 1):
@@ -157,8 +157,8 @@ if __name__ == '__main__':
 
     net = Mininet(topo=topo, controller=None, switch=OVSBridge, link=TCLink)
     net.start()
-    for host in net.hosts:
-        scenario.add_default_route(host)
+    scenario.make_switches_traditional(net)
+    scenario.add_default_route_to_hosts(net)
     if scenario.WITH_DNSSEC in add_compile_definitions:
         scenario.dns_host_hex_ip = scenario._get_dns_host_ip_in_hex(net, dns_host_name)
     print("Done.")
@@ -169,11 +169,14 @@ if __name__ == '__main__':
     print("Done.")
 
     # create host configs and certificates
-    print("Creating host configs and certificates ... ")
-    scenario.create_publishers(net, dns_host_name)
-    scenario.create_subscribers(net, dns_host_name)
-    scenario.reference_certificates()
-    print("Done.")
+    if args.clean_start:
+        print("Creating host configs and certificates ... ")
+        scenario.create_subscribers(net)
+        scenario.create_publishers(net)
+        scenario.reference_certificates()
+        print("Done.")
+    else:
+        print("Reusing existing host configs and certificates ... ")
 
     # Evaluate
     if args.evaluate and args.runs:

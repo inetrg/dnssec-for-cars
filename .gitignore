@@ -13,3 +13,4 @@ statistic-results/*.csv
 statistic-results/*.txt
 publisher-initialized*
 logs/
+vsomeip-configs/

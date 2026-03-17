@@ -89,12 +89,12 @@ class VSomeIPTopologyBase(ABC):
 
     # ========== TIER 2: CONFIGURABLE CONSTANTS ==========
 
-    PUBLISHER_PORT = 2000
-    SUBSCRIBER_PORT = 5000
-    PUBLISHER_MCAST_PORT = 7000
-    EVENT_ID_1 = 10000
-    EVENT_ID_2 = 20000
-    EVENT_GROUP_ID = 30000
+    PUBLISHER_PORT = 10000
+    SUBSCRIBER_PORT = 20000
+    EVENT_ID_1 = 30000
+    EVENT_ID_2 = 40000
+    EVENT_GROUP_ID = 50000
+    PUBLISHER_MCAST_PORT = 60000
 
     # Pkill patterns (may be overridden)
     SUBSCRIBER_PROGRAM = "my-subscriber"
@@ -147,10 +147,11 @@ class VSomeIPTopologyBase(ABC):
             net.iperf(hosts=host_tuple, l4Type='TCP')
             net.iperf(hosts=host_tuple, l4Type='UDP')
 
-    def add_default_route(self, host):
-        """Add default route for a host."""
-        host_name = host.__str__()
-        host.cmd(f'route add default gw 10.0.0.0 {host_name}-eth0')
+    def add_default_route_to_hosts(self, net: Mininet):
+        """Add default route for each host."""
+        for host in net.hosts:
+            host_name = host.__str__()
+            host.cmd(f'route add default gw 10.0.0.0 {host_name}-eth0')
 
     def scenario_dirs(self, scenario_folder):
         """Set up scenario-specific directories."""
@@ -166,6 +167,12 @@ class VSomeIPTopologyBase(ABC):
         Path(self.CERT_PATH).mkdir(parents=True, exist_ok=True)
         Path(self.ZONE_PATH).mkdir(parents=True, exist_ok=True)
         Path(self.LOGS_PATH).mkdir(parents=True, exist_ok=True)
+
+    def make_switches_traditional(self, net):
+        """Configure switches for traditional operation."""
+        for switch in net.switches:
+            switch_name = switch.__str__()
+            net[switch_name].cmd('ovs-ofctl add-flow {} action=normal'.format(switch_name))
 
     def set_copy_logs(self, copy_logs):
         """Set whether to copy logs to scenario folder after each evaluation run."""
@@ -224,8 +231,8 @@ class VSomeIPTopologyBase(ABC):
 
     def delete_configs_and_certs(self):
         """Delete all generated configurations and certificates."""
-        subprocess.run(f"rm -f {self.CONFIG_PATH}/h*.json", shell=True)
-        subprocess.run(f"rm -f {self.CERT_PATH}/*", shell=True)
+        subprocess.run(f"rm -f {self.CONFIG_PATH}/*.json", shell=True)
+        subprocess.run(f"rm -f {self.CERT_PATH}/*.pem", shell=True)
         self.reset_zone_files()
 
     def stop_subscriber_app(self, host):
@@ -345,9 +352,7 @@ class VSomeIPTopologyBase(ABC):
         created = self.create_host_config(host, host_config, app_name)
         host_name = host.__str__()
         if service_id not in self.publishers:
-            self.publishers[service_id] = {'app_name': app_name, 'app_id': app_id, 'host_name': host_name}
-        if created and host_name not in self.managers:
-            self.managers[host_name] = {'app_name': app_name, 'app_id': app_id, 'service_id': service_id, 'class': 'publisher'}
+            self.publishers[service_id] = {'app_name': app_name, 'app_id': app_id, 'host_name': host_name, 'clients': []}
 
         with open(host_config, 'r') as file:
             config = json.load(file)
@@ -393,17 +398,15 @@ class VSomeIPTopologyBase(ABC):
 
     def create_subscriber_config(self, host, service_id, client_id):
         """Create subscriber configuration. """
-        host_config = self.get_host_config_path(host.__str__())
+        host_name = host.__str__()
+        host_config = self.get_host_config_path(host_name)
         app_name = self.get_subscriber_app_name(host, service_id, client_id)
         app_id = self.get_subscriber_app_id(host, service_id, client_id)
 
         # check if config already exists, else create.
         created = self.create_host_config(host, host_config, app_name)
-        host_name = host.__str__()
         if client_id not in self.subscribers:
             self.subscribers[client_id] = {'service_id': service_id, 'app_name': app_name, 'app_id': app_id, 'host_name': host_name}
-        if created and host_name not in self.managers:
-            self.managers[host_name] = {'service_id': service_id, 'app_name': app_name, 'app_id': app_id, 'client_id': client_id, 'class': 'subscriber'}
 
         with open(host_config, 'r') as file:
             config = json.load(file)
@@ -517,6 +520,54 @@ class VSomeIPTopologyBase(ABC):
             with open(host_config, "w") as config_file:
                 json.dump(config, config_file, indent=4)
 
+    def _initialize_publishers_from_config(self, net):
+        """Initialize publishers and managers from existing configs."""
+        for host in net.hosts:
+            host_name = host.__str__()
+            if host_name == self.dns_host_name:
+                continue
+            host_config = self.get_host_config_path(host_name)
+            with open(host_config, "r") as config_file:
+                config = json.load(config_file)
+            manager = config['routing']
+
+            for service in config['services']:
+                service_id = int(service['service'], 16)
+                app_name = self.get_publisher_app_name(host, service_id)
+                app_id = self.get_publisher_app_id(host, service_id)
+                if app_name == manager and host_name not in self.managers:
+                    print(f"Manager {manager} on host {host_name} is publisher {app_name} for service {service_id}")
+                    self.managers[host_name] = {'app_name': app_name, 'app_id': app_id, 'service_id': service_id, 'class': 'publisher'}
+                if service_id not in self.publishers:
+                    self.publishers[service_id] = {'app_name': app_name, 'app_id': app_id, 'host_name': host_name, 'clients': []}
+
+    def _initialize_subscribers_from_config(self, net):
+        """Initialize subscribers from existing configs. Requires publishers to be initialized first since it maintains client service relationships.""" 
+        for host in net.hosts:
+            host_name = host.__str__()
+            if host_name == self.dns_host_name:
+                continue
+            host_config = self.get_host_config_path(host_name)
+            with open(host_config, "r") as config_file:
+                config = json.load(config_file)
+            manager = config['routing']
+
+            for client in config['clients']:
+                service_id = int(client['service'], 16)
+                client_id = int(client['client-id'], 16)
+                app_name = self.get_subscriber_app_name(host, service_id, client_id)
+                app_id = self.get_subscriber_app_id(host, service_id, client_id)
+                if app_name == manager and host_name not in self.managers:
+                    print(f"Manager {manager} on host {host_name} is subscriber {app_name} for service {service_id} client {client_id}")
+                    self.managers[host_name] = {'service_id': service_id, 'app_name': app_name, 'app_id': app_id, 'client_id': client_id, 'class': 'subscriber'}
+                if client_id not in self.subscribers:
+                    self.subscribers[client_id] = {'service_id': service_id, 'app_name': app_name, 'app_id': app_id, 'host_name': host_name}
+                if service_id not in self.publishers:
+                    print(self.publishers)
+                    raise ValueError(f"Config error: client {client_id} on host {host_name} references service {service_id} which has no publisher defined")
+                if client_id not in self.publishers[service_id]['clients']:
+                    self.publishers[service_id]['clients'].append(client_id)
+            
     def initialize_missing_from_config(self, net):
         for host in net.hosts:
             host_name = host.__str__()
@@ -525,34 +576,9 @@ class VSomeIPTopologyBase(ABC):
             if host_name not in self.hosts:
                 self.hosts.append(host_name)
 
-            host_config = self.get_host_config_path(host_name)
-            with open(host_config, "r") as config_file:
-                config = json.load(config_file)
+        self._initialize_publishers_from_config(net)
+        self._initialize_subscribers_from_config(net)
 
-            manager = config['routing']
-
-            for service in config['services']:
-                service_id = int(service['service'], 16)
-                app_name = self.get_publisher_app_name(host, service_id)
-                app_id = self.get_publisher_app_id(host, service_id)
-                if app_name == manager and host_name not in self.managers:
-                    self.managers[host_name] = {'app_name': app_name, 'app_id': app_id, 'service_id': service_id, 'class': 'publisher'}
-                if service_id not in self.publishers:
-                    self.publishers[service_id] = {'app_name': app_name, 'app_id': app_id, 'host_name': host_name}
-                self.publishers[service_id]['clients'] = []
-            
-            for client in config['clients']:
-                service_id = int(client['service'], 16)
-                client_id = int(client['client-id'], 16)
-                app_name = self.get_subscriber_app_name(host, service_id, client_id)
-                app_id = self.get_subscriber_app_id(host, service_id, client_id)
-                if app_name == manager and host_name not in self.managers:
-                    self.managers[host_name] = {'service_id': service_id, 'app_name': app_name, 'app_id': app_id, 'client_id': client_id, 'class': 'subscriber'}
-                if client_id not in self.subscribers:
-                    self.subscribers[client_id] = {'service_id': service_id, 'app_name': app_name, 'app_id': app_id, 'host_name': host_name}
-                if client_id not in self.publishers[service_id]['clients']:
-                    self.publishers[service_id]['clients'].append(client_id)
-            
         for service_id, info in self.publishers.items():
             count = len(info['clients'])
             self.service_sub_counts[service_id] = count
@@ -715,6 +741,7 @@ class VSomeIPTopologyBase(ABC):
             print("Starting SOME/IP subscribers ... ")
             subscribers_start = time.time()
             self.start_subscribers(net)
+            self._wait_for_initialized_files()
             subscribers_end = time.time()
             print("Done.")
 
