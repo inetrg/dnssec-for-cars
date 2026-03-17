@@ -18,6 +18,8 @@ from pathlib import Path
 from subprocess import TimeoutExpired
 from itertools import combinations
 
+from tqdm import tqdm
+
 from mininet.net import Mininet
 from mininet.util import dumpNodeConnections, dumpNetConnections
 
@@ -627,48 +629,49 @@ class VSomeIPTopologyBase(ABC):
 
     def start_managers(self, net: Mininet):
         """Start manager applications. """
-        for host_name, manager_info in self.managers.items():
+        for host_name, manager_info in tqdm(self.managers.items(), desc="Starting managers", unit="manager", leave=False):
             host = net[host_name]
             if manager_info['class'] == 'publisher':
                 self.start_someip_publisher_app(host, manager_info['service_id'])
-                print(f"Started SOME/IP manager app for {manager_info['app_name']} on host {host_name} for service {manager_info['service_id']}")
             elif manager_info['class'] == 'subscriber':
                 self.start_someip_subscriber_app(host, manager_info['service_id'], manager_info['client_id'])
-                print(f"Started SOME/IP manager app for {manager_info['app_name']} on host {host_name} for service {manager_info['service_id']} client {manager_info['client_id']}")
             else:
                 raise ValueError(f"Unknown manager class {manager_info['class']} for host {host_name} should be publisher/subscriber")
 
     def start_publishers(self, net: Mininet):
         """Start publisher applications. """
-        for service_id, info in self.publishers.items():
+        for service_id, info in tqdm(self.publishers.items(), desc="Starting publishers", unit="publisher", leave=False):
             host = net[info['host_name']]
             manager = self.managers[info['host_name']]
             if manager['class'] == 'publisher' and manager['service_id'] == service_id:
-                print(f"Skip publisher {service_id} on host {info['host_name']}, already launched as manager")
                 continue
             self.start_someip_publisher_app(host, service_id)
 
     def start_subscribers(self, net: Mininet):
         """Start subscriber applications."""
-        for client_id, info in self.subscribers.items():
+        for client_id, info in tqdm(self.subscribers.items(), desc="Starting subscribers", unit="subscriber", leave=False):
             host = net[info['host_name']]
             manager = self.managers[info['host_name']]
             if manager['class'] == 'subscriber' and manager['client_id'] == client_id:
-                print(f"Skip subscriber {client_id} for service {info['service_id']} on host {info['host_name']}, already launched as manager")
                 continue
             self.start_someip_subscriber_app(host, info['service_id'], client_id)
 
     def _wait_for_initialized_files(self, poll_interval=0.001):
         """Wait for all started apps to be initialized by polling for marker files."""
         manager_initialized_path = Path(f"{self.PROJECT_PATH}/")
-        print(f"Waiting until all launched SOME/IP apps ({self.num_pubs_started} publishers and {self.num_subs_started} subscribers) are initialized ...")
-        while True:
-            num_pubs_initialized = len(list(manager_initialized_path.glob("publisher-initialized-*")))
-            num_subs_initialized = len(list(manager_initialized_path.glob("subscriber-initialized-*")))
-            if (num_pubs_initialized == self.num_pubs_started) and (num_subs_initialized == self.num_subs_started):
-                break
-            print (f"Still waiting for initialization: {num_pubs_initialized}/{self.num_pubs_started} publishers and {num_subs_initialized}/{self.num_subs_started} subscribers")
-            time.sleep(poll_interval)
+        total = self.num_pubs_started + self.num_subs_started
+        with tqdm(total=total, desc="Waiting for initialization", unit="app") as pbar:
+            last_count = 0
+            while True:
+                num_pubs_initialized = len(list(manager_initialized_path.glob("publisher-initialized-*")))
+                num_subs_initialized = len(list(manager_initialized_path.glob("subscriber-initialized-*")))
+                current_count = num_pubs_initialized + num_subs_initialized
+                pbar.update(current_count - last_count)
+                pbar.set_postfix(pubs=f"{num_pubs_initialized}/{self.num_pubs_started}", subs=f"{num_subs_initialized}/{self.num_subs_started}")
+                last_count = current_count
+                if current_count == total:
+                    break
+                time.sleep(poll_interval)
 
     def start_statistics_writer(self, evaluation_option: str):
         out_path = f"{self.SCENARIO_PATH}/statistic-results/{evaluation_option}-series"

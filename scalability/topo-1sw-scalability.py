@@ -24,6 +24,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from tqdm import tqdm
+
 from mininet_vsomeip_base_scenario import VSomeIPTopologyBase, _get_parser_with_common_args
 
 
@@ -89,9 +91,8 @@ class ScalabilityScenario(VSomeIPTopologyBase):
 
     def create_publishers(self, net):
         """Create all publisher configurations and certificates."""
-        for i in range(1, self.pub_count + 1):
+        for i in tqdm(range(1, self.pub_count + 1), desc="Creating publishers", unit="pub"):
             host_id = self._get_publisher_host_id(i)
-            print(f"Creating publisher {i}/{self.pub_count} on host h{host_id}")
             host = net[f'h{host_id}']
             self.create_publisher_config(host, i)
             self.create_publisher_certificate(host, i)
@@ -99,14 +100,16 @@ class ScalabilityScenario(VSomeIPTopologyBase):
     def create_subscribers(self, net):
         """Create all subscriber configurations and certificates."""
         client_id = 1 # we need a unique client id for each subscriber
-        for i in range(1, self.pub_count + 1):
-            for j in range(1, self.sub_count + 1):
-                sub_host_id = self._get_subscriber_host_id(i, j)
-                sub_host = net[f'h{sub_host_id}']
-                print(f"Creating subscriber {i}/{self.pub_count} - {j}/{self.sub_count} with id {client_id} on host h{sub_host_id}")
-                self.create_subscriber_config(sub_host, i, client_id)
-                self.create_subscriber_certificate(sub_host, i, client_id)
-                client_id += 1
+        total_subs = self.pub_count * self.sub_count
+        with tqdm(total=total_subs, desc="Creating subscribers", unit="sub") as pbar:
+            for i in range(1, self.pub_count + 1):
+                for j in range(1, self.sub_count + 1):
+                    sub_host_id = self._get_subscriber_host_id(i, j)
+                    sub_host = net[f'h{sub_host_id}']
+                    self.create_subscriber_config(sub_host, i, client_id)
+                    self.create_subscriber_certificate(sub_host, i, client_id)
+                    client_id += 1
+                    pbar.update(1)
 
 if __name__ == '__main__':
     parser = _get_parser_with_common_args()

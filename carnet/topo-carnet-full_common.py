@@ -25,6 +25,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from mininet_vsomeip_base_scenario import VSomeIPTopologyBase, _get_parser_with_common_args
+from tqdm import tqdm
 
 DNS_HOST_NAME = 'dns'
 
@@ -114,13 +115,9 @@ class CarNetScenario(VSomeIPTopologyBase):
         """Create all publisher configurations and certificates."""
         with open(f"{self.SCENARIO_PATH}/publishers.json", "r") as service_file:
             services = json.load(service_file)
-        total_services = len(services)
-        service_count = 0
-        for service in services:
-            service_count += 1
+        for service in tqdm(services, desc="Creating publishers", unit="pub"):
             net_name = services[service]["host"].lower()
             service_id = services[service]["serviceId"]
-            print(f"Creating publisher {service_count}/{total_services} for service {service_id} on host {net_name}")
             host = net[net_name]
             if host is None:
                 print(f"Error: Host {net_name} not found in topology. Skipping publisher for service {service_id}.")
@@ -132,10 +129,7 @@ class CarNetScenario(VSomeIPTopologyBase):
         """Create all subscriber configurations and certificates."""
         with open(f"{self.SCENARIO_PATH}/subscribers.json", "r") as service_file:
             clients = json.load(service_file)
-        total_clients = len(clients)
-        client_count = 0    
-        for client in clients:
-            client_count += 1
+        for client in tqdm(clients, desc="Creating subscribers", unit="sub"):
             service_id = clients[client]["serviceId"]
             client_id = clients[client]["clientId"]
             net_name = clients[client]["host"].lower()
@@ -143,7 +137,6 @@ class CarNetScenario(VSomeIPTopologyBase):
             if host is None:
                 print(f"Error: Host {net_name} not found in topology. Skipping subscriber with id {client_id} for service {service_id}.")
                 continue
-            print(f"Creating subscriber {client_count}/{total_clients} for service {service_id} with id {client_id} on host {net_name}")
             self.create_subscriber_config(host, service_id, client_id)
             self.create_subscriber_certificate(host, service_id, client_id)
 
