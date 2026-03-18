@@ -115,30 +115,34 @@ class CarNetScenario(VSomeIPTopologyBase):
         """Create all publisher configurations and certificates."""
         with open(f"{self.SCENARIO_PATH}/publishers.json", "r") as service_file:
             services = json.load(service_file)
-        for service in tqdm(services, desc="Creating publishers", unit="pub"):
-            net_name = services[service]["host"].lower()
-            service_id = services[service]["serviceId"]
-            host = net[net_name]
-            if host is None:
-                print(f"Error: Host {net_name} not found in topology. Skipping publisher for service {service_id}.")
-                continue
-            self.create_publisher_config(host, service_id)
-            self.create_publisher_certificate(host, service_id)
+        with tqdm(total=len(services), desc="Creating publishers", unit="pub") as pbar:
+            for service in services:
+                net_name = services[service]["host"].lower()
+                service_id = services[service]["serviceId"]
+                host = net[net_name]
+                if host is None:
+                    print(f"Error: Host {net_name} not found in topology. Skipping publisher for service {service_id}.")
+                    continue
+                self.create_publisher_config(host, service_id)
+                self.create_publisher_certificate(host, service_id)
+                pbar.update(1)
 
     def create_subscribers(self, net):
         """Create all subscriber configurations and certificates."""
         with open(f"{self.SCENARIO_PATH}/subscribers.json", "r") as service_file:
             clients = json.load(service_file)
-        for client in tqdm(clients, desc="Creating subscribers", unit="sub"):
-            service_id = clients[client]["serviceId"]
-            client_id = clients[client]["clientId"]
-            net_name = clients[client]["host"].lower()
-            host = net[net_name]
-            if host is None:
-                print(f"Error: Host {net_name} not found in topology. Skipping subscriber with id {client_id} for service {service_id}.")
-                continue
-            self.create_subscriber_config(host, service_id, client_id)
-            self.create_subscriber_certificate(host, service_id, client_id)
+        with tqdm(total=len(clients), desc="Creating subscribers", unit="sub") as pbar:
+            for client in clients:
+                service_id = clients[client]["serviceId"]
+                client_id = clients[client]["clientId"]
+                net_name = clients[client]["host"].lower()
+                host = net[net_name]
+                if host is None:
+                    print(f"Error: Host {net_name} not found in topology. Skipping subscriber with id {client_id} for service {service_id}.")
+                    continue
+                self.create_subscriber_config(host, service_id, client_id)
+                self.create_subscriber_certificate(host, service_id, client_id)
+                pbar.update(1)
 
 if __name__ == '__main__':
     parser = _get_parser_with_common_args()

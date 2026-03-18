@@ -629,32 +629,47 @@ class VSomeIPTopologyBase(ABC):
 
     def start_managers(self, net: Mininet):
         """Start manager applications. """
-        for host_name, manager_info in tqdm(self.managers.items(), desc="Starting managers", unit="manager", leave=False):
-            host = net[host_name]
-            if manager_info['class'] == 'publisher':
-                self.start_someip_publisher_app(host, manager_info['service_id'])
-            elif manager_info['class'] == 'subscriber':
+        # check for any non 'publisher' or 'subscriber' managers and raise error if found since current implementation relies on this classification to determine startup order. 
+        for host_name, info in self.managers.items():
+            if info['class'] not in ['publisher', 'subscriber']:
+                raise ValueError(f"Manager {info['app_name']} on host {host_name} has invalid class {info['class']}. Must be 'publisher' or 'subscriber'.")
+        # first only subscriber managers
+        sub_managers = {host_name: info for host_name, info in self.managers.items() if info['class'] == 'subscriber'}
+        pub_managers = {host_name: info for host_name, info in self.managers.items() if info['class'] == 'publisher'}
+        total_managers = len(self.managers)
+        with tqdm(total=total_managers, desc="Starting managers", unit="manager") as pbar:
+            for host_name, manager_info in sub_managers.items():
+                host = net[host_name]
                 self.start_someip_subscriber_app(host, manager_info['service_id'], manager_info['client_id'])
-            else:
-                raise ValueError(f"Unknown manager class {manager_info['class']} for host {host_name} should be publisher/subscriber")
+                pbar.update(1)
+            for host_name, manager_info in pub_managers.items():
+                host = net[host_name]
+                self.start_someip_publisher_app(host, manager_info['service_id'])
+                pbar.update(1)
 
     def start_publishers(self, net: Mininet):
         """Start publisher applications. """
-        for service_id, info in tqdm(self.publishers.items(), desc="Starting publishers", unit="publisher", leave=False):
-            host = net[info['host_name']]
-            manager = self.managers[info['host_name']]
-            if manager['class'] == 'publisher' and manager['service_id'] == service_id:
-                continue
-            self.start_someip_publisher_app(host, service_id)
+        with tqdm(total=len(self.publishers), desc="Starting publishers", unit="publisher") as pbar:
+            for service_id, info in self.publishers.items():
+                host = net[info['host_name']]
+                manager = self.managers[info['host_name']]
+                if manager['class'] == 'publisher' and manager['service_id'] == service_id:
+                    pbar.update(1)
+                    continue
+                self.start_someip_publisher_app(host, service_id)
+                pbar.update(1)
 
     def start_subscribers(self, net: Mininet):
         """Start subscriber applications."""
-        for client_id, info in tqdm(self.subscribers.items(), desc="Starting subscribers", unit="subscriber", leave=False):
-            host = net[info['host_name']]
-            manager = self.managers[info['host_name']]
-            if manager['class'] == 'subscriber' and manager['client_id'] == client_id:
-                continue
-            self.start_someip_subscriber_app(host, info['service_id'], client_id)
+        with tqdm(total=len(self.subscribers), desc="Starting subscribers", unit="subscriber") as pbar:
+            for client_id, info in self.subscribers.items():
+                host = net[info['host_name']]
+                manager = self.managers[info['host_name']]
+                if manager['class'] == 'subscriber' and manager['client_id'] == client_id:
+                    pbar.update(1)
+                    continue
+                self.start_someip_subscriber_app(host, info['service_id'], client_id)
+                pbar.update(1)
 
     def _wait_for_initialized_files(self, poll_interval=0.001):
         """Wait for all started apps to be initialized by polling for marker files."""
@@ -686,7 +701,7 @@ class VSomeIPTopologyBase(ABC):
 
     def _copy_logs_to_scenario_folder(self, evaluation_option: str, run: int, return_code: int, move_logs: bool = True):
         """Copy or move logs to scenario folder."""
-        time_stamp = datetime.fromtimestamp(time.time()).strftime("%Y%m%d-%H%M%S")
+        time_stamp = datetime.fromtimestamp(self.eval_start).strftime("%Y%m%d-%H%M%S")
         out_path = f"{self.LOGS_PATH}/{evaluation_option}-series/{time_stamp}/run-{run}-"
         subprocess.run(f"rm -rf {out_path}*", shell=True, check=True)
 
@@ -714,11 +729,11 @@ class VSomeIPTopologyBase(ABC):
         """Run evaluation with given parameters."""
         self.initialize_missing_from_config(net)
         entire_evaluation_start = time.time()
+        self.eval_start = entire_evaluation_start
         current_run = 1
 
         while current_run <= total_evaluation_runs:
-            self.num_pubs_started = 0 
-            self.num_subs_started = 0
+            self._reset_state()
             evaluation_run_start = time.time()
             print(f"Starting {current_run}/{total_evaluation_runs} evaluation run {evaluation_option} ... ")
 
@@ -756,10 +771,10 @@ class VSomeIPTopologyBase(ABC):
             print("Starting SOME/IP publishers ... ")
             publishers_start = time.time()
             self.start_publishers(net)
+            self._wait_for_initialized_files()
             publishers_end = time.time()
             print("Done.")
 
-            self._wait_for_initialized_files()
             start_apps_end = time.time()
 
             print(f"Total initialization time: {start_apps_end-start_apps_begin}s (managers: {managers_end-managers_start}s, publishers: {publishers_end-publishers_start}s, subscribers: {subscribers_end-subscribers_start}s)")

@@ -91,11 +91,13 @@ class ScalabilityScenario(VSomeIPTopologyBase):
 
     def create_publishers(self, net):
         """Create all publisher configurations and certificates."""
-        for i in tqdm(range(1, self.pub_count + 1), desc="Creating publishers", unit="pub"):
-            host_id = self._get_publisher_host_id(i)
-            host = net[f'h{host_id}']
-            self.create_publisher_config(host, i)
-            self.create_publisher_certificate(host, i)
+        with tqdm(total=self.pub_count, desc="Creating publishers", unit="pub") as pbar:
+            for i in range(1, self.pub_count + 1):
+                host_id = self._get_publisher_host_id(i)
+                host = net[f'h{host_id}']
+                self.create_publisher_config(host, i)
+                self.create_publisher_certificate(host, i)
+                pbar.update(1)
 
     def create_subscribers(self, net):
         """Create all subscriber configurations and certificates."""
