@@ -686,7 +686,7 @@ class VSomeIPTopologyBase(ABC):
 
     def _copy_logs_to_scenario_folder(self, evaluation_option: str, run: int, return_code: int, move_logs: bool = True):
         """Copy or move logs to scenario folder."""
-        time_stamp = datetime.fromtimestamp(self.eval_start).strftime("%Y%m%d-%H%M%S")
+        time_stamp = datetime.fromtimestamp(time.time()).strftime("%Y%m%d-%H%M%S")
         out_path = f"{self.LOGS_PATH}/{evaluation_option}-series/{time_stamp}/run-{run}-"
         subprocess.run(f"rm -rf {out_path}*", shell=True, check=True)
 
@@ -702,6 +702,9 @@ class VSomeIPTopologyBase(ABC):
         else:
             subprocess.run(f"cp {self.LOGS_PATH}/*.log {out_path}/", shell=True, check=True)
 
+        # own everything below log/
+        subprocess.run(f"chown -R vm-user:vm-user {self.LOGS_PATH}", shell=True, check=True)
+
     def _process_evaluation_run(self, evaluation_option, run, return_code):
         """Process evaluation run results (e.g., copy logs). Hook for subclass customization."""
         pass
@@ -714,6 +717,8 @@ class VSomeIPTopologyBase(ABC):
         current_run = 1
 
         while current_run <= total_evaluation_runs:
+            self.num_pubs_started = 0 
+            self.num_subs_started = 0
             evaluation_run_start = time.time()
             print(f"Starting {current_run}/{total_evaluation_runs} evaluation run {evaluation_option} ... ")
 
@@ -793,7 +798,7 @@ class VSomeIPTopologyBase(ABC):
             # Hook for subclass-specific processing
             
             if self.copy_logs:
-                self._copy_logs_to_scenario_folder(evaluation_option, current_run, return_code)
+                self._copy_logs_to_scenario_folder(evaluation_option, current_run - 1, return_code)
             self._process_evaluation_run(evaluation_option, current_run - 1, return_code)
 
             self.cleanup()
