@@ -119,6 +119,7 @@ class VSomeIPTopologyBase(ABC):
         parser.add_argument('--max-retries', type=int, metavar='N', default=0, help='Maximum number of retries for a failed run. Default is 0 = no retries.')
         parser.add_argument('--clean-start', dest='clean_start', action='store_true', help='Removes certificates and host configs causing them to be recreated')
         parser.add_argument('--copy-logs', dest='copy_logs', action='store_true', default=False, help='Copy logs to scenario folder for every evaluation run')
+        parser.add_argument('--copy-logs-on-failure', dest='copy_logs_on_failure', action='store_true', default=False, help='Copy logs to scenario folder for every failed evaluation run (overrides --copy-logs)')
         return parser
     
     def handle_common_args(self, args):
@@ -127,6 +128,7 @@ class VSomeIPTopologyBase(ABC):
         self.total_evaluation_runs = args.runs
         self.add_compile_definitions = self.COMPILE_DEFINITIONS[args.evaluate]
         self.copy_logs = args.copy_logs
+        self.copy_logs_on_failure = args.copy_logs_on_failure
         self.clean_start = args.clean_start
         self.max_retries = args.max_retries
 
@@ -737,13 +739,16 @@ class VSomeIPTopologyBase(ABC):
     def copy_logs_to_scenario_folder(self, run: int, return_code: int, move_logs: bool = True):
         """Copy or move logs to scenario folder."""
         time_stamp = datetime.fromtimestamp(self.eval_start).strftime("%Y%m%d-%H%M%S")
-        out_path = f"{self.LOGS_PATH}/{self.evaluation_option}-series/{time_stamp}/run-{run}-"
-        subprocess.run(f"rm -rf {out_path}*", shell=True, check=True)
-
+        out_path = f"{self.LOGS_PATH}/{self.evaluation_option}-series/{time_stamp}_p{len(self.publishers)}_s{len(self.subscribers)}/run-{run}-"
         if return_code == 0:
+            if self.copy_logs_on_failure:
+                # abort because we only want logs for failed runs, but this run was successful
+                return
             out_path += "success"
         else:
             out_path += "failure"
+
+        subprocess.run(f"rm -rf {out_path}*", shell=True, check=True)
 
         os.makedirs(out_path, exist_ok=True)
 
@@ -871,7 +876,7 @@ class VSomeIPTopologyBase(ABC):
 
                 # Hook for subclass-specific processing
                 self.process_evaluation_run(self.evaluation_option, current_run, return_code)
-                if self.copy_logs:
+                if self.copy_logs or self.copy_logs_on_failure:
                     self.copy_logs_to_scenario_folder(current_run, return_code)
                 
                 self.cleanup()
