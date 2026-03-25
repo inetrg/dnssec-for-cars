@@ -129,3 +129,10 @@ The ```carnet/evaluation.ipynb``` notebook contains parsing and aggregation func
 - As mentioned above, the DNS library cares has limitations regaring the number of concurrent instances that can run on the same OS. This limits the total number of mininet nodes per scenarios, since each node runs a separate instance of the library. This is a problem for the scalability study when many subscribers are hosted on separate nodes and for the carnet scenario when all subscribers are hosted on separate nodes.
 - Wireshark is prone to freezing when evaluation options with authentication are used
 - _vsomeip_ does not work properly when file or console logging is enabled but not redirected to the terminal or to a file, which is handled by python scripts (see STD_CONDITION variable).
+
+### Wireshark Dissection and Traces
+Scenarios come with the option to capture tcpdump traces on all mininet hosts (--capture). As SOME/IP with Authentication options uses configuration options, wireshark default dissectors for SOME/IP do not work properly. 
+We provide custom Lua scripts (extended from [eth-ws-someip](https://gitlab.com/automotive-projects/eth-ws-someip)) for vsomeip wireshark dissectors that run fine with our options. They are located in the ```lua``` directory. 
+To use them copy them to the wireshark plugins directory (check wireshark docs for specific OS locations). Some know default locations are:
+    Windows ```%APPDATA%\Wireshark\plugins```
+    Linux ```/$HOME/.config/wireshark/plugins```
