@@ -327,7 +327,6 @@ class VSomeIPTopologyBase(ABC):
     def start_dns_server(self):
         """Start DNS server (NSD) on the specified host."""
         dns_host = self.net[self.dns_host_name]
-        """Start DNS server (NSD) on the given host."""
         dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
         dns_host.cmd(f"sed -i -E 's/.* # mininet-host-ip/    ip-address: {dns_host_ip} # mininet-host-ip/' {self.NSD_CONF_PATH}")
         dns_host.cmd(f"sed -i -E 's|zonefile: \"/home/vm-user/workspace/mininet-vsomeip-evaluation/zones/service.zone\"|zonefile: \"{self.ZONE_PATH}/service.zone\"|' {self.NSD_CONF_PATH}")
@@ -924,7 +923,7 @@ class VSomeIPTopologyBase(ABC):
 
     def launch_components(self):
         """Launch SOME/IP apps, DNS server and tcpdump captures (if enabled) for the evaluation run."""
-        if self.capture is not None:
+        if self.capture_arg:
             print("Starting tcpdump captures ... ")
             self.start_captures()
             print("Done.")
@@ -977,7 +976,8 @@ class VSomeIPTopologyBase(ABC):
 
         if self.WITH_DNSSEC in self.add_compile_definitions:
             self.stop_dns_server()
-        if self.capture is not None:
+
+        if self.capture_arg:
             out_path = self.CAPTURE_PATH + "/" + self.get_out_path_for_run(run, return_code)
             self.capture.finalize_captures(out_path)
 

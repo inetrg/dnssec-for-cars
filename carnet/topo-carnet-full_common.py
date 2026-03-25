@@ -7,6 +7,7 @@ endpoints loaded from JSON configuration files.
 """
 
 import argparse
+import subprocess
 import sys
 import json
 from pathlib import Path
@@ -141,5 +142,6 @@ if __name__ == '__main__':
     scenario = CarNetScenario()
     parser = scenario.get_parser_with_common_args()
     args = parser.parse_args()
+    scenario.handle_common_args(args)
     scenario.setup_evaluation(args, car_topo(), DNS_HOST_NAME)
     scenario.run_evaluation()
