@@ -14,3 +14,4 @@ statistic-results/*.txt
 publisher-initialized*
 logs/
 vsomeip-configs/
+capture/

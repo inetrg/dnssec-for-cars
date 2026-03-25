@@ -15,16 +15,87 @@ import time
 from datetime import datetime
 from abc import ABC, abstractmethod
 from pathlib import Path
-from subprocess import TimeoutExpired
+from subprocess import TimeoutExpired, Popen
 from itertools import combinations
+from collections import defaultdict
+import re
 
 from tqdm import tqdm
 
 from mininet.topo import Topo
 from mininet.net import Mininet
+from mininet.node import Node
 from mininet.link import TCLink
 from mininet.log import setLogLevel
 from mininet.util import dumpNodeConnections, dumpNetConnections
+
+class CaptureUtils:
+    """Utility class for managing network captures using dumpcap."""
+
+    # Capture settings
+    CAPTURE_BUFSIZE_MB = 100
+    CAPTURE_FILTER = "udp port 30490 or udp port 53 or tcp port 53" # filter SOME/IP Discovery (udp port 30490) and DNS traffic (udp port 53, tcp port 53)
+
+    def __init__(self):
+        start_time = time.time()
+        self.tmp_path = f"/tmp/capture-{datetime.fromtimestamp(start_time).strftime('%Y%m%d-%H%M%S')}"
+        Path(self.tmp_path).mkdir(parents=True, exist_ok=True)
+        self.processes = []
+
+    def launch_dumpcap(self, node: Node, interface: str):
+        filename = f"{self.tmp_path}/{node.name}.pcapng"
+        cmd = [
+            "dumpcap",
+            "-i",
+            interface,
+            "-f",
+            f"{self.CAPTURE_FILTER}",
+            "-w",
+            filename,
+            "-B",
+            f"{self.CAPTURE_BUFSIZE_MB}",
+        ]
+        process = node.popen(cmd)
+        # check if process started successfully
+        time.sleep(0.1)  # give it a moment to start
+        if process.poll() is not None:
+            raise RuntimeError(f"Failed to start dumpcap on {node.name} interface {interface}. Command: {' '.join(cmd)}")
+        self.processes.append(process)
+
+    def start_dumpcap_on_hosts(self, net: Mininet):
+        with tqdm(total=len(net.hosts), desc="Starting dumpcap on hosts", unit="hosts") as pbar:
+            for host in net.hosts:
+                # list interfaces on host and launch dumpcap on all of them
+                interfaces = host.intfs.values()
+                for interface in interfaces:
+                    self.launch_dumpcap(host, interface.name)
+                pbar.update(1)
+
+    def start_dumpcap_on_switches(self, net: Mininet):
+        with tqdm(total=len(net.switches), desc="Starting dumpcap on switches", unit="switches") as pbar:
+            for switch in net.switches:
+                # list interfaces on switch and launch dumpcap on all of them
+                interfaces = switch.intfs.values()
+                for interface in interfaces:
+                    self.launch_dumpcap(switch, interface.name)
+                pbar.update(1)
+
+    def stop_all_dumpcap_processes(self):
+        for process in self.processes:
+            process.terminate()
+        for process in self.processes:
+            try:   
+                process.wait(timeout=1)
+            except TimeoutExpired:
+                process.kill()
+
+    def finalize_captures(self, capture_path):
+        self.stop_all_dumpcap_processes()
+        time.sleep(0.1)
+        # copy from tmp to final location
+        Path(capture_path).mkdir(parents=True, exist_ok=True)
+        subprocess.run(f"mv {self.tmp_path}/*.pcapng {capture_path}/", shell=True, check=True)
+        subprocess.run(f"chown -R vm-user:vm-user {capture_path}", shell=True, check=True)
 
 class VSomeIPTopologyBase(ABC):
     """Base class for SOME/IP evaluation scenarios.
@@ -73,6 +144,7 @@ class VSomeIPTopologyBase(ABC):
     ZONE_PATH = None  # Must be set by subclass
     SCRIPT_PATH = PROJECT_PATH + "/scripts" # May be set by subclass
     LOGS_PATH = None  # May be set by subclass
+    CAPTURE_PATH = None # May be set by subclass
     NSD_CONF_PATH = f"{PROJECT_PATH}/nsd/nsd.conf"
 
     # ========== TIER 2: CONFIGURABLE CONSTANTS ==========
@@ -103,6 +175,8 @@ class VSomeIPTopologyBase(ABC):
         self.dns_host_name = ""
         self.dns_host_hex_ip = None
         self.copy_logs = False
+        self.capture = CaptureUtils()
+        self.capture_arg = False
         self.net = None
 
     def get_parser_with_common_args(self):
@@ -120,11 +194,13 @@ class VSomeIPTopologyBase(ABC):
         parser.add_argument('--clean-start', dest='clean_start', action='store_true', help='Removes certificates and host configs causing them to be recreated')
         parser.add_argument('--copy-logs', dest='copy_logs', action='store_true', default=False, help='Copy logs to scenario folder for every evaluation run')
         parser.add_argument('--copy-logs-on-failure', dest='copy_logs_on_failure', action='store_true', default=False, help='Copy logs to scenario folder for every failed evaluation run (overrides --copy-logs)')
+        parser.add_argument('--capture', dest='capture', action='store_true', help='Start capture process to record network traffic during evaluation')
         return parser
     
     def handle_common_args(self, args):
         """Handle common command-line arguments and set up scenario accordingly."""
         self.evaluation_option = args.evaluate
+        self.capture_arg = args.capture
         self.total_evaluation_runs = args.runs
         self.add_compile_definitions = self.COMPILE_DEFINITIONS[args.evaluate]
         self.copy_logs = args.copy_logs
@@ -141,10 +217,12 @@ class VSomeIPTopologyBase(ABC):
         self.ZONE_PATH = f"{self.SCENARIO_PATH}/zones"
         # self.SCRIPT_PATH = f"{self.SCENARIO_PATH}/scripts"
         self.LOGS_PATH = f"{self.SCENARIO_PATH}/logs"
+        self.CAPTURE_PATH = f"{self.SCENARIO_PATH}/capture"
 
         Path(self.CONFIG_PATH).mkdir(parents=True, exist_ok=True)
         Path(self.CERT_PATH).mkdir(parents=True, exist_ok=True)
         Path(self.LOGS_PATH).mkdir(parents=True, exist_ok=True)
+        Path(self.CAPTURE_PATH).mkdir(parents=True, exist_ok=True)
 
     # ========== TIER 1 & 2: NETWORK UTILITIES (SHARED) ==========
 
@@ -166,6 +244,61 @@ class VSomeIPTopologyBase(ABC):
         dumpNodeConnections(self.net.switches)
         print("Dumping net connections")
         dumpNetConnections(self.net)
+
+    def check_host_queue_overflows(self):
+        """Check for queue overflows on host interfaces."""
+        print("Checking for queue overflows on host interfaces")
+        drops: dict[str, int] = {}
+        for host in self.net.hosts:
+            try:
+                host_name = host.__str__()
+                intf_name = f"{host_name}-eth0"
+                output = host.cmd(f"tc -s qdisc show dev {intf_name}")
+                rx_result = host.cmd(f"cat /sys/class/net/{host.name}-eth0/statistics/rx_dropped")
+                tx_result = host.cmd(f"cat /sys/class/net/{host.name}-eth0/statistics/tx_dropped")
+                rx_dropped = int(rx_result.strip())
+                tx_dropped = int(tx_result.strip())
+                overlimits_value = 0
+                if "overlimits" in output:
+                    lines = output.splitlines()
+                    for line in lines:
+                        if "overlimits" in line:
+                            parts = line.strip().split()
+                            overlimits_index = parts.index("overlimits")
+                            if overlimits_index + 1 < len(parts):
+                                overlimits_value = parts[overlimits_index + 1]
+                if rx_dropped > 0 or tx_dropped > 0 or (overlimits_value.isdigit() and int(overlimits_value) > 0):
+                    print(f"Host {host.name} tx_dropped: {tx_dropped} / rx_dropped: {rx_dropped} / overlimits: {overlimits_value}")
+                    drops[host.name] = (rx_dropped, tx_dropped, int(overlimits_value) if overlimits_value.isdigit() else overlimits_value)
+            except Exception as e:
+                self.log.error(f"Failed to check drops for {host.name}: {e}")
+        return drops
+
+    def check_switch_queue_overflows(self):
+        """Check for queue overflows on switch interfaces."""
+        print("Checking for queue overflows on switch interfaces")
+        drops: dict[str, int] = {}
+        for switch in self.net.switches:
+            switch_name = switch.__str__()
+            # list switch interfaces
+            interfaces = switch.cmd("ovs-vsctl list-ports {}".format(switch_name)).split()
+            dropped: dict[str, int] = {}
+            for intf in interfaces:
+                output = switch.cmd(f"tc -s qdisc show dev {intf}")
+                port_name: str | None = None
+            for line in output.splitlines():
+                port_match = re.match(r'\s*port\s+"([^"]+)":', line)
+                if port_match:
+                    port_name = port_match.group(1)
+                    dropped[port_name] = 0  # Initialize
+                elif port_name and ("rx pkts" in line or "tx pkts" in line):
+                    drop_match = re.search(r"drop=(\d+)", line)
+                    if drop_match:
+                        dropped[port_name] += int(drop_match.group(1))
+            if dropped and any(count > 0 for count in dropped.values()):
+                print(f"Switch {switch_name} drops: {dropped}")
+                drops[switch_name] = dropped
+        return drops
 
     def simple_tests(self):
         """Test network connectivity and bandwidth."""
@@ -634,6 +767,12 @@ class VSomeIPTopologyBase(ABC):
 
     # ========== TIER 3: MANAGER/INITIALIZATION ==========
 
+    def start_captures(self):
+        """Start tcpdump captures on all hosts."""
+        if not self.capture_arg:
+            return
+        self.capture.start_dumpcap_on_hosts(self.net)
+
     def start_managers(self):
         """Start manager applications. """
         # check for any non 'publisher' or 'subscriber' managers and raise error if found since current implementation relies on this classification to determine startup order. 
@@ -736,17 +875,22 @@ class VSomeIPTopologyBase(ABC):
         """Abstract method to create subscribers. To be implemented by subclass based on specific scenario needs."""
         pass
 
+    def get_out_path_for_run(self, run: int, return_code: int):
+        """Get output path for logs of a specific evaluation run."""
+        time_stamp = datetime.fromtimestamp(self.eval_start).strftime("%Y%m%d-%H%M%S")
+        out_suffix = f"{self.evaluation_option}-series/{time_stamp}_p{len(self.publishers)}_s{len(self.subscribers)}/run-{run}-"
+        if return_code == 0:
+            out_suffix += "success"
+        else:
+            out_suffix += "failure"
+        return out_suffix
+
     def copy_logs_to_scenario_folder(self, run: int, return_code: int, move_logs: bool = True):
         """Copy or move logs to scenario folder."""
-        time_stamp = datetime.fromtimestamp(self.eval_start).strftime("%Y%m%d-%H%M%S")
-        out_path = f"{self.LOGS_PATH}/{self.evaluation_option}-series/{time_stamp}_p{len(self.publishers)}_s{len(self.subscribers)}/run-{run}-"
-        if return_code == 0:
-            if self.copy_logs_on_failure:
-                # abort because we only want logs for failed runs, but this run was successful
-                return
-            out_path += "success"
-        else:
-            out_path += "failure"
+        out_path = self.LOGS_PATH + "/" + self.get_out_path_for_run(run, return_code)
+        if return_code == 0 and self.copy_logs_on_failure:
+            # abort because we only want logs for failed runs, but this run was successful
+            return
 
         subprocess.run(f"rm -rf {out_path}*", shell=True, check=True)
 
@@ -778,15 +922,83 @@ class VSomeIPTopologyBase(ABC):
             print("Reusing existing host configs and certificates ... ")
         self.initialize_missing_from_config()
 
+    def launch_components(self):
+        """Launch SOME/IP apps, DNS server and tcpdump captures (if enabled) for the evaluation run."""
+        if self.capture is not None:
+            print("Starting tcpdump captures ... ")
+            self.start_captures()
+            print("Done.")
+            time.sleep(0.1)
+
+        # Start statistics writer
+        print("Starting statistics-writer ...")
+        statistics_writer_process = self.start_statistics_writer()
+        print("Done.")
+        time.sleep(0.1)
+
+        # Start DNS server if needed
+        if self.WITH_DNSSEC in self.add_compile_definitions:
+            print("Starting DNS server ... ")
+            self.start_dns_server()
+            print("Done.")
+            time.sleep(0.1)
+
+        start_apps_begin = time.time()
+
+        # Start SOME/IP apps
+        managers_start = time.time()
+        self.start_managers()
+        self.wait_for_initialized_files()
+        managers_end = time.time()
+        # time.sleep(0.01)
+
+        subscribers_start = time.time()
+        self.start_subscribers()
+        self.wait_for_initialized_files()
+        subscribers_end = time.time()
+
+        publishers_start = time.time()
+        self.start_publishers()
+        self.wait_for_initialized_files()
+        publishers_end = time.time()
+
+        start_apps_end = time.time()
+
+        print(f"Total initialization time: {start_apps_end-start_apps_begin}s (managers: {managers_end-managers_start}s, publishers: {publishers_end-publishers_start}s, subscribers: {subscribers_end-subscribers_start}s)")
+        return statistics_writer_process
+    
+    def stop_run(self, run, return_code):
+        """Stop the current evaluation run (e.g., if it is taking too long)."""
+        print("Stopping SOME/IP apps and DNS server, and cleaning up ... ")
+        for host in self.net.hosts:
+            self.stop_subscriber_app(host)
+            self.stop_publisher_app(host)
+        print ("Done.")
+
+        if self.WITH_DNSSEC in self.add_compile_definitions:
+            self.stop_dns_server()
+        if self.capture is not None:
+            out_path = self.CAPTURE_PATH + "/" + self.get_out_path_for_run(run, return_code)
+            self.capture.finalize_captures(out_path)
+
+        time.sleep(1)
+
     def shutdown_evaluation(self):
         print("Stopping mininet network")
         self.net.stop()
         self.cleanup()
         print("Done.")
 
-    def process_evaluation_run(self, evaluation_option, run, return_code):
+    def process_evaluation_run(self, run, return_code):
         """Process evaluation run results (e.g., copy logs). Hook for subclass customization."""
-        pass
+        drops = self.check_host_queue_overflows()
+        drops.update(self.check_switch_queue_overflows())
+        if drops:
+            print(f"WARNING: Detected queue overflows on {', '.join(drops.keys())} during evaluation run {run}/{self.total_evaluation_runs} for option {self.evaluation_option}. This may indicate that the network was a bottleneck and results may be affected.")
+        else:
+            print(f"No queue overflows detected during evaluation run {run}/{self.total_evaluation_runs} for option {self.evaluation_option}.")
+        if self.copy_logs or self.copy_logs_on_failure:
+            self.copy_logs_to_scenario_folder(run, return_code)
 
     def run_evaluation(self):
         """Run evaluation with given parameters."""
@@ -801,41 +1013,7 @@ class VSomeIPTopologyBase(ABC):
                 evaluation_run_start = time.time()
                 print(f"Starting {current_run}/{self.total_evaluation_runs} evaluation run {self.evaluation_option} ... ")
 
-                # Start statistics writer
-                print("Starting statistics-writer ...")
-                statistics_writer_process = self.start_statistics_writer()
-                print("Done.")
-                time.sleep(0.1)
-
-                # Start DNS server if needed
-                if self.WITH_DNSSEC in self.add_compile_definitions:
-                    print("Starting DNS server ... ")
-                    self.start_dns_server()
-                    print("Done.")
-                    time.sleep(0.1)
-
-                start_apps_begin = time.time()
-
-                # Start SOME/IP apps
-                managers_start = time.time()
-                self.start_managers()
-                self.wait_for_initialized_files()
-                managers_end = time.time()
-                time.sleep(0.01)
-
-                subscribers_start = time.time()
-                self.start_subscribers()
-                self.wait_for_initialized_files()
-                subscribers_end = time.time()
-
-                publishers_start = time.time()
-                self.start_publishers()
-                self.wait_for_initialized_files()
-                publishers_end = time.time()
-
-                start_apps_end = time.time()
-
-                print(f"Total initialization time: {start_apps_end-start_apps_begin}s (managers: {managers_end-managers_start}s, publishers: {publishers_end-publishers_start}s, subscribers: {subscribers_end-subscribers_start}s)")
+                statistics_writer_process = self.launch_components()
 
                 # Wait for statistics writer
                 print("Waiting until all statistics are contributed ... ")
@@ -852,32 +1030,20 @@ class VSomeIPTopologyBase(ABC):
                     print(f"RUN ({self.evaluation_option}): {current_run}/{self.total_evaluation_runs} ({evaluation_run_end-evaluation_run_start}s)")
                     reruns = 0
                 else:
-                    print(f"statistics writer failed with return code {return_code}")
-                    print(f"{current_run}/{self.total_evaluation_runs} evaluation run {self.evaluation_option} failed and will be repeated")
+                    # print(f"statistics writer failed with return code {return_code}")
                     if reruns < self.max_retries:
                         reruns += 1
-                        print(f"Retrying failed run {current_run}/{self.total_evaluation_runs} ...")
+                        print(f"{current_run}/{self.total_evaluation_runs} evaluation run {self.evaluation_option} failed with return code {return_code} and will be repeated")
                     else:
                         if self.max_retries > 0:
-                            print(f"Maximum retries ({self.max_retries}) reached for run {current_run}/{self.total_evaluation_runs}")
+                            print(f"{current_run}/{self.total_evaluation_runs} evaluation run {self.evaluation_option} failed with return code {return_code} -- maximum retries ({self.max_retries}) reached for run {current_run}/{self.total_evaluation_runs}")
                         reruns = 0
 
-                # Stop apps
-                print("Stopping SOME/IP apps and DNS server, and cleaning up ... ")
-                for host in self.net.hosts:
-                    self.stop_subscriber_app(host)
-                    self.stop_publisher_app(host)
-                print ("Done.")
+                time.sleep(5)
 
-                if self.WITH_DNSSEC in self.add_compile_definitions:
-                    self.stop_dns_server()
+                self.stop_run(current_run, return_code)
 
-                time.sleep(1)
-
-                # Hook for subclass-specific processing
-                self.process_evaluation_run(self.evaluation_option, current_run, return_code)
-                if self.copy_logs or self.copy_logs_on_failure:
-                    self.copy_logs_to_scenario_folder(current_run, return_code)
+                self.process_evaluation_run(current_run, return_code)
                 
                 self.cleanup()
                 
