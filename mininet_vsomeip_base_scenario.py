@@ -329,8 +329,8 @@ class VSomeIPTopologyBase(ABC):
         dns_host = self.net[self.dns_host_name]
         dns_host_ip = dns_host.IP(intf=dns_host.defaultIntf())
         dns_host.cmd(f"sed -i -E 's/.* # mininet-host-ip/    ip-address: {dns_host_ip} # mininet-host-ip/' {self.NSD_CONF_PATH}")
-        dns_host.cmd(f"sed -i -E 's|zonefile: \"/home/vm-user/workspace/mininet-vsomeip-evaluation/zones/service.zone\"|zonefile: \"{self.ZONE_PATH}/service.zone\"|' {self.NSD_CONF_PATH}")
-        dns_host.cmd(f"sed -i -E 's|zonefile: \"/home/vm-user/workspace/mininet-vsomeip-evaluation/zones/client.zone\"|zonefile: \"{self.ZONE_PATH}/client.zone\"|' {self.NSD_CONF_PATH}")
+        dns_host.cmd(f"sed -i -E 's|zonefile: \"[^\"]*zones/service\\.zone\"|zonefile: \"{self.ZONE_PATH}/service.zone\"|' {self.NSD_CONF_PATH}")
+        dns_host.cmd(f"sed -i -E 's|zonefile: \"[^\"]*zones/client\\.zone\"|zonefile: \"{self.ZONE_PATH}/client.zone\"|' {self.NSD_CONF_PATH}")
         dns_host.cmd(f"sed -i -E 's/ns\.service\.         IN    A    .*/ns.service.         IN    A    {dns_host_ip}/' {self.ZONE_PATH}/service.zone")
         dns_host.cmd(f"sed -i -E 's/ns\.client\.         IN    A    .*/ns.client.         IN    A    {dns_host_ip}/' {self.ZONE_PATH}/client.zone")
         dns_host.cmd('nsd-control-setup')
@@ -1039,7 +1039,7 @@ class VSomeIPTopologyBase(ABC):
                             print(f"{current_run}/{self.total_evaluation_runs} evaluation run {self.evaluation_option} failed with return code {return_code} -- maximum retries ({self.max_retries}) reached for run {current_run}/{self.total_evaluation_runs}")
                         reruns = 0
 
-                time.sleep(5)
+                time.sleep(1)
 
                 self.stop_run(current_run, return_code)
 
