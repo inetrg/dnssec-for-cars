@@ -144,6 +144,7 @@ class VSomeIPTopologyBase(ABC):
     ZONE_PATH = None  # Must be set by subclass
     SCRIPT_PATH = PROJECT_PATH + "/scripts" # May be set by subclass
     LOGS_PATH = None  # May be set by subclass
+    STATISTICS_PATH = None  # May be set by subclass
     CAPTURE_PATH = None # May be set by subclass
     NSD_CONF_PATH = f"{PROJECT_PATH}/nsd/nsd.conf"
 
@@ -218,11 +219,13 @@ class VSomeIPTopologyBase(ABC):
         # self.SCRIPT_PATH = f"{self.SCENARIO_PATH}/scripts"
         self.LOGS_PATH = f"{self.SCENARIO_PATH}/logs"
         self.CAPTURE_PATH = f"{self.SCENARIO_PATH}/capture"
+        self.STATISTICS_PATH = f"{self.SCENARIO_PATH}/statistic-results"
 
         Path(self.CONFIG_PATH).mkdir(parents=True, exist_ok=True)
         Path(self.CERT_PATH).mkdir(parents=True, exist_ok=True)
         Path(self.LOGS_PATH).mkdir(parents=True, exist_ok=True)
         Path(self.CAPTURE_PATH).mkdir(parents=True, exist_ok=True)
+        Path(self.STATISTICS_PATH).mkdir(parents=True, exist_ok=True)
 
     # ========== TIER 1 & 2: NETWORK UTILITIES (SHARED) ==========
 
@@ -986,6 +989,7 @@ class VSomeIPTopologyBase(ABC):
     def shutdown_evaluation(self):
         print("Stopping mininet network")
         self.net.stop()
+        subprocess.run(f"chown -R vm-user:vm-user {self.STATISTICS_PATH}", shell=True, check=True)
         self.cleanup()
         print("Done.")
 

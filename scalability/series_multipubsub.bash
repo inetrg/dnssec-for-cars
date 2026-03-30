@@ -7,17 +7,17 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # Default parameters
-RUNTIMESLOG="./bash_series.log"
-MIN_PUBS=2
+RUNTIMESLOG="scalability_series_$(date +%Y%m%d%H%M%S).log"
+MIN_PUBS=1
 MAX_PUBS=50
-PUB_STEPS=2
+PUB_STEPS=1
 MIN_SUBS=1
 MAX_SUBS=5
 SUB_STEPS=1
 PUBS_PER_HOST=50
 RUNS=10
 OPTIONS=("A" "F" "H")
-MAX_RETRIES=2
+MAX_RETRIES=5
 
 # Function to display usage
 usage() {
@@ -25,16 +25,16 @@ usage() {
 Usage: $0 [OPTIONS]
 
 Options:
-    --runtimeslog FILE          Log file for runtimes (default: ./bash_series.log)
-    --min-pubs NUM              Minimum publishers (default: 2)
+    --runtimeslog FILE          Log file for runtimes (default: scalability_series_TIMESTAMP.log)
+    --min-pubs NUM              Minimum publishers (default: 1)
     --max-pubs NUM              Maximum publishers (default: 50)
-    --pub-steps NUM             Publisher step size (default: 2)
+    --pub-steps NUM             Publisher step size (default: 1)
     --min-subs NUM              Minimum subscribers (default: 1)
     --max-subs NUM              Maximum subscribers (default: 5)
     --sub-steps NUM             Subscriber step size (default: 1)
     --pubs-per-host NUM         Publishers per host (default: 50)
     --runs NUM                  Number of runs per configuration (default: 10)
-    --max-retries NUM             Maximum retries for failed runs (default: 2)
+    --max-retries NUM             Maximum retries for failed runs (default: 5)
     --options LIST              Comma-separated options to evaluate (default: A,F,H)
     --help                      Display this help message
 
@@ -116,8 +116,7 @@ OPTS="--pubsperhost $PUBS_PER_HOST --onesubhost --max-retries $MAX_RETRIES --cop
 touch $RUNTIMESLOG
 options=("${OPTIONS[@]}")
 bash clear_results.bash
-
-# print_settings
+start_time=$(date +%s)
 
 for option in "${options[@]}"; do
     # pub_count=1
@@ -130,3 +129,6 @@ for option in "${options[@]}"; do
         done
     done
 done
+end_time=$(date +%s)
+total_time=$((end_time - start_time))
+echo "Total time for all measurements: $total_time seconds" >> "$RUNTIMESLOG"
