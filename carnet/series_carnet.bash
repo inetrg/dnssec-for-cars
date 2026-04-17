@@ -6,7 +6,7 @@ if [ "$EUID" -ne 0 ]; then
     exit
 fi
 
-RUNTIMESLOG="carnet_study_$(date +%Y%m%d%H%M%S).log"
+RUNTIMESLOG="carnet_study_$(date +%Y%m%d-%H%M%S).log"
 RUNS=25
 OPTIONS=("A" "F" "H")
 MAX_RETRIES=5
@@ -65,7 +65,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-OPTS="--max-retries $MAX_RETRIES --copy-logs-on-failure --vsomeip-no-logging"
+OPTS="--max-retries $MAX_RETRIES --vsomeip-no-logging" #--copy-logs-on-failure 
 touch $RUNTIMESLOG
 IF_FIRST="--clean-start"
 options=("${OPTIONS[@]}")

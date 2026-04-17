@@ -1011,7 +1011,7 @@ class VSomeIPTopologyBase(ABC):
             print(f"WARNING: Detected queue overflows on {', '.join(drops.keys())} during evaluation run {self.current_run}/{self.total_evaluation_runs} for option {self.evaluation_option}. This may indicate that the network was a bottleneck and results may be affected.")
         else:
             print(f"No queue overflows detected during evaluation run {self.current_run}/{self.total_evaluation_runs} for option {self.evaluation_option}.")
-        if self.copy_logs or self.copy_logs_on_failure:
+        if not self.vsomeip_no_logging and (self.copy_logs or self.copy_logs_on_failure):
             self.copy_logs_to_scenario_folder(self.current_run, return_code)
 
     def run_evaluation(self):
