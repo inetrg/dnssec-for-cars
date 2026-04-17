@@ -65,23 +65,43 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-OPTS="--max-retries $MAX_RETRIES --copy-logs-on-failure"
+OPTS="--max-retries $MAX_RETRIES --copy-logs-on-failure --vsomeip-no-logging"
+touch $RUNTIMESLOG
 IF_FIRST="--clean-start"
 options=("${OPTIONS[@]}")
-# bash clear_results.bash
 
+echo "Cleaning up everything to ensure a fresh start..."
+for opt in "${OPTIONS[@]}"; do
+    rm -rf logs/${opt}-series/*
+    rm -rf statistic-results/${opt}-series/*
+done
 pkill nsd
 
 start_time=$(date +%s)
 for option in "${options[@]}"; do
-    echo "Starting evaluation for option $option" >> "$RUNTIMESLOG"
+    echo "Starting evaluation for option $option"
     option_start_time=$(date +%s)
     python $SCENARIO --evaluate "$option" --runs $RUNS $OPTS $IF_FIRST >> "$RUNTIMESLOG" 2>&1
     option_time=$(date +%s)
-    echo "Evaluation for option $option done after $((option_time - option_start_time)) seconds" >> "$RUNTIMESLOG"
-    sleep 1
+    echo "Evaluation for option $option done after $((option_time - option_start_time)) seconds"
+    sleep 0.1
     IF_FIRST=""
 done
 end_time=$(date +%s)
 total_time=$((end_time - start_time))
-echo "Total time for all measurements: $total_time seconds" >> "$RUNTIMESLOG"
+echo "Total time for all measurements: $total_time seconds"
+
+echo "Verifying all results are available..."
+for option in "${options[@]}"; do
+    if [ ! -d "statistic-results/${option}-series" ] || [ -z "$(ls -A "statistic-results/${option}-series")" ]; then
+        echo "Error: Result directory statistic-results/${option}-series does not exist or is empty!"
+    else
+        for i in $(seq 1 $((RUNS))); do
+            result_file="statistic-results/${option}-series/run-${i}/${option}-300-#0.csv"
+            if [ ! -f "$result_file" ]; then
+                echo "Error: Result file $result_file is missing!"
+            fi
+        done
+    fi
+done
+echo "Results verification completed."

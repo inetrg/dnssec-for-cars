@@ -18,6 +18,7 @@ PUBS_PER_HOST=50
 RUNS=10
 OPTIONS=("A" "F" "H")
 MAX_RETRIES=5
+SCENARIO="topo-1sw-scalability.py"
 
 # Function to display usage
 usage() {
@@ -112,23 +113,50 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-OPTS="--pubsperhost $PUBS_PER_HOST --onesubhost --max-retries $MAX_RETRIES --copy-logs-on-failure"
+OPTS="--pubsperhost $PUBS_PER_HOST --onesubhost --max-retries $MAX_RETRIES --copy-logs-on-failure --vsomeip-no-logging"
 touch $RUNTIMESLOG
 options=("${OPTIONS[@]}")
-bash clear_results.bash
-start_time=$(date +%s)
 
+
+echo "Cleaning up everything to ensure a fresh start..."
+for opt in "${OPTIONS[@]}"; do
+    rm -rf logs/${opt}-series/*
+    rm -rf statistic-results/${opt}-series/*
+done
+pkill nsd
+
+start_time=$(date +%s)
 for option in "${options[@]}"; do
-    # pub_count=1
     for ((pub_count = $MIN_PUBS; pub_count <= $MAX_PUBS; pub_count += $PUB_STEPS)); do
         for ((sub_count = $MIN_SUBS; sub_count <= $MAX_SUBS; sub_count += $SUB_STEPS)); do
-            echo "Running with $pub_count publishers, $sub_count subscribers"
-            $(which time) -a -o $RUNTIMESLOG -f "${option}-${pub_count}-${sub_count}-${RUNS}:\t%E real,\t%U user,\t%S sys" python topo-1sw-scalability.py --pubs $pub_count  --subsperpub $sub_count $OPTS --evaluate $option --runs $RUNS --clean-start
-            # cp -r /var/log/multihost ./logs/multihost-${option}-${pub_count}-${sub_count}
-            echo "Done."
+            echo "Starting evaluation for option ${option} with $pub_count publishers, $sub_count subscribers"
+            option_start_time=$(date +%s)
+            python $SCENARIO --evaluate $option --runs $RUNS --pubs $pub_count  --subsperpub $sub_count $OPTS  --clean-start >> "$RUNTIMESLOG" 2>&1
+            option_time=$(date +%s)
+            echo "Evaluation for option ${option} with $pub_count publishers, $sub_count subscribers completed after $((option_time - option_start_time)) seconds""
+            sleep 1
         done
     done
 done
 end_time=$(date +%s)
 total_time=$((end_time - start_time))
-echo "Total time for all measurements: $total_time seconds" >> "$RUNTIMESLOG"
+echo "Total time for all measurements: $total_time seconds"
+
+echo "Verifying all results are available..."
+for option in "${options[@]}"; do
+    if [ ! -d "statistic-results/${option}-series" ] || [ -z "$(ls -A "statistic-results/${option}-series")" ]; then
+        echo "Error: Result directory statistic-results/${option}-series does not exist or is empty!"
+    else
+        for pub_count in $(seq $MIN_PUBS $PUB_STEPS $MAX_PUBS); do
+            for sub_count in $(seq $MIN_SUBS $SUB_STEPS $MAX_SUBS); do
+                for i in $(seq 1 $((RUNS))); do
+                    result_file="statistic-results/${option}-series/p${pub_count}_s${sub_count}/run-${i}/${option}-1-#0.csv"
+                    if [ ! -f "$result_file" ]; then
+                        echo "Error: Result file $result_file is missing!"
+                    fi
+                done
+            done
+        done
+    fi
+done
+echo "Results verification completed."

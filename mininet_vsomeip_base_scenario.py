@@ -196,6 +196,7 @@ class VSomeIPTopologyBase(ABC):
         parser.add_argument('--copy-logs', dest='copy_logs', action='store_true', default=False, help='Copy logs to scenario folder for every evaluation run')
         parser.add_argument('--copy-logs-on-failure', dest='copy_logs_on_failure', action='store_true', default=False, help='Copy logs to scenario folder for every failed evaluation run (overrides --copy-logs)')
         parser.add_argument('--capture', dest='capture', action='store_true', help='Start capture process to record network traffic during evaluation')
+        parser.add_argument('--vsomeip-no-logging', dest='vsomeip_no_logging', action='store_true', help='Disable most logging in vsomeip')
         return parser
     
     def handle_common_args(self, args):
@@ -206,6 +207,7 @@ class VSomeIPTopologyBase(ABC):
         self.add_compile_definitions = self.COMPILE_DEFINITIONS[args.evaluate]
         self.copy_logs = args.copy_logs
         self.copy_logs_on_failure = args.copy_logs_on_failure
+        self.vsomeip_no_logging = args.vsomeip_no_logging
         self.clean_start = args.clean_start
         self.max_retries = args.max_retries
 
@@ -469,9 +471,13 @@ class VSomeIPTopologyBase(ABC):
 
         config['network'] = f'-{host_name}'
         config['unicast'] = unicast_ip
-        config['logging']['level'] = 'trace'
         config['logging']['console'] = 'false'
-        config['logging']['file']['enable'] = 'true'
+        if self.vsomeip_no_logging:
+            config['logging']['level'] = 'warning'
+            config['logging']['file']['enable'] = 'false'
+        else:
+            config['logging']['level'] = 'trace'
+            config['logging']['file']['enable'] = 'true'
         if self.LOGS_PATH:
             config['logging']['file']['path'] = f'{self.LOGS_PATH}/{host_name}.log'
         config['routing'] = app_name
@@ -836,14 +842,18 @@ class VSomeIPTopologyBase(ABC):
                     break
                 time.sleep(poll_interval)
 
+    def get_statistics_result_path(self):
+        return f"{self.SCENARIO_PATH}/statistic-results/{self.evaluation_option}-series/run-{self.current_run}"
+
     def start_statistics_writer(self):
-        out_path = f"{self.SCENARIO_PATH}/statistic-results/{self.evaluation_option}-series"
+        out_path = self.get_statistics_result_path()
         Path(out_path).mkdir(parents=True, exist_ok=True)
         services = "[" + ",".join(str(service_id) for service_id in self.service_sub_counts.keys()) + "]"
         member_counts = "[" + ",".join(str(count) for count in self.service_sub_counts.values()) + "]"
+        result_filename = f"{self.evaluation_option}"
         print(f"services: {services}")
         print(f"member_counts: {member_counts}")
-        return subprocess.Popen([f"{self.PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", services, member_counts, out_path, self.evaluation_option])
+        return subprocess.Popen([f"{self.PROJECT_PATH}/vsomeip/build/implementation/statistics/statistics-writer-main", services, member_counts, out_path, result_filename ])
 
     # ========== TIER 3: EVALUATION SUPPORT ==========
 
@@ -969,7 +979,7 @@ class VSomeIPTopologyBase(ABC):
         print(f"Total initialization time: {start_apps_end-start_apps_begin}s (managers: {managers_end-managers_start}s, publishers: {publishers_end-publishers_start}s, subscribers: {subscribers_end-subscribers_start}s)")
         return statistics_writer_process
     
-    def stop_run(self, run, return_code):
+    def stop_run(self, return_code):
         """Stop the current evaluation run (e.g., if it is taking too long)."""
         print("Stopping SOME/IP apps and DNS server, and cleaning up ... ")
         for host in self.net.hosts:
@@ -981,7 +991,7 @@ class VSomeIPTopologyBase(ABC):
             self.stop_dns_server()
 
         if self.capture_arg:
-            out_path = self.CAPTURE_PATH + "/" + self.get_out_path_for_run(run, return_code)
+            out_path = self.CAPTURE_PATH + "/" + self.get_out_path_for_run(self.current_run, return_code)
             self.capture.finalize_captures(out_path)
 
         time.sleep(1)
@@ -993,29 +1003,29 @@ class VSomeIPTopologyBase(ABC):
         self.cleanup()
         print("Done.")
 
-    def process_evaluation_run(self, run, return_code):
+    def process_evaluation_run(self, return_code):
         """Process evaluation run results (e.g., copy logs). Hook for subclass customization."""
         drops = self.check_host_queue_overflows()
         drops.update(self.check_switch_queue_overflows())
         if drops:
-            print(f"WARNING: Detected queue overflows on {', '.join(drops.keys())} during evaluation run {run}/{self.total_evaluation_runs} for option {self.evaluation_option}. This may indicate that the network was a bottleneck and results may be affected.")
+            print(f"WARNING: Detected queue overflows on {', '.join(drops.keys())} during evaluation run {self.current_run}/{self.total_evaluation_runs} for option {self.evaluation_option}. This may indicate that the network was a bottleneck and results may be affected.")
         else:
-            print(f"No queue overflows detected during evaluation run {run}/{self.total_evaluation_runs} for option {self.evaluation_option}.")
+            print(f"No queue overflows detected during evaluation run {self.current_run}/{self.total_evaluation_runs} for option {self.evaluation_option}.")
         if self.copy_logs or self.copy_logs_on_failure:
-            self.copy_logs_to_scenario_folder(run, return_code)
+            self.copy_logs_to_scenario_folder(self.current_run, return_code)
 
     def run_evaluation(self):
         """Run evaluation with given parameters."""
         entire_evaluation_start = time.time()
         self.eval_start = entire_evaluation_start
-        current_run = 1
+        self.current_run = 1
         reruns = 0
 
         with tqdm(total=self.total_evaluation_runs, desc=f"Evaluation runs for option {self.evaluation_option}", unit="run") as pbar:
-            while current_run <= self.total_evaluation_runs:
+            while self.current_run <= self.total_evaluation_runs:
                 self.reset_state()
                 evaluation_run_start = time.time()
-                print(f"Starting {current_run}/{self.total_evaluation_runs} evaluation run {self.evaluation_option} ... ")
+                print(f"Starting {self.current_run}/{self.total_evaluation_runs} evaluation run {self.evaluation_option} ... ")
 
                 statistics_writer_process = self.launch_components()
 
@@ -1031,28 +1041,28 @@ class VSomeIPTopologyBase(ABC):
                 if return_code == 0:
                     print("Done.")
                     evaluation_run_end = time.time()
-                    print(f"RUN ({self.evaluation_option}): {current_run}/{self.total_evaluation_runs} ({evaluation_run_end-evaluation_run_start}s)")
+                    print(f"RUN ({self.evaluation_option}): {self.current_run}/{self.total_evaluation_runs} ({evaluation_run_end-evaluation_run_start}s)")
                     reruns = 0
                 else:
                     # print(f"statistics writer failed with return code {return_code}")
                     if reruns < self.max_retries:
                         reruns += 1
-                        print(f"{current_run}/{self.total_evaluation_runs} evaluation run {self.evaluation_option} failed with return code {return_code} and will be repeated")
+                        print(f"{self.current_run}/{self.total_evaluation_runs} evaluation run {self.evaluation_option} failed with return code {return_code} and will be repeated")
                     else:
                         if self.max_retries > 0:
-                            print(f"{current_run}/{self.total_evaluation_runs} evaluation run {self.evaluation_option} failed with return code {return_code} -- maximum retries ({self.max_retries}) reached for run {current_run}/{self.total_evaluation_runs}")
+                            print(f"{self.current_run}/{self.total_evaluation_runs} evaluation run {self.evaluation_option} failed with return code {return_code} -- maximum retries ({self.max_retries}) reached for run {self.current_run}/{self.total_evaluation_runs}")
                         reruns = 0
 
                 time.sleep(1)
 
-                self.stop_run(current_run, return_code)
+                self.stop_run(return_code)
 
-                self.process_evaluation_run(current_run, return_code)
+                self.process_evaluation_run(return_code)
                 
                 self.cleanup()
                 
                 if reruns == 0:
-                    current_run += 1
+                    self.current_run += 1
                     pbar.update(1)
 
         entire_evaluation_end = time.time()

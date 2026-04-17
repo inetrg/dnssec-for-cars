@@ -93,6 +93,9 @@ class ScalabilityScenario(VSomeIPTopologyBase):
             host_count += self.pub_count * self.sub_count
         return host_count
 
+    def get_statistics_result_path(self):
+        return f"{self.SCENARIO_PATH}/statistic-results/{self.evaluation_option}-series/p{self.pub_count}_s{self.sub_count}/run-{self.current_run}"
+    
     # ========== CONFIGURATION CREATION ==========
 
     # ========== MANAGER/APP STARTUP ==========
