@@ -84,7 +84,7 @@ echo "Running paper evaluation series with the following settings:"
 echo "  Runs per configuration: $RUNS"
 echo "  Max retries for failed runs: $MAX_RETRIES"
 echo "  Options: ${OPTIONS[*]}"
-echo "  Note: this will take a while to complete (expect several hours, i.e., X hours on Intel 13900K), pre compiled results are in the data/raw folder."
+echo "  Note: this will take a while to complete (expect several hours, i.e., 20 min for carnet or 3 hours for scalability 1x50 subs), pre compiled results are in the data/raw folder."
 
 mkdir -p "$RAW"
 
@@ -150,6 +150,7 @@ else
     echo "Skipping Carnet evaluation as per user request."
 fi
 
+### should we do them as seperate sub hosts?
 if [ "$SKIP_SCALABILITY_1_50" != "true" ]; then
     cd scalability
     echo "Starting evaluation for scalability/Multipubsub 1 pub X 1-50 subs..."
@@ -165,16 +166,16 @@ fi
 
 if [ "$SKIP_SCALABILITY_5_200" != "true" ]; then
     cd scalability
-    echo "Starting evaluation for scalability/Multipubsub 1-200 pubs (step 10) X 1-5 subs..."
-    bash ./series_multipubsub.bash --runs $RUNS --max-retries $MAX_RETRIES --options $(IFS=,; echo "${OPTIONS[*]}") --min-pubs 1 --max-pubs 200 --pub-steps 10 --min-subs 1 --max-subs 5 --sub-steps 1 --pubs-per-host 50
-    echo "Moving scalability/Multipubsub 1-200 pubs (step 10) X 1-5 subs results to raw data folder..."
+    echo "Starting evaluation for scalability/Multipubsub 1-150 pubs (step 10) X 1-5 subs..."
+    bash ./series_multipubsub.bash --runs $RUNS --max-retries $MAX_RETRIES --options H --min-pubs 1 --max-pubs 150 --pub-steps 10 --min-subs 1 --max-subs 5 --sub-steps 1 --pubs-per-host 50
+    echo "Moving scalability/Multipubsub 1-150 pubs (step 10) X 1-5 subs results to raw data folder..."
     cd ..
-    move_to_raw "scalability/statistic-results" "scalability/1-5subs_x_1-200pubs"
-    copy_closest_logs "scalability" "scalability/1-5subs_x_1-200pubs"
-    echo "Scalability/Multipubsub 1-200 pubs (step 10) X 1-5 subs evaluation completed."
+    move_to_raw "scalability/statistic-results" "scalability/1-5subs_x_1-150pubs"
+    copy_closest_logs "scalability" "scalability/1-5subs_x_1-150pubs"
+    echo "Scalability/Multipubsub 1-150 pubs (step 10) X 1-5 subs evaluation completed."
     echo "Scalability evaluation completed."
 else 
-    echo "Skipping scalability/Multipubsub 1-200 pubs (step 10) X 1-5 subs evaluation as per user request."
+    echo "Skipping scalability/Multipubsub 1-150 pubs (step 10) X 1-5 subs evaluation as per user request."
 fi
 
 copy_closest_logs "." ""
