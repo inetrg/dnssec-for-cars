@@ -6,7 +6,7 @@ import typer
 import os
 import polars as pl
 
-from mininet_vsomeip_dnssec.config import PROCESSED_DATA_DIR, RAW_DATA_DIR, INTERIM_DATA_DIR, SCENARIOS, get_config_for_pubsub_count, get_pubsub_count_from_config
+from mininet_vsomeip_dnssec.config import PROCESSED_DATA_DIR, RAW_DATA_DIR, INTERIM_DATA_DIR, SCENARIOS
 
 app = typer.Typer()
 
@@ -115,45 +115,33 @@ cols_first_last = [
     ("TLSA_SERVICE_REQUEST_SEND", "tlsa_service_request_send"),
     ("SUBSCRIBER_APP_INITIALIZATION_END", "subscriber_app_initialization_end"),
 ]
+sum_stats = {
+    "dns_resolution": ["svcb_service_dur","tlsa_client_dur", "tlsa_service_dur"], 
+    "sign": ["client_sign_dur", "service_sign_dur"], 
+    "verify": ["verify_client_dur", "verify_service_dur"],
+    "crypto": ["client_sign_dur", "service_sign_dur", "verify_client_dur", "verify_service_dur"],
+}
 
 def preprocess_stat_file(raw_file: str) -> pl.DataFrame:
     duration_exprs = [
-        (pl.col(end_col) - pl.col(start_col)).alias(duration_col)
+        (pl.when(pl.col(start_col).is_null() | pl.col(end_col).is_null()).then(None).otherwise(pl.col(end_col) - pl.col(start_col))).alias(duration_col)
         for (start_col, end_col), duration_col in column_duration_pairs.items()
     ]
     # host_ip_expr = pl.col("HOST").map_elements(lambda x: str(ipaddress.IPv4Address(x)), return_dtype=pl.Utf8).alias("host_ip")
+    add_exprs = [
+        pl.sum_horizontal([pl.col(stat) for stat in stat_set]).alias(f"{stat_name}_dur_sum") for stat_name, stat_set in sum_stats.items()
+    ]
     return (
         pl.scan_csv(raw_file)
         .drop(columns_to_drop, strict=False)
         .with_columns(pl.selectors.numeric().replace(0, None)) # replace 0 with null for numeric columns to avoid skewing aggregates
         .with_columns(duration_exprs)
+        .with_columns(add_exprs)
         .with_columns(
-            [
-                pl.max_horizontal(
-                    "offer_receive_to_subscribeack_dur",
-                    "offer_receive_to_verify_service_dur",
-                ).alias("subscription_dur"),
-                pl.max_horizontal(
-                    "validate_offer_to_subscribeack_dur",
-                    "validate_offer_to_verify_service_dur",
-                ).alias("valid_offer_to_subscription_dur"),
-                pl.min_horizontal(
-                    "svcb_service_dur",
-                    "tlsa_client_dur",
-                    "tlsa_service_dur",
-                ).alias("dns_resolution_min_dur"),
-                pl.mean_horizontal(
-                    "svcb_service_dur",
-                    "tlsa_client_dur",
-                    "tlsa_service_dur",
-                ).alias("dns_resolution_mean_dur"),
-                pl.max_horizontal(
-                    "svcb_service_dur",
-                    "tlsa_client_dur",
-                    "tlsa_service_dur",
-                ).alias("dns_resolution_max_dur"),
-            ]
-        )
+            pl.max_horizontal("offer_receive_to_subscribeack_dur", "offer_receive_to_verify_service_dur").alias("subscription_dur"),
+            pl.max_horizontal("validate_offer_to_subscribeack_dur", "validate_offer_to_verify_service_dur").alias("valid_offer_to_subscription_dur"))
+        .with_columns(pl.selectors.numeric().clip(0, None)) # ensure no negative values--> set to none
+        .with_columns(pl.selectors.numeric().replace(0, None)) # replace 0 with null for numeric columns to avoid skewing aggregates
         .collect()
     )
 
@@ -177,17 +165,21 @@ def preprocess_run_data(all_services_df: pl.DataFrame) -> tuple[pl.DataFrame, pl
             pl.col(col_name).drop_nulls().max().alias(f"{col_name}_max"),
         )
     ]
-    dns_exprs = [
-        pl.col("dns_resolution_min_dur").drop_nulls().min().alias("dns_resolution_dur_min"),
-        pl.col("dns_resolution_mean_dur").drop_nulls().mean().alias("dns_resolution_dur_mean"),
-        pl.col("dns_resolution_max_dur").drop_nulls().max().alias("dns_resolution_dur_max"),
+    add_exprs = [
+        expr
+        for stat_name in sum_stats.keys()
+        for expr in (
+            pl.col(f"{stat_name}_dur_sum").drop_nulls().min().alias(f"{stat_name}_dur_sum_min"),
+            pl.col(f"{stat_name}_dur_sum").drop_nulls().mean().alias(f"{stat_name}_dur_sum_mean"),
+            pl.col(f"{stat_name}_dur_sum").drop_nulls().max().alias(f"{stat_name}_dur_sum_max"),
+        )
     ]
     # expression to drop everything except the columns that contain "dur"
     drop_non_duration_expr = pl.all().exclude("^.*dur.*$")
     # compute all base aggregates in one pass, then derive total durations
     return (
         all_services_df
-        .select(first_last_exprs + duration_exprs + dns_exprs)
+        .select(first_last_exprs + duration_exprs + add_exprs)
         .with_columns(
             (pl.col("subscribe_ack_receive_last") - pl.col("offer_receive_first")).alias(
                 "total_offer_receive_to_subscribeack_dur"
@@ -201,7 +193,11 @@ def preprocess_run_data(all_services_df: pl.DataFrame) -> tuple[pl.DataFrame, pl
             (pl.col("verify_service_signature_end_last") - pl.col("validate_offer_end_first")).alias(
                 "total_validate_offer_to_verify_service_dur"
             ),
-        ).drop(drop_non_duration_expr)
+        )
+        .with_columns(pl.selectors.numeric().clip(0, None)) # ensure no negative values--> set to none
+        .with_columns(pl.selectors.numeric().replace(0, None)) # replace 0 with null for numeric columns to avoid skewing
+        .with_columns(pl.max_horizontal("total_offer_receive_to_subscribeack_dur", "total_offer_receive_to_verify_service_dur").alias("total_dur"))
+        .drop(drop_non_duration_expr)
     )
 
 def load_or_create_interim_for_service(service_file: str, interim_path: Path) -> pl.DataFrame:
@@ -222,7 +218,7 @@ def load_or_create_interim_for_run(all_services_df: pl.DataFrame, interim_path: 
         df_run.write_parquet(interim_path)
         return df_run
 
-def load_or_create_interim_for_files(run_files: dict[str, dict[str, str]], config_interim_dir: str, config_info_msg: str) -> pl.DataFrame:
+def load_or_create_interim_for_files(run_files: dict[str, dict[str, str]], config_interim_dir: Path, config_info_msg: str) -> pl.DataFrame:
     # check if interim file already exists for config with all runs, if so load and return
     interim_path = config_interim_dir / "all_runs.parquet"
     if interim_path.exists():
@@ -241,12 +237,59 @@ def load_or_create_interim_for_files(run_files: dict[str, dict[str, str]], confi
             df_stat = load_or_create_interim_for_service(file_path, config_interim_dir / f"run-{run}" / f"{service}.parquet")
             stat_dfs.append(df_stat)
         df_config = load_or_create_interim_for_run(pl.concat(stat_dfs, how="vertical_relaxed", rechunk=True), config_interim_dir / f"run-{run}.parquet")
-        config_dfs.append(df_config)
+        config_dfs.append(df_config.with_columns(pl.lit(int(run)).alias("run_num")))
     df_config_all_runs = pl.concat(config_dfs, how="vertical_relaxed", rechunk=True)
+    interim_path.parent.mkdir(parents=True, exist_ok=True)
     df_config_all_runs.write_parquet(interim_path)
     return df_config_all_runs
             
 
+processed_columns = {
+    "crypto_sum": "crypto_dur_sum",
+    "create_signatures_sum": "sign_dur_sum",
+    "verify_signatures_sum": "verify_dur_sum",
+    "resolve_dns_sum": "dns_resolution_dur_sum",
+    "resolve_pub_svcb": "svcb_service_dur",
+    "resolve_pub_tlsa": "tlsa_service_dur",
+    "resolve_sub_tlsa": "tlsa_client_dur", 
+}
+processed_non_aggregates = {
+    "network_initialization": "total_dur",
+    "service_setup": "subscription_dur_max"
+}
+processed_results_cols = list(processed_columns.keys()) + list(processed_non_aggregates.keys())
+processed_results_cols = [col + suffix for col in processed_results_cols for suffix in ["_min", "_mean", "_stddev", "_max"]]
+
+def load_or_create_processed_config_data(df_config: pl.DataFrame, config_processed_file: Path) -> pl.DataFrame:
+    # check if processed file already exists for config, if so load and return
+    if config_processed_file.exists():
+        return pl.read_parquet(config_processed_file)
+    # we need to process this config
+    process_exprs = [
+        expr
+        for col_name, stat_name in processed_columns.items()
+        for expr in [
+            pl.min(f"{stat_name}_min").alias(f"{col_name}_min"),
+            pl.mean(f"{stat_name}_mean").alias(f"{col_name}_mean"),
+            pl.max(f"{stat_name}_max").alias(f"{col_name}_max"),
+        ]
+    ]
+    process_exprs.extend(
+        [
+            expr
+            for col_name, stat_name in processed_non_aggregates.items()
+            for expr in [
+                pl.min(f"{stat_name}").alias(f"{col_name}_min"),
+                pl.mean(f"{stat_name}").alias(f"{col_name}_mean"),
+                pl.max(f"{stat_name}").alias(f"{col_name}_max"),
+            ]
+        ]
+    )
+    processed_df = df_config.select(process_exprs).select([col for col in df_config.select(process_exprs).columns if df_config.select(process_exprs)[col].null_count() < df_config.select(process_exprs).height])
+    # save aggregated data for config as parquet in processed dir
+    config_processed_file.parent.mkdir(parents=True, exist_ok=True)
+    processed_df.write_parquet(config_processed_file)
+    return processed_df
 
 @app.command()
 def main(
@@ -257,16 +300,22 @@ def main(
 
     # parse interim data 
     # create a map scenario -> map series -> map config -> df of all runs for that config
-    print("Loading or creating interim datasets for all configs...")
+    logger.info("Loading or creating interim datasets for all configs...")
     all_sceario_dfs = dict()
     for scenario, series_map in files.items():
         all_sceario_dfs[scenario] = dict()
         for series, config_map in series_map.items():
             all_sceario_dfs[scenario][series] = dict()
             for config, run_map in config_map.items():
-                all_sceario_dfs[scenario][series][config] = load_or_create_interim_for_files(run_map, INTERIM_DATA_DIR / scenario / series / config, f"Processing runs of config {config} for {series}-series in {scenario}") 
+                all_sceario_dfs[scenario][series][config] = load_or_create_interim_for_files(run_map, INTERIM_DATA_DIR / scenario / series / config, f"Preprocessing runs of config {config} for {series}-series in {scenario}") 
+    logger.success("Interim datasets for all configs complete.")
                 
     # process all runs for each config to create final processed dataset with aggregates, and save as parquet
+    logger.info("Creating processed datasets for all configs...")
+    for scenario, series_map in all_sceario_dfs.items():
+        for series, config_map in series_map.items():
+            for config, df_config in tqdm(config_map.items(), desc=f"Processing configs for {series}-series in {scenario}", leave=True):
+                _ = load_or_create_processed_config_data(df_config, PROCESSED_DATA_DIR / scenario / f"{series}_{config}.parquet")
 
     logger.success("Processing dataset complete.")
 

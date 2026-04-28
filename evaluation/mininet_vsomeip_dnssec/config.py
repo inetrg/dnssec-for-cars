@@ -34,8 +34,6 @@ def get_pubsub_count_from_config(config: str) -> tuple[int, int]:
     sub_count = int(parts[1][1:])  # Extract SUBCOUNT
     return pub_count, sub_count
 
-MODELS_DIR = PROJ_ROOT / "models"
-
 REPORTS_DIR = PROJ_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
 
