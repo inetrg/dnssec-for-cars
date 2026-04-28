@@ -12,10 +12,9 @@ Evaluation components and data for mininet experiments of SOME/IP using DNSSEC f
 ├── Makefile           <- Makefile with convenience commands like `make data` or `make train`
 ├── README.md          <- The top-level README for developers using this project.
 ├── data
-│   ├── external       <- Data from third party sources.
 │   ├── interim        <- Intermediate data that has been transformed.
-│   ├── processed      <- The final, canonical data sets for modeling.
-│   └── raw            <- The original, immutable data dump.
+│   ├── processed      <- The final, canonical data sets for analysis.
+│   └── raw            <- The original, immutable statistics recording from experiments.
 │
 ├── notebooks          <- Jupyter notebooks for prototype development.
 │
@@ -37,11 +36,6 @@ Evaluation components and data for mininet experiments of SOME/IP using DNSSEC f
     ├── config.py               <- Store useful variables and configuration
     │
     ├── dataset.py              <- Scripts to download or generate data
-    │
-    ├── modeling                // not included in this project.
-    │   ├── __init__.py 
-    │   ├── predict.py          <- Code to run model inference with trained models          
-    │   └── train.py            <- Code to train models
     │
     └── plots.py                <- Code to create visualizations, and tables
 ```
