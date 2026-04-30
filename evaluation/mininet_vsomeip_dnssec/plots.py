@@ -70,15 +70,39 @@ def create_latex_table_config_stats(config_map, path):
         "resolve_pub_tlsa": "% Resolve Pub TLSA",
         "resolve_dns_sum": "DNS resolution per subscription",
         "crypto_sum": "Crypto ops. per subscription",
+        "run_time": "% Total experiment runtime",
+        "initialization_total": "% Total initialization time",
+        "initialization_manager": "% Initialization time (manager)",
+        "initialization_publishers": "% Initialization time (publishers)",
+        "initialization_subscribers": "% Initialization time (subscribers)",
+    }
+    metric_scaling = {
+        # data in ns --> convert to ms
+        "network_initialization": 1_000_000,
+        "service_setup": 1_000_000,
+        "create_signatures_sum": 1_000_000,
+        "verify_signatures_sum": 1_000_000,
+        "resolve_pub_svcb": 1_000_000,
+        "resolve_sub_tlsa": 1_000_000,
+        "resolve_pub_tlsa": 1_000_000,
+        "resolve_dns_sum": 1_000_000,
+        "crypto_sum": 1_000_000,
+        # data in s --> convert to ms
+        "run_time": 0.001,
+        "initialization_total": 0.001,
+        "initialization_manager": 0.001,
+        "initialization_publishers": 0.001,
+        "initialization_subscribers": 0.001,
     }
     metrics_per_section = {
-        "A": ["network_initialization", "service_setup"],
+        "A": ["network_initialization", "service_setup", "run_time", "initialization_total", "initialization_manager", "initialization_publishers", "initialization_subscribers"],
         "F": [
             "network_initialization",
             "service_setup",
             "create_signatures_sum",
             "verify_signatures_sum",
             "crypto_sum",
+            "run_time", "initialization_total", "initialization_manager", "initialization_publishers", "initialization_subscribers"
         ],
         "H": [
             "network_initialization",
@@ -90,6 +114,7 @@ def create_latex_table_config_stats(config_map, path):
             "resolve_pub_tlsa",
             "crypto_sum",
             "resolve_dns_sum",
+            "run_time", "initialization_total", "initialization_manager", "initialization_publishers", "initialization_subscribers"
         ],
     }
 
@@ -100,7 +125,7 @@ def create_latex_table_config_stats(config_map, path):
         values = [df.select(col).item() for col in cols]
         if any(value is None for value in values):
             return None
-        values_ms = [float(value) / 1_000_000 for value in values]
+        values_ms = [float(value) / metric_scaling[metric] for value in values]
         return (
             f"        {metric_labels[metric]} & \\SI{{{values_ms[0]:.2f}}}{{}} & "
             f"\\SI{{{values_ms[1]:.2f}}}{{}} & \\SI{{{values_ms[2]:.2f}}}{{}} \\\\"

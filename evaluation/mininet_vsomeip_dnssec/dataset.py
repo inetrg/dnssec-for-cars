@@ -11,6 +11,8 @@ from mininet_vsomeip_dnssec.config import (
     PROCESSED_DATA_DIR,
     RAW_DATA_DIR,
     SCENARIOS,
+    get_pubsub_count_from_config,
+    get_config_for_pubsub_count
 )
 
 app = typer.Typer()
@@ -315,6 +317,89 @@ def load_or_create_interim_for_files(
     return df_config_all_runs
 
 
+def preprocess_log_file(log_file: str) -> dict[str, dict[str, pl.DataFrame]]:
+    # read log file as dataframe and extract relevant metrics for config, then return as new df
+    # this is a placeholder function, the actual implementation will depend on the format of the log files and the metrics we want to extract
+    indicators = {
+        # "series": "Evaluation runs for option",
+        "initialization": "Total initialization time",
+        # "failed": "failed with return code",
+        "success": "RUN (",
+        "pub_count": "services: [",
+        "sub_count": "member_counts: [",
+    }
+    dfs = dict()
+    # read log file and look for indicators to track progress and extract metrics
+    pub_count = None
+    sub_count = None
+    initialization_times = None
+    with open(log_file, "r") as f:
+        for line in f:
+            if indicators["pub_count"] in line:
+                # count length of the list that looks like this:
+                # services: [1, 2,..., X]
+                pub_count = len(line.split(indicators["pub_count"])[1].split("]")[0].strip().split(","))
+            elif indicators["sub_count"] in line:
+                # add up numbers in the list that indicate the subs per service, looks like this:
+                # member_counts: [1,2,2,1,...,1]
+                sub_count = sum(int(x) for x in line.split(indicators["sub_count"])[1].split("]")[0].strip().split(","))
+            elif indicators["initialization"] in line:
+                # looks like this:
+                # Total initialization time: 0.8188607692718506s (managers: 0.024270057678222656s, publishers: 0.2712595462799072s, subscribers: 0.5233304500579834s)
+                init_total = float(line.split("time:")[1].split("s")[0].strip())
+                manager_time = float(line.split("managers:")[1].split("s")[0].strip())
+                publisher_time = float(line.split("publishers:")[1].split("s")[0].strip())
+                subscriber_time = float(line.split("subscribers:")[1].split("s")[0].strip().split(")")[0].strip())
+                initialization_times = {
+                    "total": init_total,
+                    "manager": manager_time,
+                    "publisher": publisher_time,
+                    "subscriber": subscriber_time,
+                }
+            elif indicators["success"] in line:
+                # looks like this:
+                # RUN (A): 13/25 (1.4339499473571777s)
+                series = line.split("RUN (")[1].split("):")[0].strip()
+                run = int(line.split("):")[1].split("/")[0].strip())
+                run_time = float(line.split("/")[1].split("(")[1].strip().split("s")[0])
+                if not pub_count or not sub_count:
+                    logger.warning(f"Could not extract pub_count or sub_count from log file {log_file} for run {run}. Skipping this run.")
+                    continue
+                config = get_config_for_pubsub_count(pub_count, sub_count)
+                if series not in dfs:
+                    dfs[series] = dict()
+                if config not in dfs[series]:
+                    dfs[series][config] = pl.DataFrame()
+                dfs[series][config] = dfs[series][config].vstack(
+                    pl.DataFrame([
+                        {
+                            "run": run,
+                            "run_time": run_time,
+                            "initialization_total": initialization_times["total"] if initialization_times else None,
+                            "initialization_manager": initialization_times["manager"] if initialization_times else None,
+                            "initialization_publishers": initialization_times["publisher"] if initialization_times else None,
+                            "initialization_subscribers": initialization_times["subscriber"] if initialization_times else None,
+                        }
+                    ])
+                )
+    return dfs
+
+def create_processed_log_data(log_file: str, interim_dir: Path) -> dict[str, dict[str, pl.DataFrame]]:
+    dfs = preprocess_log_file(log_file)
+    # save processed log data as parquet in interim dir, with one file per series and config, e.g., p1_s1.parquet
+    for series, config_map in dfs.items():
+        for config, df in config_map.items():
+            df.write_parquet(interim_dir / series / config / f"{config}_logs.parquet")
+    return dfs
+
+log_columns = [
+    "run_time",
+    "initialization_total",
+    "initialization_manager",
+    "initialization_publishers",
+    "initialization_subscribers",
+]
+
 processed_columns = {
     "crypto_sum": "crypto_dur_sum",
     "create_signatures_sum": "sign_dur_sum",
@@ -337,7 +422,7 @@ processed_results_cols = [
 
 
 def load_or_create_processed_config_data(
-    df_config: pl.DataFrame, config_processed_file: Path
+    df_config: pl.DataFrame, df_log: pl.DataFrame, config_processed_file: Path
 ) -> pl.DataFrame:
     # check if processed file already exists for config, if so load and return
     if config_processed_file.exists():
@@ -371,6 +456,15 @@ def load_or_create_processed_config_data(
             < df_config.select(process_exprs).height
         ]
     )
+    log_exprs = [ expr
+        for col_name in log_columns
+        for expr in [
+            pl.min(f"{col_name}").alias(f"{col_name}_min"),
+            pl.mean(f"{col_name}").alias(f"{col_name}_mean"),
+            pl.max(f"{col_name}").alias(f"{col_name}_max"),
+        ]
+    ]
+    processed_df = processed_df.hstack(df_log.select(log_exprs))
     # save aggregated data for config as parquet in processed dir
     config_processed_file.parent.mkdir(parents=True, exist_ok=True)
     processed_df.write_parquet(config_processed_file)
@@ -419,6 +513,29 @@ def main():
                     INTERIM_DATA_DIR / scenario / series / config,
                     f"Preprocessing runs of config {config} for {series}-series in {scenario}",
                 )
+
+    logger.info("Preprocessing log data for all configs...")
+    processed_logs = dict()
+    for scenario in tqdm(SCENARIOS, desc="Processing log files for scenarios", leave=True):
+        # list log file in RAW_DATA_DIR / scenario / *.log and take the one with the most recent timestamp 
+        log_files = list(Path(RAW_DATA_DIR / scenario).glob("*.log"))
+        log_file = None
+        current_date = 0
+        current_time = 0
+        for log_file in log_files: # e.g., carnet_study_20260418-000722.log 
+            timestamp_str = log_file.stem.split("_")[-1]  # get timestamp part of file name
+            date = int(timestamp_str.split("-")[0])
+            time = int(timestamp_str.split("-")[1])
+            if date > current_date or (date == current_date and time > current_time):
+                current_date = date
+                current_time = time
+                log_file = log_file
+        if log_file:
+            logger.info(f"Processing log file {log_file} for config {config} in {series}-series of {scenario}...")
+            processed_logs[scenario] = create_processed_log_data(str(log_file), INTERIM_DATA_DIR / scenario)
+        else:
+            logger.warning(f"Log file {log_file} not found for config {config} in {series}-series of {scenario}. Skipping log data processing for this config.")
+
     logger.success("Interim datasets for all configs complete.")
 
     # process all runs for each config to create final processed dataset with aggregates, and save as parquet
@@ -430,8 +547,11 @@ def main():
                 desc=f"Processing configs for {series}-series in {scenario}",
                 leave=True,
             ):
+                df_log = None
+                if scenario in processed_logs and series in processed_logs[scenario] and config in processed_logs[scenario][series]:
+                    df_log = processed_logs[scenario][series][config]
                 _ = load_or_create_processed_config_data(
-                    df_config, PROCESSED_DATA_DIR / scenario / f"{series}_{config}.parquet"
+                    df_config, df_log, PROCESSED_DATA_DIR / scenario / f"{series}_{config}.parquet"
                 )
 
     logger.success("Processing dataset complete.")
