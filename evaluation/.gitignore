@@ -1,5 +1,6 @@
 # Data
 /data/
+/reports/
 
 # Mac OS-specific storage files
 .DS_Store
@@ -12,7 +13,7 @@
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[cod]
+*.py[cod]w
 *$py.class
 
 # C extensions

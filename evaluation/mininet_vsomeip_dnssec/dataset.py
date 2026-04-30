@@ -376,12 +376,34 @@ def load_or_create_processed_config_data(
     processed_df.write_parquet(config_processed_file)
     return processed_df
 
+def load_processed_data() -> dict[str, dict[str, pl.DataFrame]]:
+    processed_data = {}
+    for scenario in SCENARIOS:
+        scenario_dir = PROCESSED_DATA_DIR / scenario
+        if not scenario_dir.exists():
+            logger.warning(f"Processed data for scenario {scenario} not found in {PROCESSED_DATA_DIR}. Skipping.")
+            continue
+        processed_data[scenario] = {}
+        for config_file in scenario_dir.glob("*.parquet"):
+            config_name = config_file.stem  # get file name without extension
+            processed_data[scenario][config_name] = pl.read_parquet(config_file)
+    return processed_data
+
 
 @app.command()
 def main():
     logger.info("Processing dataset...")
 
     files = _find_files_per_scenario(RAW_DATA_DIR)
+
+    if not files or any(len(series_map) == 0 for series_map in files.values()):
+        logger.error(
+            f"No raw data files found in {RAW_DATA_DIR} or directory structure not recognized. Please check the directory and try again."
+        )
+        logger.info(
+            f"Expected directory structure: {RAW_DATA_DIR}/{{SCENARIO}}/{{SERIES}}/{{CONFIG}}/run-{{RUN}}/{{SERVICE}}.csv"
+        )
+        return
 
     # parse interim data
     # create a map scenario -> map series -> map config -> df of all runs for that config

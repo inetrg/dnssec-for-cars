@@ -62,6 +62,11 @@ create_environment:
 data: requirements
 	$(PYTHON_INTERPRETER) mininet_vsomeip_dnssec/dataset.py
 
+## Make plots and tables
+.PHONY: plots
+plots: requirements data
+	$(PYTHON_INTERPRETER) mininet_vsomeip_dnssec/plots.py
+
 
 #################################################################################
 # Self Documenting Commands                                                     #
