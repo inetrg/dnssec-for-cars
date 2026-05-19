@@ -13,8 +13,8 @@ OPTIONS=("A" "F" "H")
 MAX_RETRIES=100
 
 SKIP_CARNET="false"
-SKIP_SCALABILITY_1_50="false"
-SKIP_SCALABILITY_5_200="false"
+SKIP_SCALABILITY_1_50="true"
+SKIP_SCALABILITY_5_100="true"
 
 RAW="evaluation/data/raw/$(date +%Y%m%d-%H%M%S)"
 
@@ -28,8 +28,8 @@ Options:
     --max-retries NUM           Maximum retries for failed runs (default: 100)
     --options LIST              Comma-separated options to evaluate (default: A,F,H)
     --skip-carnet               Skip Carnet evaluation (default: false)
-    --skip-scalability-1-50     Skip scalability evaluation for 1 pub X 1-50 subs (default: false)
-    --skip-scalability-5-200    Skip scalability evaluation for 1-200 pubs X 1-5 subs (default: false)
+    --skip-scalability-1-50     Skip scalability evaluation for 1 pub X 1-50 subs (default: true)
+    --skip-scalability-5-100    Skip scalability evaluation for 1-100 pubs X 1-5 subs (default: true)
     --raw_dir DIR               Directory to store raw results (default: evaluation/data/raw/TIMESTAMP)
     --help                      Display this help message
 
@@ -60,8 +60,8 @@ while [[ $# -gt 0 ]]; do
             SKIP_SCALABILITY_1_50="true"
             shift 1
             ;;
-        --skip-scalability-5-200)
-            SKIP_SCALABILITY_5_200="true"
+        --skip-scalability-5-100)
+            SKIP_SCALABILITY_5_100="true"
             shift 1
             ;;
         --raw_dir)
@@ -150,7 +150,6 @@ else
     echo "Skipping Carnet evaluation as per user request."
 fi
 
-### should we do them as seperate sub hosts?
 if [ "$SKIP_SCALABILITY_1_50" != "true" ]; then
     cd scalability
     echo "Starting evaluation for scalability/Multipubsub 1 pub X 1-50 subs..."
@@ -164,18 +163,18 @@ else
     echo "Skipping scalability/Multipubsub 1 pub X 1-50 subs evaluation as per user request."
 fi
 
-if [ "$SKIP_SCALABILITY_5_200" != "true" ]; then
+if [ "$SKIP_SCALABILITY_5_100" != "true" ]; then
     cd scalability
-    echo "Starting evaluation for scalability/Multipubsub 1-150 pubs (step 10) X 1-5 subs..."
-    bash ./series_multipubsub.bash --runs $RUNS --max-retries $MAX_RETRIES --options H --min-pubs 1 --max-pubs 150 --pub-steps 10 --min-subs 1 --max-subs 5 --sub-steps 1 --pubs-per-host 50
-    echo "Moving scalability/Multipubsub 1-150 pubs (step 10) X 1-5 subs results to raw data folder..."
+    echo "Starting evaluation for scalability/Multipubsub 1-100 pubs (step 5) X 1-5 subs..."
+    bash ./series_multipubsub.bash --runs $RUNS --max-retries $MAX_RETRIES --options H --min-pubs 1 --max-pubs 100 --pub-steps 5 --min-subs 1 --max-subs 5 --sub-steps 1 --pubs-per-host 10
+    echo "Moving scalability/Multipubsub 1-100 pubs (step 5) X 1-5 subs results to raw data folder..."
     cd ..
-    move_to_raw "scalability/statistic-results" "scalability/1-5subs_x_1-150pubs"
-    copy_closest_logs "scalability" "scalability/1-5subs_x_1-150pubs"
-    echo "Scalability/Multipubsub 1-150 pubs (step 10) X 1-5 subs evaluation completed."
+    move_to_raw "scalability/statistic-results" "scalability/1-5subs_x_1-100pubs"
+    copy_closest_logs "scalability" "scalability/1-5subs_x_1-100pubs"
+    echo "Scalability/Multipubsub 1-100 pubs (step 5) X 1-5 subs evaluation completed."
     echo "Scalability evaluation completed."
 else 
-    echo "Skipping scalability/Multipubsub 1-150 pubs (step 10) X 1-5 subs evaluation as per user request."
+    echo "Skipping scalability/Multipubsub 1-100 pubs (step 5) X 1-5 subs evaluation as per user request."
 fi
 
 copy_closest_logs "." ""
