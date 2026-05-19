@@ -1,7 +1,8 @@
-loguru
+loguru==0.7.3
 pip
-python-dotenv
-ruff
-tqdm
-typer
+python-dotenv==1.2.2
+ruff==0.15.11
+tqdm==4.67.3
+typer==0.24.1
+polars==1.40.0
 -e .
