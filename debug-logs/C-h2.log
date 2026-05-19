@@ -1,5 +1,0 @@
-2024-02-04 03:30:01.654807 [debug] request_service_svcb_record SVCB SERVICE REQUEST SEND
-2024-02-04 03:30:01.662048 [debug] Joining to multicast group 224.244.224.245 from 10.0.0.2
-2024-02-04 03:30:01.665867 [debug] service_svcb_resolve_callback SVCB SERVICE RESPONSE RECEIVE
-2024-02-04 03:30:01.699477 [debug] create_eventgroup_entry SUBSCRIBE SEND
-2024-02-04 03:30:01.708804 [debug] process_eventgroupentry SUBSCRIBE ACK RECEIVE

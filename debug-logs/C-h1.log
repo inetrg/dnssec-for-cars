@@ -1,3 +1,0 @@
-2024-02-04 03:29:57.745201 [debug] Joining to multicast group 224.244.224.245 from 10.0.0.1
-2024-02-04 03:30:01.704849 [debug] process_eventgroupentry SUBSCRIBE RECEIVE
-2024-02-04 03:30:01.705869 [debug] insert_subscription_ack SUBSCRIBE ACK SEND

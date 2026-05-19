@@ -1,8 +1,0 @@
-2024-02-04 03:07:02.819408 [debug] Joining to multicast group 224.244.224.245 from 10.0.0.2
-2024-02-04 03:07:02.451602 [debug] on_find_debounce_timer_expired FIND SEND
-2024-02-04 03:07:02.459123 [debug] process_serviceentry OFFER RECEIVE
-2024-02-04 03:07:02.492226 [debug] create_eventgroup_entry SUBSCRIBE SEND
-2024-02-04 03:07:02.498685 [debug] process_eventgroupentry SUBSCRIBE ACK RECEIVE
-2024-02-04 03:07:03.132379 [debug] process_serviceentry OFFER RECEIVE
-2024-02-04 03:07:03.133169 [debug] create_eventgroup_entry SUBSCRIBE SEND
-2024-02-04 03:07:03.137519 [debug] process_eventgroupentry SUBSCRIBE ACK RECEIVE

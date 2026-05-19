@@ -1,5 +1,0 @@
-2024-02-04 03:45:03.479359 [debug] Joining to multicast group 224.244.224.245 from 10.0.0.1
-2024-02-04 03:45:07.442582 [debug] process_eventgroupentry SUBSCRIBE RECEIVE
-2024-02-04 03:45:07.443674 [debug] process_authentication_for_created_subscribe_ack SERVICE SIGN START
-2024-02-04 03:45:07.453483 [debug] process_authentication_for_created_subscribe_ack SERVICE SIGN END
-2024-02-04 03:45:07.453957 [debug] insert_subscription_ack SUBSCRIBE ACK SEND
