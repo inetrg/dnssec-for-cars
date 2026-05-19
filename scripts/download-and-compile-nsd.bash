@@ -1,5 +1,6 @@
 #!/usr/bin/bash
-PROJECT_PATH="${PROJECT_PATH:-/home/vm-user/workspace/mininet-vsomeip-evaluation}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_PATH="${PROJECT_PATH:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 cd "$PROJECT_PATH" || exit 1
 mkdir -p nsd
 wget https://nlnetlabs.nl/downloads/nsd/nsd-4.8.0.tar.gz

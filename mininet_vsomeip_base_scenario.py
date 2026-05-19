@@ -19,6 +19,24 @@ from subprocess import TimeoutExpired, Popen
 from itertools import combinations
 from collections import defaultdict
 import re
+import getpass
+
+def effective_user():
+    """Return the non-root invoking user: SUDO_USER if set, else USER, else getpass.getuser()."""
+    return os.environ.get('SUDO_USER') or os.environ.get('USER') or getpass.getuser()
+
+
+def run_as_effective_user(cmd: str, check: bool = True):
+    """Run `cmd` as the effective non-root user when possible, falling back to direct execution.
+
+    Uses `su - <user> -c "cmd"` when the effective user is not root.
+    """
+    user = effective_user()
+    if user and user != 'root':
+        safe_cmd = cmd.replace('"', '\\"')
+        wrapped = f"su - {user} -c \"{safe_cmd}\""
+        return subprocess.run(wrapped, shell=True, check=check)
+    return subprocess.run(cmd, shell=True, check=check)
 
 from tqdm import tqdm
 
@@ -95,7 +113,9 @@ class CaptureUtils:
         # copy from tmp to final location
         Path(capture_path).mkdir(parents=True, exist_ok=True)
         subprocess.run(f"mv {self.tmp_path}/*.pcapng {capture_path}/", shell=True, check=True)
-        subprocess.run(f"chown -R vm-user:vm-user {capture_path}", shell=True, check=True)
+        # set ownership to the effective user (the user who invoked sudo, or current user)
+        eff_user = effective_user()
+        subprocess.run(f"chown -R {eff_user}:{eff_user} {capture_path}", shell=True, check=True)
 
 class VSomeIPTopologyBase(ABC):
     """Base class for SOME/IP evaluation scenarios.
@@ -136,17 +156,18 @@ class VSomeIPTopologyBase(ABC):
 
     # ========== TIER 1: SCENARIO CONFIGURATION (set by subclass) ==========
 
-    PROJECT_PATH = "/home/vm-user/workspace/mininet-vsomeip-evaluation"
+    PROJECT_ROOT = Path(__file__).resolve().parent
+    PROJECT_PATH = str(PROJECT_ROOT)
     SCENARIO_PATH = None  # Must be set by subclass
     CONFIG_PATH = None  # Must be set by subclass
-    CONFIG_TEMPLATE_PATH = PROJECT_PATH + "/template-configs/vsomeip-udp-mininet-multihost.json" # May be set by subclass
+    CONFIG_TEMPLATE_PATH = str(PROJECT_ROOT / "template-configs" / "vsomeip-udp-mininet-multihost.json") # May be set by subclass
     CERT_PATH = None  # Must be set by subclass
     ZONE_PATH = None  # Must be set by subclass
-    SCRIPT_PATH = PROJECT_PATH + "/scripts" # May be set by subclass
+    SCRIPT_PATH = str(PROJECT_ROOT / "scripts") # May be set by subclass
     LOGS_PATH = None  # May be set by subclass
     STATISTICS_PATH = None  # May be set by subclass
     CAPTURE_PATH = None # May be set by subclass
-    NSD_CONF_PATH = f"{PROJECT_PATH}/nsd/nsd.conf"
+    NSD_CONF_PATH = str(PROJECT_ROOT / "nsd" / "nsd.conf")
 
     # ========== TIER 2: CONFIGURABLE CONSTANTS ==========
 
@@ -359,18 +380,20 @@ class VSomeIPTopologyBase(ABC):
 
     def reset_zone_files(self):
         """Reset zone files to default state."""
-        subprocess.run(["su", "-", "vm-user", "-c", f"{self.SCRIPT_PATH}/reset-zone-files.bash --zones-folder {self.ZONE_PATH} --zone-file client.zone --zone-file service.zone"], check=True)
+        run_as_effective_user(f"{self.SCRIPT_PATH}/reset-zone-files.bash --zones-folder {self.ZONE_PATH} --zone-file client.zone --zone-file service.zone", check=True)
 
     def build_vsomeip(self):
         """Build vsomeip project."""
         print("Building vsomeip ... ")
         # set compile opts
         subprocess.run(f"sed -i -E 's/add_compile_definitions.*/add_compile_definitions\({self.add_compile_definitions}\)/' {self.PROJECT_PATH}/vsomeip/CMakeLists.txt", shell=True)
-
-        subprocess.run(f'su - vm-user -c "cmake -B {self.PROJECT_PATH}/vsomeip/build -S {self.PROJECT_PATH}/vsomeip"', shell=True)
-        subprocess.run(f'su - vm-user -c "$(which cmake) --build {self.PROJECT_PATH}/vsomeip/build --config Release --target all -- -j$(nproc)"', shell=True)
-        subprocess.run(f'su - vm-user -c "$(which cmake) --build {self.PROJECT_PATH}/vsomeip/build --config Release --target examples -- -j$(nproc)"', shell=True)
-        subprocess.run(f'su - vm-user -c "$(which cmake) --build {self.PROJECT_PATH}/vsomeip/build --config Release --target statistics-writer -- -j$(nproc)"', shell=True)
+        # ensure build directory is clean and configure cmake with BASE_PATH so
+        # the generated internal.hpp contains the correct project path
+        configure_cmd = f"rm -rf {self.PROJECT_PATH}/vsomeip/build && cmake -B {self.PROJECT_PATH}/vsomeip/build -S {self.PROJECT_PATH}/vsomeip -DBASE_PATH={self.PROJECT_PATH}/vsomeip"
+        run_as_effective_user(configure_cmd, check=True)
+        run_as_effective_user(f"$(which cmake) --build {self.PROJECT_PATH}/vsomeip/build --config Release --target all -- -j$(nproc)", check=True)
+        run_as_effective_user(f"$(which cmake) --build {self.PROJECT_PATH}/vsomeip/build --config Release --target examples -- -j$(nproc)", check=True)
+        run_as_effective_user(f"$(which cmake) --build {self.PROJECT_PATH}/vsomeip/build --config Release --target statistics-writer -- -j$(nproc)", check=True)
         print("Done.")
 
     def cleanup(self):
@@ -738,13 +761,13 @@ class VSomeIPTopologyBase(ABC):
     def build_publisher_launch_cmd(self, host_name, service_id, app_name):
         """Build publisher launch command."""
         config_path = self.get_host_config_path(host_name)
-        launch_cmd = f"env VSOMEIP_CONFIGURATION={config_path} VSOMEIP_APPLICATION_NAME={app_name} {self.PROJECT_PATH}/vsomeip/build/examples/{self.PUBLISHER_PROGRAM} --serviceid {service_id} --instanceid {self.INSTANCE_ID} --eventgroupid {self.EVENT_GROUP_ID + service_id} --eventid {self.EVENT_ID_1 + service_id} "
+        launch_cmd = f"env VSOMEIP_CONFIGURATION={config_path} VSOMEIP_APPLICATION_NAME={app_name} VSOMEIP_INITIALIZED_FILES_BASE_PATH={self.PROJECT_PATH} {self.PROJECT_PATH}/vsomeip/build/examples/{self.PUBLISHER_PROGRAM} --serviceid {service_id} --instanceid {self.INSTANCE_ID} --eventgroupid {self.EVENT_GROUP_ID + service_id} --eventid {self.EVENT_ID_1 + service_id} "
         return launch_cmd
 
     def build_subscriber_launch_cmd(self, host_name, service_id, client_id, app_name):
         """Build subscriber launch command."""
         config_path = self.get_host_config_path(host_name)
-        launch_cmd = f"env VSOMEIP_CONFIGURATION={config_path} VSOMEIP_APPLICATION_NAME={app_name} {self.PROJECT_PATH}/vsomeip/build/examples/{self.SUBSCRIBER_PROGRAM} --serviceid {service_id} --instanceid {self.INSTANCE_ID} --eventgroupid {self.EVENT_GROUP_ID + service_id} --eventid {self.EVENT_ID_1 + service_id} --clientid {client_id} "
+        launch_cmd = f"env VSOMEIP_CONFIGURATION={config_path} VSOMEIP_APPLICATION_NAME={app_name} VSOMEIP_INITIALIZED_FILES_BASE_PATH={self.PROJECT_PATH} {self.PROJECT_PATH}/vsomeip/build/examples/{self.SUBSCRIBER_PROGRAM} --serviceid {service_id} --instanceid {self.INSTANCE_ID} --eventgroupid {self.EVENT_GROUP_ID + service_id} --eventid {self.EVENT_ID_1 + service_id} --clientid {client_id} "
         return launch_cmd
 
     def start_someip_publisher_app(self, host, service_id):
@@ -914,7 +937,8 @@ class VSomeIPTopologyBase(ABC):
             subprocess.run(f"cp {self.LOGS_PATH}/*.log {out_path}/", shell=True, check=True)
 
         # own everything below log/
-        subprocess.run(f"chown -R vm-user:vm-user {self.LOGS_PATH}", shell=True, check=True)
+        eff_user = effective_user()
+        subprocess.run(f"chown -R {eff_user}:{eff_user} {self.LOGS_PATH}", shell=True, check=True)
     
     # ========== TIER 4: EVALUATION EXECUTION ==========
     def setup_evaluation(self, args, topo: Topo, dns_host_name: str = None):
@@ -999,7 +1023,8 @@ class VSomeIPTopologyBase(ABC):
     def shutdown_evaluation(self):
         print("Stopping mininet network")
         self.net.stop()
-        subprocess.run(f"chown -R vm-user:vm-user {self.STATISTICS_PATH}", shell=True, check=True)
+        eff_user = effective_user()
+        subprocess.run(f"chown -R {eff_user}:{eff_user} {self.STATISTICS_PATH}", shell=True, check=True)
         self.cleanup()
         print("Done.")
 

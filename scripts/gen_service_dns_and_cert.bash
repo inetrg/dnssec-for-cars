@@ -8,7 +8,8 @@
 set -euo pipefail
 
 # Default values
-PROJECT_PATH="${PROJECT_PATH:-/home/vm-user/workspace/mininet-vsomeip-evaluation}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_PATH="${PROJECT_PATH:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 ZONE_FILE=""
 CERTIFICATES_PATH=""
 
@@ -47,7 +48,7 @@ Optional Options:
   --instance ID             Instance ID (default: 1)
   --protocol PROTO          Protocol: UDP (default) or TCP
   --project-path PATH       Project root path
-                            (default: /home/vm-user/workspace/mininet-vsomeip-evaluation)
+                            (default: $PROJECT_PATH)
   --zone-file PATH          Path to zone file to append records
                             (default: \$PROJECT_PATH/\$SCENARIO/zones/service.zone)
   --certificates-path PATH  Path to certificates directory

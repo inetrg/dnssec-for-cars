@@ -1,8 +1,9 @@
 #!/usr/bin/bash
 
 # defaults
-BASE_DIR="/home/vm-user/workspace/mininet-vsomeip-evaluation"
-SCENARIO_DIR="$BASE_DIR/scalability"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_PATH="${PROJECT_PATH:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+SCENARIO_DIR="$PROJECT_PATH/scalability"
 ZONES_FOLDER="zones"
 
 DEFAULT_ZONE_FILES=("client.zone" "service.zone")
@@ -18,7 +19,7 @@ usage() {
 Usage: $0 [OPTIONS]
 
 Options:
-    --base-dir DIR              Base directory for the project as an absolute or relative path (default: $BASE_DIR)
+    --base-dir DIR              Base directory for the project as an absolute or relative path (default: $PROJECT_PATH)
     --scenario DIR              Scenario folder as an absolute path or relative to base directory (default: $SCENARIO_DIR)
     --zones-folder DIR          Zones folder as an absolute or relative path in scenario folder containing zone files (default: $ZONES_FOLDER)
     --zone-file FILE            Zone file as an absolute path or relative to zones folder (repeatable)
@@ -47,7 +48,7 @@ resolve_path() {
 
 parse_zones_from_args() {
     # Build paths in dependency order so relative inputs are resolved correctly.
-    SCENARIO_DIR="$(resolve_path "$SCENARIO_DIR_INPUT" "$BASE_DIR")"
+    SCENARIO_DIR="$(resolve_path "$SCENARIO_DIR_INPUT" "$PROJECT_PATH")"
     ZONES_FOLDER="$(resolve_path "$ZONES_FOLDER_INPUT" "$SCENARIO_DIR")"
 
     if [[ ${#ZONE_FILES_INPUT[@]} -eq 0 ]]; then
@@ -65,7 +66,7 @@ parse_zones_from_args() {
 while [[ $# -gt 0 ]]; do
     case $1 in
         --base|--base-dir)
-            BASE_DIR="$2"
+            PROJECT_PATH="$2"
             shift 2
             ;;
         --scenario|--scenario-folder)

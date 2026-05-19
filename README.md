@@ -52,8 +52,8 @@ Look at the prerequisites, since you may need to adapt some user and path specif
 
 ### Prerequisites
 1. Execute `git submodule init` first and then `git submodule update` to pull the _vsomeip_ project
-2. Adjust all path specifications in every file containing `/home/vm-user/workspace` according to your project path
-3. Execute the `download-and-compile-nsd.bash` script and follow the instructions at the end to setup the authoritative name server
+2. The scripts and Python scenarios resolve the repository root automatically. If you need to override it, set `PROJECT_PATH` when calling a script.
+3. Execute the `download-and-compile-nsd.bash` script and follow the instructions at the end to set up the authoritative name server
 
 ## Scenarios
 The scenarios automatically create vsomeip configurations, certificates, and DNS records. 

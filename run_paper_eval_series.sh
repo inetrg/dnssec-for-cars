@@ -2,11 +2,22 @@
 # This script runs the evaluation for the paper, using the scripts for
 # carnet/series_carnet.bash and the scalability/series_multipubsub.bash.
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 # validate that the script runs as root
 if [ "$EUID" -ne 0 ]; then
     echo "Please run as root"
     exit
 fi
+
+NORMAL_USER="${SUDO_USER:-${USER:-$(id -un)}}"
+
+restore_raw_ownership() {
+    if [ -d "$RAW" ]; then
+        chown -R "$NORMAL_USER:$NORMAL_USER" "$RAW"
+    fi
+}
 
 RUNS=25
 OPTIONS=("A" "F" "H")
@@ -16,7 +27,8 @@ SKIP_CARNET="false"
 SKIP_SCALABILITY_1_50="true"
 SKIP_SCALABILITY_5_100="true"
 
-RAW="evaluation/data/raw/$(date +%Y%m%d-%H%M%S)"
+RAW="$SCRIPT_DIR/evaluation/data/raw/$(date +%Y%m%d-%H%M%S)"
+trap restore_raw_ownership EXIT
 
 # Function to display usage
 usage() {
@@ -84,7 +96,7 @@ echo "Running paper evaluation series with the following settings:"
 echo "  Runs per configuration: $RUNS"
 echo "  Max retries for failed runs: $MAX_RETRIES"
 echo "  Options: ${OPTIONS[*]}"
-echo "  Note: this will take a while to complete (expect several hours, i.e., 20 min for carnet or 3 hours for scalability 1x50 subs), pre compiled results are in the data/raw folder."
+echo "  Note: this will take a while to complete, pre compiled results are in the data/raw folder."
 
 mkdir -p "$RAW"
 
@@ -178,3 +190,5 @@ else
 fi
 
 copy_closest_logs "." ""
+
+restore_raw_ownership
