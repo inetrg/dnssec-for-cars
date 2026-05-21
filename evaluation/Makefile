@@ -56,6 +56,10 @@ create_environment:
 # PROJECT RULES                                                                 #
 #################################################################################
 
+## Extract the data set with tar -xvzf 20260418_carnet_study.tar.gz in the data/raw directory, and then run this command to move the files to the right place
+.PHONY: extract
+extract: requirements
+	tar -xvzf "data/raw/20260418_carnet_study.tar.gz" -C data/raw/
 
 ## Make dataset
 .PHONY: data

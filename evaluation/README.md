@@ -9,7 +9,7 @@ Evaluation components and data for mininet experiments of SOME/IP using DNSSEC f
 ## Project Organization
 
 ```
-├── Makefile           <- Makefile with convenience commands like `make data` or `make train`
+├── Makefile           <- Makefile with convenience commands like `make data` or `make plots`
 ├── README.md          <- The top-level README for developers using this project.
 ├── data
 │   ├── interim        <- Intermediate data that has been transformed.
@@ -35,10 +35,16 @@ Evaluation components and data for mininet experiments of SOME/IP using DNSSEC f
     │
     ├── config.py               <- Store useful variables and configuration
     │
-    ├── dataset.py              <- Scripts to download or generate data
+    ├── dataset.py              <- Scripts to process data from the raw format to the interim and processed data sets
     │
     └── plots.py                <- Code to create visualizations, and tables
 ```
 
 --------
 
+## Reproducing the Analysis
+Make sure the data is in place. 
+Either run the series as described in the main project README, or use the ```make extract``` command to extract the data set from the tar.gz file in the raw data directory.
+If you run the series yourself, move the data from the data collection directory to the raw data directory, as each run will create a directory with the time and date of the run. Move the scenario folders, i.e., carnet or scalability up one level.
+
+The run ```make data``` to preprocess the data, and ```make plots``` to reproduce the tables and reports.

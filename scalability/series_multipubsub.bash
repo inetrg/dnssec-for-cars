@@ -9,15 +9,15 @@ fi
 # Default parameters
 RUNTIMESLOG="scalability_series_$(date +%Y%m%d-%H%M%S).log"
 MIN_PUBS=1
-MAX_PUBS=200
+MAX_PUBS=50
 PUB_STEPS=10
 MIN_SUBS=1
-MAX_SUBS=5
-SUB_STEPS=1
-PUBS_PER_HOST=50
+MAX_SUBS=50
+SUB_STEPS=10
+PUBS_PER_HOST=10
 RUNS=10
 OPTIONS=("A" "F" "H")
-MAX_RETRIES=5
+MAX_RETRIES=100
 SCENARIO="topo-1sw-scalability.py"
 
 # Function to display usage
@@ -28,14 +28,14 @@ Usage: $0 [OPTIONS]
 Options:
     --runtimeslog FILE          Log file for runtimes (default: scalability_series_TIMESTAMP.log)
     --min-pubs NUM              Minimum publishers (default: 1)
-    --max-pubs NUM              Maximum publishers (default: 200)
+    --max-pubs NUM              Maximum publishers (default: 50)
     --pub-steps NUM             Publisher step size, this will ensure that both limits are included but then keep clean divisions of the pub-steps, e.g., MIN,10,20,...MAX for step size 10 (default: 10)
     --min-subs NUM              Minimum subscribers (default: 1)
-    --max-subs NUM              Maximum subscribers (default: 5)
+    --max-subs NUM              Maximum subscribers (default: 50)
     --sub-steps NUM             Subscriber step size, this will ensure that both limits are included but then keep clean divisions of the sub-steps, e.g., MIN,10,20,...MAX for step size 10 (default: 1)
-    --pubs-per-host NUM         Publishers per host (default: 50)
+    --pubs-per-host NUM         Publishers per host (default: 10)
     --runs NUM                  Number of runs per configuration (default: 10)
-    --max-retries NUM             Maximum retries for failed runs (default: 5)
+    --max-retries NUM             Maximum retries for failed runs (default: 100)
     --options LIST              Comma-separated options to evaluate (default: A,F,H)
     --help                      Display this help message
 

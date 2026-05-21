@@ -203,15 +203,8 @@ class VSomeIPTopologyBase(ABC):
 
     def get_parser_with_common_args(self):
         parser = argparse.ArgumentParser(description='Starts vsomeip w/ or w/o security mechanisms and collects timestamps of handshake events')
-        parser.add_argument('--evaluate', choices=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], required=True, help="""A: vanilla (vsomeip as it is),
-                                                                                                                            B: w/ DNSSEC w/o SOME/IP SD,
-                                                                                                                            C: w/ service authentication,
-                                                                                                                            D: w/ service authentication + DNSSEC + DANE w/o SOME/IP SD,
-                                                                                                                            E: w/ service and client authentiction,
-                                                                                                                            F: w/ service and client authentiction + payload encryption,
-                                                                                                                            G: w/ service and client authentication + DNSSEC + DANE,
-                                                                                                                            H: w/ service and client authentication + DNSSEC + DANE + payload encryption""")
-        parser.add_argument('--runs', type=int, metavar='N', required=False, help='Specify the number of runs for the evaluation or omit this parameter to start the interactive mode with mininet CLI')
+        parser.add_argument('--evaluate', choices=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], required=True, help="""A: vanilla (vsomeip as it is), B: w/ DNSSEC w/o SOME/IP SD, C: w/ service authentication, D: w/ service authentication + DNSSEC + DANE w/o SOME/IP SD, E: w/ service and client authentiction, F: w/ service and client authentiction + payload encryption, G: w/ service and client authentication + DNSSEC + DANE, H: w/ service and client authentication + DNSSEC + DANE + payload encryption""")
+        parser.add_argument('--runs', type=int, metavar='N', required=False, help='Specify the number of runs for the evaluation')
         parser.add_argument('--max-retries', type=int, metavar='N', default=0, help='Maximum number of retries for a failed run. Default is 0 = no retries.')
         parser.add_argument('--clean-start', dest='clean_start', action='store_true', help='Removes certificates and host configs causing them to be recreated')
         parser.add_argument('--copy-logs', dest='copy_logs', action='store_true', default=False, help='Copy logs to scenario folder for every evaluation run')
