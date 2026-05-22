@@ -1,5 +1,6 @@
 # Data
-/data/
+/data/interim/ 
+/data/processed/
 /reports/
 
 # Mac OS-specific storage files
