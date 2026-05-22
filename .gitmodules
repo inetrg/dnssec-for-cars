@@ -1,4 +1,4 @@
 [submodule "vsomeip"]
 	path = vsomeip
-	url = git@git.inet.haw-hamburg.de:core/source/someip/mininet-vsomeip
+	url = git@github.com:inetrg/dnssec-vsomeip.git
 	branch = main
